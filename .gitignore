@@ -1,0 +1,46 @@
+# Compilazione
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+
+# Visual Studio e Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Generatori locali
+*.binlog
+*.nupkg
+*.snupkg
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+BenchmarkDotNet.Artifacts/
+
+# Publish
+publish/
+*.publishsettings
+
+# Licenze emesse in locale
+*.tlicense
+
+# Chiavi private: la pubblica (keys/*.pub.pem) va invece versionata
+keys/*private*
+*-private.pem
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Crash e log locali
+*.log
+core

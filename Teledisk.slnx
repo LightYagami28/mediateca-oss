@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Teledisk.Core/Teledisk.Core.csproj" />
+    <Project Path="src/Teledisk.Licensing/Teledisk.Licensing.csproj" />
+  </Folder>
+</Solution>

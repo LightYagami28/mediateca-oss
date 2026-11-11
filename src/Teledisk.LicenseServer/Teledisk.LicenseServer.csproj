@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>teledisk-license-server</AssemblyName>
+    <RootNamespace>Teledisk.LicenseServer</RootNamespace>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Teledisk.Licensing\Teledisk.Licensing.csproj" />
+  </ItemGroup>
+
+</Project>

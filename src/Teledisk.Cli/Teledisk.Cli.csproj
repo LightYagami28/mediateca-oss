@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Teledisk.Core\Teledisk.Core.csproj" />
+    <ProjectReference Include="..\Teledisk.Data\Teledisk.Data.csproj" />
+    <ProjectReference Include="..\Teledisk.Licensing\Teledisk.Licensing.csproj" />
+    <ProjectReference Include="..\Teledisk.Server\Teledisk.Server.csproj" />
+    <ProjectReference Include="..\Teledisk.Media\Teledisk.Media.csproj" />
+    <ProjectReference Include="..\Teledisk.Backup\Teledisk.Backup.csproj" />
+    <ProjectReference Include="..\Teledisk.Telegram\Teledisk.Telegram.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
