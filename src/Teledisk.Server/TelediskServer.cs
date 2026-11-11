@@ -31,8 +31,11 @@ public sealed record ServerOptions
     /// <summary>Utente WebDAV.</summary>
     public string WebDavUser { get; init; } = "teledisk";
 
-    /// <summary>Password WebDAV in chiaro, verificata all'avvio (l'hash vive nelle impostazioni).</summary>
+    /// <summary>Password WebDAV in chiaro, verificata all'avvio (alternativa all'hash).</summary>
     public string WebDavPassword { get; init; } = "";
+
+    /// <summary>Hash PBKDF2 della password WebDAV: se presente ha la precedenza sul testo in chiaro.</summary>
+    public string WebDavPasswordHash { get; init; } = "";
 
     /// <summary>Token per le API JSON. Vuoto significa nessuna autenticazione.</summary>
     public string ApiToken { get; init; } = "";
@@ -250,7 +253,8 @@ internal static class WebDav
 
     private static bool CheckBasic(HttpContext context, ServerOptions options)
     {
-        if (string.IsNullOrEmpty(options.WebDavPassword))
+        var hasHash = !string.IsNullOrEmpty(options.WebDavPasswordHash);
+        if (!hasHash && string.IsNullOrEmpty(options.WebDavPassword))
         {
             return true;
         }
@@ -272,8 +276,15 @@ internal static class WebDav
 
             var user = raw[..separator];
             var password = raw[(separator + 1)..];
-            return string.Equals(user, options.WebDavUser, StringComparison.Ordinal)
-                   && string.Equals(password, options.WebDavPassword, StringComparison.Ordinal);
+            if (!string.Equals(user, options.WebDavUser, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            // Le impostazioni salvano l'hash, non la password: se c'è, si verifica quello.
+            return hasHash
+                ? Teledisk.Core.Security.PasswordHasher.Verify(password, options.WebDavPasswordHash)
+                : string.Equals(password, options.WebDavPassword, StringComparison.Ordinal);
         }
         catch (FormatException)
         {

@@ -2,5 +2,15 @@
   <Folder Name="/src/">
     <Project Path="src/Teledisk.Core/Teledisk.Core.csproj" />
     <Project Path="src/Teledisk.Licensing/Teledisk.Licensing.csproj" />
+    <Project Path="src/Teledisk.LicenseServer/Teledisk.LicenseServer.csproj" />
+    <Project Path="src/Teledisk.Data/Teledisk.Data.csproj" />
+    <Project Path="src/Teledisk.Server/Teledisk.Server.csproj" />
+    <Project Path="src/Teledisk.Telegram/Teledisk.Telegram.csproj" />
+    <Project Path="src/Teledisk.Media/Teledisk.Media.csproj" />
+    <Project Path="src/Teledisk.Backup/Teledisk.Backup.csproj" />
+    <Project Path="src/Teledisk.Cli/Teledisk.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Teledisk.Tests/Teledisk.Tests.csproj" />
   </Folder>
 </Solution>
