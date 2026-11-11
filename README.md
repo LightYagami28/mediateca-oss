@@ -22,9 +22,10 @@ Il nucleo è utilizzabile da riga di comando; l'interfaccia grafica arriva dopo.
 | Sistema di licenza offline, opzionale e senza funzioni bloccate | pronto |
 | CLI, test automatici, integrazione continua | pronto |
 | Presa dei metadati TMDB | pronto (client, non ancora richiamato dalla CLI) |
+| Client della Bot API di Telegram (identità, invio, aggiornamenti) | pronto (client, non ancora richiamato dalla CLI) |
 | Interfaccia grafica | mancante (l'originale usa PyQt5) |
 | Client Telegram MTProto (equivalente di Telethon) | mancante |
-| Bot Telegram (equivalente del bot aiogram dell'originale) | mancante |
+| Bot Telegram completo (equivalente dei 25 moduli aiogram dell'originale) | mancante |
 | Streaming dei byte dal server, montaggio FUSE/WinFsp, rclone | mancante (il server espone metadati, non il contenuto) |
 | Backup su Google Drive e backup pianificato | mancante (solo backup locale manuale) |
 | MiniApp, pagamenti Telegram Stars, import da smartphone | mancanti |
@@ -43,8 +44,8 @@ Il dettaglio per area, confrontato con i moduli dell'originale, è in [docs/PARI
 | `Teledisk.Data` | Database SQLite: apertura, migrazioni versionate, integrità, lettura e scrittura del catalogo |
 | `Teledisk.Server` | Server HTTP locale: API JSON del catalogo, area WebDAV in sola lettura, health check |
 | `Teledisk.Media` | Provider di metadati del catalogo (interfaccia, registro, client TMDB) |
-| `Teledisk.Backup` | Backup della radice dati (progetto riservato; oggi il comando vive nella CLI) |
-| `Teledisk.Telegram` | Integrazione Telegram: client MTProto e bot (progetto riservato) |
+| `Teledisk.Backup` | Backup della radice dati: contratto `IBackupTarget` e destinazione locale con retention |
+| `Teledisk.Telegram` | Client della Bot API di Telegram (identità, invio, aggiornamenti) e relativi modelli |
 | `Teledisk.Cli` | Eseguibile `teledisk`: manutenzione, scansione, backup, server, licenza |
 | `Teledisk.LicenseServer` | Server locale di attivazione per far funzionare il **client originale 1.7** senza il servizio del vendor |
 | `Teledisk.Tests` | Test automatici con xUnit |
@@ -64,8 +65,10 @@ dotnet build Teledisk.slnx -c Release
 dotnet test Teledisk.slnx -c Release
 ```
 
-Un singolo progetto si compila indicandolo, per esempio
-`dotnet build src/Teledisk.Cli/Teledisk.Cli.csproj`.
+Un singolo progetto si compila (o si testa) indicandolo: la soluzione elenca i progetti da
+costruire insieme, il percorso diretto serve quando se ne tocca uno solo, per esempio
+`dotnet build src/Teledisk.Cli/Teledisk.Cli.csproj` o
+`dotnet test tests/Teledisk.Tests/Teledisk.Tests.csproj`.
 
 L'eseguibile della CLI si produce con
 `dotnet publish src/Teledisk.Cli/Teledisk.Cli.csproj -c Release`.
@@ -98,11 +101,11 @@ all'installazione (utile per supporto, log e distribuzioni personalizzate). I ti
 `Pro` e `Patron` sono solo un'etichetta: concedono le stesse funzionalità.
 
 ```powershell
-teledisk license keygen --out .\chiavi          # coppia di chiavi RSA-2048
-teledisk license issue --key .\chiavi\teledisk-<kid>-private.pem --tier pro --subject nome@esempio.it
-teledisk license verify .\tl-....tlicense       # verifica senza installare
-teledisk license install .\tl-....tlicense      # copia nella radice dati
-teledisk license status                         # stato effettivo
+teledisk license keygen --out "$env:APPDATA\Teledisk\keys"   # coppia di chiavi RSA-2048
+teledisk license issue --tier pro --subject nome@esempio.it  # usa la privata trovata lì
+teledisk license verify .\tl-....tlicense                    # verifica senza installare
+teledisk license install .\tl-....tlicense                   # copia nella radice dati
+teledisk license status                                      # stato effettivo
 ```
 
 Dettagli di formato, percorsi e chiavi fidate in [docs/LICENZA.md](docs/LICENZA.md).

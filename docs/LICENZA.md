@@ -60,7 +60,7 @@ l'attuale `DefaultFeatures` ogni flag richiesto è comunque già attivo.
 | Elemento | Percorso | Note |
 |---|---|---|
 | Chiave pubblica ufficiale | `keys/teledisk-community.pub.pem` | pubblica; è anche incorporata nell'applicazione, quindi una licenza si verifica senza rete |
-| Chiave privata dell'issuer | **fuori dal repository** | serve solo a emettere licenze; chi la detiene può firmarle tutte |
+| Chiave privata dell'issuer | **fuori dal repository** | serve solo a emettere licenze; chi la detiene può firmarle tutte. La posizione comoda è `<radice dati>/keys/`, che `license issue` consulta da sé. |
 | Chiavi fidate aggiuntive | `<radice dati>/keys/trusted/*.pem` | per firmare licenze proprie senza toccare la chiave del progetto |
 | Cartella chiavi fidate alternativa | variabile `TELEDISK_TRUSTED_KEYS` | sostituisce la cartella precedente |
 
@@ -123,7 +123,7 @@ implementazione. La firma copre l'intero payload, perciò modificare un solo cam
 teledisk machine                                  # impronta di questa macchina
 teledisk license status                            # stato effettivo, in JSON
 teledisk license verify .\file.tlicense            # verifica senza installare
-teledisk license keygen --out .\chiavi             # coppia di chiavi RSA-2048
+teledisk license keygen --out .\chiavi             # coppia di chiavi RSA-2048 (predefinita: cartella corrente)
 teledisk license issue --key ... --tier pro ...    # emette una licenza firmata
 teledisk license install .\file.tlicense           # installa nella radice dati
 ```
@@ -163,11 +163,10 @@ cartella dati risolta, utile quando una licenza sembra non essere letta.
 Emettere una licenza per sé e verificarla:
 
 ```powershell
-teledisk license keygen --out .\chiavi
-copy .\chiavi\teledisk-*.pub.pem "$env:APPDATA\Teledisk\keys\trusted\"
+teledisk license keygen --out "$env:APPDATA\Teledisk\keys"
+copy "$env:APPDATA\Teledisk\keys\teledisk-*.pub.pem" "$env:APPDATA\Teledisk\keys\trusted\"
 
-teledisk license issue --key .\chiavi\teledisk-<kid>-private.pem `
-    --tier pro --subject nome@esempio.it --expires 2027-12-31 --out .\mialicenza.tlicense
+teledisk license issue --tier pro --subject nome@esempio.it --expires 2027-12-31 --out .\mialicenza.tlicense
 
 teledisk license verify .\mialicenza.tlicense
 teledisk license install .\mialicenza.tlicense
@@ -175,4 +174,4 @@ teledisk license status
 ```
 
 Senza il passaggio in `keys/trusted` la licenza non verifica: il `kid` corrisponderebbe a una chiave
-non nota. La cartella si può creare a mano, viene comunque ricreata al primo avvio.
+non nota. La cartella viene ricreata al primo avvio dei comandi, quindi basta copiarci il file.

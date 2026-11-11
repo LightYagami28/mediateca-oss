@@ -38,7 +38,7 @@ Le note dicono sempre dove sta il confine.
 | Crittografia | 1 — `crypto_utils` | **parziale** | PBKDF2-HMAC-SHA256 e AES-256-GCM al posto di Fernet. Manca il caso d'uso sulle sessioni Telethon, che non ci sono ancora. |
 | Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **mancante** | Nessun client MTProto: niente login, sessioni, normalizzazione degli identificativi. |
 | Canali e download Telegram | 9 — `telegram_channel`, `telegram_download`, `telegram_multibot_download`, `download_queue`, `file_handler`, `multipart_files`, `thumbnail_downloader`, `media_caption`, `telegram_caption_sync` | **mancante** | Il catalogo ha già le colonne per canali, messaggi e code di trasferimento, ma nessuno le riempie da Telegram. |
-| File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Backup zip locale con ritenzione. Mancano backup per singolo canale, selezione dei file e Google Drive. |
+| File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Backup zip locale con ritenzione, destinazione `LocalBackupTarget` in `Teledisk.Backup` non ancora richiamata dal comando. Mancano backup per singolo canale, selezione dei file e Google Drive. |
 | Dati dei bot e rubrica | 5 — `bot_access_db`, `bot_channel_access`, `bot_runtime_manager`, `bot_token_registry`, `telegram_address_book_db` | **mancante** | Nessun registro di token, permessi o accessi. |
 | Import da smartphone | 1 — `smartphone_import` | **mancante** | Solo import da cartella locale. |
 
@@ -57,7 +57,7 @@ Le note dicono sempre dove sta il confine.
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
-| Nucleo, comandi, aiuti | 15 — `admin_chat`, `core`, `commands`, `config`, `database`, `login`, `help`, `help_scope`, `app_package`, `bot_ui_helpers`, `ui`, `markdown_editor`, `icon_picker`, `system_commands`, `telegram_features` | **mancante** | Nessun bot. |
+| Nucleo, comandi, aiuti | 15 — `admin_chat`, `core`, `commands`, `config`, `database`, `login`, `help`, `help_scope`, `app_package`, `bot_ui_helpers`, `ui`, `markdown_editor`, `icon_picker`, `system_commands`, `telegram_features` | **parziale** | Presente in `Teledisk.Telegram` un client essenziale della Bot API (identità del bot, invio di un messaggio, lettura aggiornamenti). Mancano comandi, menu, stato e login. |
 | Catalogo e ricerca | 4 — `catalog`, `user_library`, `user_search`, `tmdb` | **mancante** | — |
 | Pagamenti e amministrazione utenti | 3 — `payments`, `user_admin`, `stat` | **mancante** | Nessun pagamento con Telegram Stars. |
 | Messaggistica e Telegraph | 3 — `messaging`, `telegraph_catalog`, `telegraph_store` | **mancante** | Niente MiniApp né cataloghi su Telegraph. |
@@ -92,11 +92,12 @@ Le note dicono sempre dove sta il confine.
 Fatto o utilizzabile: database e migrazioni, catalogo, import locale, server HTTP e WebDAV in sola
 lettura, backup locale, licenza offline, CLI e test.
 
-Parziale: tutto ciò che dipende dal mondo Telegram e dalla GUI, più i punti di contatto con i dati
-dell'originale (migrazione dei database, copertine, analisi dei nomi, streaming dei byte).
+Parziale: la parte Telegram (client della Bot API presente, logica del bot no), il backup nella sua
+integrazione con la CLI, e tutto ciò che dipende dai dati dell'originale (migrazione dei database,
+copertine, analisi dei nomi, streaming dei byte).
 
-Mancante: client MTProto, bot, code di upload, scraper non-TMDB, FUSE, MiniApp, pagamenti, import da
-smartphone, interfaccia grafica.
+Mancante: client MTProto, comandi e menu del bot, code di upload, scraper non-TMDB, FUSE, MiniApp,
+pagamenti, import da smartphone, interfaccia grafica.
 
 La matrice non copre le parti non-Moduli dell'originale: installer Inno Setup, protezione PyArmor,
 bootloader PyInstaller, chiavi pubbliche del vendor e servizio di attivazione (quest'ultimo

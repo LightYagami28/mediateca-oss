@@ -36,6 +36,8 @@ convenzione.
 | `Teledisk.Server.TelediskServer` | Server HTTP: API JSON e area WebDAV in sola lettura. |
 | `Teledisk.Licensing` | Documento, envelope, firma, verifica, chiavi fidate, entitlement effettivo. |
 | `Teledisk.Media` | Contratto dei provider di metadati (`IMediaScraper`), registro e client TMDB. |
+| `Teledisk.Backup` | Contratto delle destinazioni di backup (`IBackupTarget`) e destinazione locale su ZIP, con retention. |
+| `Teledisk.Telegram` | Client della Bot API di Telegram (`getMe`, invio messaggi, lettura aggiornamenti) e modelli. |
 | `Teledisk.Cli` | Comandi `machine`, `doctor`, `db`, `settings`, `scan`, `backup`, `serve`, `license`. |
 
 ## Percorsi dati
@@ -52,7 +54,7 @@ quest'ordine:
 | `<radice>/settings.json` | Impostazioni dell'utente. |
 | `<radice>/license.tlicense` | Licenza opzionale dell'installazione. |
 | `<radice>/keys/trusted/` | Chiavi pubbliche aggiuntive di cui fidarsi. |
-| `<radice>/backups/` | Archivi con nome `teledisk-<data>_<ora>.zip`. |
+| `<radice>/backups/` | Archivi ZIP dei backup, con data e ora nel nome e ritenzione configurabile. |
 | `<radice>/cache/` | Copertine e anteprime. |
 | `<radice>/logs/` | Log applicativi. |
 
@@ -110,8 +112,10 @@ con nonce per ogni valore e stringa autodescrittiva `v1$nonce$tag$payload`.
 
 ## Punti aperti
 
-- Client Telegram MTProto e bot: i progetti `Teledisk.Telegram` e `Teledisk.Backup` esistono come
-  contenitori, la logica vera è ancora nella CLI e in `Core`.
+- Client Telegram MTProto: non esiste. C'è il client della Bot API (`Teledisk.Telegram`), che non
+  sostituisce Telethon per scaricare o pubblicare file nei canali.
+- `Teledisk.Backup` ha il contratto e la destinazione locale, ma il comando `backup` della CLI
+  scrive ancora il proprio archivio: l'aggancio è da fare.
 - Il comando `scan` importa da cartella locale; la scansione di un canale Telegram arriverà quando
   ci sarà il client.
 - `Teledisk.Media` ha il contratto e il client TMDB, non ancora richiamati dai comandi.
