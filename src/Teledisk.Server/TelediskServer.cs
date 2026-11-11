@@ -71,6 +71,14 @@ public static class TelediskServer
             ContentRootPath = contentRoot ?? AppContext.BaseDirectory,
         });
 
+        // La porta e l'indirizzo delle opzioni devono arrivare a Kestrel: senza questo il server
+        // ascolterebbe sulle impostazioni predefinite di ASP.NET e ignorerebbe la configurazione.
+        // Se ASPNETCORE_URLS e' impostata (utile nei test) ha la precedenza.
+        var configuredUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+        builder.WebHost.UseUrls(string.IsNullOrWhiteSpace(configuredUrls)
+            ? $"http://{options.BindAddress}:{options.Port}"
+            : configuredUrls);
+
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         var app = builder.Build();
 
@@ -185,6 +193,7 @@ internal static class WebDav
 
             case "PROPFIND":
                 context.Response.StatusCode = 207;
+                context.Response.Headers["DAV"] = "1";
                 context.Response.ContentType = "application/xml; charset=utf-8";
                 await context.Response.WriteAsync(BuildPropFind(path, store, database)).ConfigureAwait(false);
                 return;
