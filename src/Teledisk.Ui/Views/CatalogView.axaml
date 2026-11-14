@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Teledisk.Ui.Views.CatalogView">
+
+  <Grid RowDefinitions="Auto,*">
+
+    <Border Grid.Row="0" Padding="18,14">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="Catalogo" Classes="h2" VerticalAlignment="Center" />
+          <Border Classes="pill">
+            <TextBlock Text="{Binding ItemsText}" Classes="caption" />
+          </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button Classes="command" Content="Filtri" />
+          <Button Classes="command" Content="Ordina" />
+          <Button Classes="command" Content="Azioni di massa" />
+          <Button Classes="accent" Content="Scarica" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="1" Margin="18,0,18,16" Classes="card" ClipToBounds="True">
+      <DataGrid ItemsSource="{Binding Rows}"
+                SelectedItem="{Binding SelectedRow}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                CanUserReorderColumns="True"
+                CanUserResizeColumns="True"
+                CanUserSortColumns="True"
+                SelectionMode="Extended"
+                HeadersVisibility="Column"
+                RowHeight="38"
+                GridLinesVisibility="Horizontal">
+        <DataGrid.Columns>
+          <DataGridTemplateColumn Header="Nome" Width="2.4*">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <Border Classes="badge" Background="{Binding KindColor, Converter={StaticResource HexBrush}}">
+                    <TextBlock Text="{Binding Extension}" Foreground="#101418" FontSize="10" FontWeight="Bold" />
+                  </Border>
+                  <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+
+          <DataGridTextColumn Header="Tipo" Width="0.7*" Binding="{Binding KindLabel}" />
+          <DataGridTextColumn Header="Canale" Width="1.3*" Binding="{Binding Channel}" />
+          <DataGridTextColumn Header="Dimensione" Width="0.9*" Binding="{Binding SizeText}" />
+          <DataGridTextColumn Header="Durata" Width="0.7*" Binding="{Binding DurationText}" />
+          <DataGridTextColumn Header="Anno" Width="0.5*" Binding="{Binding Year}" />
+          <DataGridTextColumn Header="Modificato" Width="0.9*" Binding="{Binding UpdatedText}" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+  </Grid>
+</UserControl>
