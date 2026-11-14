@@ -177,6 +177,29 @@ public sealed class MediaStoreTests
         }
     }
 
+    /// <summary>La lista dei canali rispetta l'ordine alfabetico e conserva i flag.</summary>
+    [Fact]
+    public void ListChannels_RestituisceTuttiICanaliInOrdineAlfabetico()
+    {
+        var (_, store, directory) = CreateStore();
+        try
+        {
+            store.UpsertChannel(Canale(2, "Zeta", sorgente: true));
+            store.UpsertChannel(Canale(1, "Alfa"));
+            store.UpsertChannel(Canale(3, "Medio", sorgente: true));
+
+            var channels = store.ListChannels();
+
+            Assert.Equal(3, channels.Count);
+            Assert.Equal(["Alfa", "Medio", "Zeta"], channels.Select(c => c.Title));
+            Assert.Equal(2, channels.Count(c => c.IsSource));
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
     private static (TelediskDatabase Database, SqliteMediaStore Store, string Directory) CreateStore()
     {
         var directory = NewTempDirectory();

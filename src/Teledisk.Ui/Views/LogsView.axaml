@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Teledisk.Ui.Views.LogsView">
+
+  <Grid RowDefinitions="Auto,*">
+
+    <Border Grid.Row="0" Padding="18,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="Log" Classes="h2" VerticalAlignment="Center" />
+        <Border Classes="pill">
+          <TextBlock Text="{Binding CountText}" Classes="caption" />
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="1" Margin="18,0,18,16" Classes="card" ClipToBounds="True" Padding="12">
+      <ListBox ItemsSource="{Binding Entries}" Background="Transparent" BorderThickness="0">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="70,Auto,*" Margin="0,2">
+              <TextBlock Text="{Binding TimeText}" Classes="caption" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Top" />
+              <TextBlock Grid.Column="1" Text="{Binding Level}" Classes="caption" Foreground="{DynamicResource AccentBrush}" Margin="8,0" VerticalAlignment="Top" />
+              <TextBlock Grid.Column="2" Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Top" />
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+  </Grid>
+</UserControl>

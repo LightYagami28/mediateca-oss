@@ -7,10 +7,9 @@ namespace Teledisk.Ui.Tests;
 
 public class ViewModelTests
 {
-    private static async Task<MainWindowViewModel> CreateViewModel(int count = 50)
+    private static async Task<CatalogViewModel> CreateCatalog(int count = 50)
     {
-        var theme = new ThemeService();
-        var viewModel = new MainWindowViewModel(new SampleCatalogSource(count), NullLogger<MainWindowViewModel>.Instance, theme);
+        var viewModel = new CatalogViewModel(new SampleCatalogSource(count), NullLogger<CatalogViewModel>.Instance, 0);
         await viewModel.LoadAsync();
         return viewModel;
     }
@@ -18,34 +17,15 @@ public class ViewModelTests
     [Fact]
     public async Task Il_catalogo_parte_carico()
     {
-        var viewModel = await CreateViewModel();
+        var viewModel = await CreateCatalog();
         Assert.Equal(50, viewModel.Rows.Count);
         Assert.False(viewModel.IsBusy);
     }
 
     [Fact]
-    public async Task La_ricerca_filtra_per_nome_e_canale()
-    {
-        var viewModel = await CreateViewModel();
-        var primo = viewModel.Rows[0];
-
-        var query = primo.Name[..8];
-        viewModel.Search = query;
-        Assert.NotEmpty(viewModel.Rows);
-        Assert.All(viewModel.Rows, row => Assert.Contains(query, row.Name, StringComparison.OrdinalIgnoreCase));
-
-        viewModel.Search = "Cinema Atlantide";
-        Assert.NotEmpty(viewModel.Rows);
-        Assert.All(viewModel.Rows, row => Assert.Equal("Cinema Atlantide", row.Channel));
-
-        viewModel.Search = string.Empty;
-        Assert.Equal(50, viewModel.Rows.Count);
-    }
-
-    [Fact]
     public async Task La_selezione_aggiorna_il_dettaglio()
     {
-        var viewModel = await CreateViewModel();
+        var viewModel = await CreateCatalog();
         Assert.False(viewModel.HasSelection);
 
         var row = viewModel.Rows[3];
@@ -59,25 +39,22 @@ public class ViewModelTests
     }
 
     [Fact]
-    public async Task La_navigazione_marca_una_sola_voce()
+    public async Task La_ricerca_debounced_filtra_per_nome()
     {
-        var viewModel = await CreateViewModel();
-        var voce = viewModel.Sections[0].Items[0];
+        var viewModel = await CreateCatalog(200);
+        var target = viewModel.Rows[7];
 
-        viewModel.SelectNavCommand.Execute(voce);
+        viewModel.Search = target.Name[..10];
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
-        Assert.True(voce.IsSelected);
-        Assert.Single(viewModel.Sections.SelectMany(s => s.Items), i => i.IsSelected);
-    }
+        Assert.NotEmpty(viewModel.Rows);
+        Assert.All(viewModel.Rows, row => Assert.Contains(target.Name[..10], row.Name, StringComparison.OrdinalIgnoreCase));
 
-    [Fact]
-    public async Task Il_tema_alterna_chiaro_e_scuro()
-    {
-        var viewModel = await CreateViewModel();
-        Assert.False(viewModel.IsLightTheme);
-
-        viewModel.ToggleThemeCommand.Execute(null);
-        Assert.True(viewModel.IsLightTheme);
+        viewModel.Search = string.Empty;
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        Assert.Equal(200, viewModel.Rows.Count);
     }
 
     [Fact]

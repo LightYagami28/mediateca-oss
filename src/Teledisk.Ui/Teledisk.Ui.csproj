@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0-windows</TargetFramework>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
@@ -18,13 +19,18 @@
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Teledisk.Core\Teledisk.Core.csproj" />
+    <ProjectReference Include="..\Teledisk.Data\Teledisk.Data.csproj" />
+    <ProjectReference Include="..\Teledisk.Licensing\Teledisk.Licensing.csproj" />
+    <ProjectReference Include="..\Teledisk.Server\Teledisk.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

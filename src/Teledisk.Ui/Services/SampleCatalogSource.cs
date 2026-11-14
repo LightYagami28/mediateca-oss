@@ -21,7 +21,23 @@ public sealed class SampleCatalogSource(int count = 5_000) : ICatalogSource
         "Rimorso", "Codice interno", "Il commissario", "Sesta stagione",
     ];
 
-    public Task<IReadOnlyList<CatalogRow>> LoadAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<CatalogRow>> LoadAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<CatalogRow>>(BuildRows(cancellationToken));
+
+    public Task<IReadOnlyList<CatalogRow>> SearchAsync(string query, int limit, CancellationToken cancellationToken = default)
+    {
+        var trimmed = query.Trim();
+        var rows = BuildRows(cancellationToken);
+        var filtered = trimmed.Length == 0
+            ? rows
+            : rows.Where(row =>
+                row.Name.Contains(trimmed, StringComparison.OrdinalIgnoreCase) ||
+                row.Channel.Contains(trimmed, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        return Task.FromResult<IReadOnlyList<CatalogRow>>(filtered.Take(Math.Max(limit, 1)).ToList());
+    }
+
+    private List<CatalogRow> BuildRows(CancellationToken cancellationToken)
     {
         var rows = new List<CatalogRow>(count);
         var random = new Random(20261114);
@@ -63,6 +79,6 @@ public sealed class SampleCatalogSource(int count = 5_000) : ICatalogSource
             });
         }
 
-        return Task.FromResult<IReadOnlyList<CatalogRow>>(rows);
+        return rows;
     }
 }

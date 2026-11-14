@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Builder;
@@ -159,8 +160,21 @@ public static class TelediskServer
         }
 
         var header = context.Request.Headers.Authorization.ToString();
-        return header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
-               && string.Equals(header[7..].Trim(), options.ApiToken, StringComparison.Ordinal);
+        if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var supplied = header[7..].Trim();
+        var expected = options.ApiToken;
+        if (supplied.Length != expected.Length)
+        {
+            return false;
+        }
+
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(supplied),
+            Encoding.UTF8.GetBytes(expected));
     }
 }
 

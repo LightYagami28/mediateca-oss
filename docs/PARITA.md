@@ -79,7 +79,7 @@ Le note dicono sempre dove sta il confine.
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
-| Interfaccia PyQt5: file manager, impostazioni, dialoghi, temi, tabelle, import smartphone, rubrica | 13 — `ui`, `filemanager_gui`, `settings_gui`, `dialog_utils`, `modern_theme`, `console_style`, `icon_helpers`, `notes_dialog`, `operation_dialog`, `table_utils`, `smartphone_import_gui`, `telegram_address_book_gui`, `__init__` | **in corso** | Nuova interfaccia in Avalonia 12 su .NET 11 (`src/Teledisk.Ui`): navigazione laterale, catalogo con tabella virtualizzata, ricerca istantanea, pannello di dettaglio, tema chiaro/scuro, accessibilita' da tastiera. Progetti futuri: port nativi in Swift per macOS e Linux. |
+| Interfaccia PyQt5: file manager, impostazioni, dialoghi, temi, tabelle, import smartphone, rubrica | 13 — `ui`, `filemanager_gui`, `settings_gui`, `dialog_utils`, `modern_theme`, `console_style`, `icon_helpers`, `notes_dialog`, `operation_dialog`, `table_utils`, `smartphone_import_gui`, `telegram_address_book_gui`, `__init__` | **in corso** | Interfaccia in Avalonia 12 su .NET 11 (`src/Teledisk.Ui`): navigazione laterale multi-vista (catalogo, canali, impostazioni, log), catalogo con tabella virtualizzata e ricerca debounced su SQL, pannello di dettaglio, tema chiaro/scuro, scorciatoie da tastiera; server HTTP integrato come `IHostedService`; impostazioni persistenti con scrittura atomica e token cifrato con DPAPI. Progetti futuri: port nativi in Swift per macOS e Linux. |
 
 ### main (1 modulo)
 

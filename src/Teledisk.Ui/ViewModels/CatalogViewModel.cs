@@ -1,0 +1,125 @@
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Teledisk.Ui.Models;
+using Teledisk.Ui.Services;
+
+namespace Teledisk.Ui.ViewModels;
+
+public partial class CatalogViewModel : ObservableObject
+{
+    private readonly ICatalogSource _source;
+    private readonly int _searchDebounceMs;
+    private CancellationTokenSource? _searchCts;
+    private IReadOnlyList<CatalogRow> _all = [];
+
+    public CatalogViewModel(ICatalogSource source, ILogger<CatalogViewModel> logger, int searchDebounceMs = 150)
+    {
+        _source = source;
+        Logger = logger;
+        _searchDebounceMs = searchDebounceMs;
+    }
+
+    private ILogger<CatalogViewModel> Logger { get; }
+
+    public ObservableCollection<CatalogRow> Rows { get; private set; } = [];
+
+    [ObservableProperty]
+    private string _search = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DetailTitle), nameof(DetailSubtitle), nameof(DetailSize), nameof(DetailKind), nameof(DetailChannel), nameof(DetailYear), nameof(DetailDuration), nameof(HasSelection))]
+    private CatalogRow? _selectedRow;
+
+    [ObservableProperty]
+    private bool _isBusy;
+
+    [ObservableProperty]
+    private bool _isSearching;
+
+    public bool HasSelection => SelectedRow is not null;
+
+    public string DetailTitle => SelectedRow?.Name ?? "Nessuna selezione";
+
+    public string DetailSubtitle => SelectedRow?.Channel ?? "Seleziona un elemento del catalogo";
+
+    public string DetailSize => SelectedRow?.SizeText ?? "—";
+
+    public string DetailKind => SelectedRow?.KindLabel ?? "—";
+
+    public string DetailChannel => SelectedRow?.Channel ?? "—";
+
+    public string DetailYear => SelectedRow?.Year?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—";
+
+    public string DetailDuration => SelectedRow?.DurationText is { Length: > 0 } duration ? duration : "—";
+
+    public string ItemsText => $"{Rows.Count:N0} elementi";
+
+    public string TotalItemsText => $"{_all.Count:N0} in catalogo";
+
+    public string TotalSizeText => Format.Size(_all.Sum(row => row.Size));
+
+    public string ChannelsText => $"{_all.Select(row => row.Channel).Distinct().Count()} canali";
+
+    partial void OnSearchChanged(string value) => ScheduleSearch();
+
+    public async Task LoadAsync(CancellationToken cancellationToken = default)
+    {
+        IsBusy = true;
+        try
+        {
+            _all = await _source.LoadAsync(cancellationToken).ConfigureAwait(true);
+            Logger.LogDebug("Catalogo caricato con {Count} elementi", _all.Count);
+            SetRows(_all);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void ScheduleSearch()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _searchCts = cts;
+        _ = DebounceAndSearchAsync(cts.Token);
+    }
+
+    private async Task DebounceAndSearchAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(_searchDebounceMs, token).ConfigureAwait(false);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        IsSearching = true;
+        try
+        {
+            var results = await _source.SearchAsync(Search.Trim(), 2_000, token).ConfigureAwait(true);
+            SetRows(results);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            IsSearching = false;
+        }
+    }
+
+    private void SetRows(IEnumerable<CatalogRow> rows)
+    {
+        Rows = new ObservableCollection<CatalogRow>(rows);
+        OnPropertyChanged(nameof(Rows));
+        OnPropertyChanged(nameof(ItemsText));
+        OnPropertyChanged(nameof(TotalItemsText));
+        OnPropertyChanged(nameof(TotalSizeText));
+        OnPropertyChanged(nameof(ChannelsText));
+    }
+}

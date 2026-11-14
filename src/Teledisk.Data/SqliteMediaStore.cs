@@ -132,6 +132,27 @@ public sealed class SqliteMediaStore
         return reader.Read() ? (reader.GetInt32(0), reader.GetInt64(1), reader.GetInt32(2)) : (0, 0, 0);
     }
 
+    /// <summary>Tutti i canali noti, ordinati per titolo.</summary>
+    public IReadOnlyList<Channel> ListChannels()
+    {
+        using var connection = _database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT id, access_hash, title, username, kind, is_source, last_scan_at, item_count, last_message_id
+            FROM channels
+            ORDER BY title COLLATE NOCASE;
+            """;
+
+        var results = new List<Channel>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            results.Add(ReadChannel(reader));
+        }
+
+        return results;
+    }
+
     private static MediaItem Read(SqliteDataReader reader) => new()
     {
         Id = reader.GetInt64(0),
@@ -151,5 +172,18 @@ public sealed class SqliteMediaStore
         ExternalId = reader.IsDBNull(14) ? null : reader.GetString(14),
         CoverPath = reader.IsDBNull(15) ? null : reader.GetString(15),
         UpdatedAt = DateTimeOffset.TryParse(reader.GetString(16), out var stamp) ? stamp : DateTimeOffset.UtcNow,
+    };
+
+    private static Channel ReadChannel(SqliteDataReader reader) => new()
+    {
+        Id = reader.GetInt64(0),
+        AccessHash = reader.IsDBNull(1) ? null : reader.GetInt64(1),
+        Title = reader.GetString(2),
+        Username = reader.IsDBNull(3) ? null : reader.GetString(3),
+        Kind = Enum.TryParse<ChannelKind>(reader.GetString(4), ignoreCase: true, out var kind) ? kind : ChannelKind.Channel,
+        IsSource = reader.GetInt32(5) != 0,
+        LastScanAt = reader.IsDBNull(6) ? null : DateTimeOffset.TryParse(reader.GetString(6), out var scan) ? scan : null,
+        ItemCount = reader.GetInt32(7),
+        LastMessageId = reader.GetInt32(8),
     };
 }

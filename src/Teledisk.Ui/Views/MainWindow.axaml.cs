@@ -30,7 +30,7 @@ public partial class MainWindow : Window
 
         Opened += async (_, _) =>
         {
-            if (DataContext is MainWindowViewModel model && model.Rows.Count == 0)
+            if (DataContext is MainWindowViewModel model)
             {
                 await model.LoadAsync();
             }
@@ -48,9 +48,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.Escape && DataContext is MainWindowViewModel viewModel && viewModel.Search.Length > 0)
+        if (e.Key == Key.Escape && DataContext is MainWindowViewModel viewModel && viewModel.Catalog.Search.Length > 0)
         {
-            viewModel.Search = string.Empty;
+            viewModel.Catalog.Search = string.Empty;
             e.Handled = true;
         }
     }

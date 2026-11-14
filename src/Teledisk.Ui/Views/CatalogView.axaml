@@ -11,6 +11,15 @@
           <Border Classes="pill">
             <TextBlock Text="{Binding ItemsText}" Classes="caption" />
           </Border>
+          <Border Classes="pill">
+            <TextBlock Text="{Binding TotalItemsText}" Classes="caption" />
+          </Border>
+          <Border Classes="pill">
+            <TextBlock Text="{Binding TotalSizeText}" Classes="caption" />
+          </Border>
+          <Border Classes="pill">
+            <TextBlock Text="{Binding ChannelsText}" Classes="caption" />
+          </Border>
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">

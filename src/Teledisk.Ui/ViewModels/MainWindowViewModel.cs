@@ -1,8 +1,7 @@
-using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
 using Teledisk.Ui.Models;
 using Teledisk.Ui.Services;
 
@@ -10,18 +9,18 @@ namespace Teledisk.Ui.ViewModels;
 
 public partial class NavItem : ObservableObject
 {
-    public NavItem(string label, string section, string badge = "")
+    public NavItem(string label, string section, string view)
     {
         Label = label;
         Section = section;
-        Badge = badge;
+        View = view;
     }
 
     public string Label { get; }
 
     public string Section { get; }
 
-    public string Badge { get; internal set; }
+    public string View { get; }
 
     [ObservableProperty]
     private bool _isSelected;
@@ -34,67 +33,51 @@ public sealed record NavSection(string Title, IReadOnlyList<NavItem> Items);
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly ICatalogSource _source;
-    private IReadOnlyList<CatalogRow> _all = [];
+    private readonly ThemeService _theme;
 
-    public MainWindowViewModel(ICatalogSource source, ILogger<MainWindowViewModel> logger, ThemeService theme)
+    public MainWindowViewModel(
+        CatalogViewModel catalog,
+        ChannelsViewModel channels,
+        SettingsViewModel settings,
+        LogsViewModel logs,
+        ThemeService theme,
+        ServerService server)
     {
-        _source = source;
-        Logger = logger;
-        Theme = theme;
+        Catalog = catalog;
+        Channels = channels;
+        Settings = settings;
+        Logs = logs;
+        _theme = theme;
+        Server = server;
+        CurrentView = catalog;
+
         Sections = BuildSections();
         foreach (var item in Sections.SelectMany(section => section.Items))
         {
             item.SelectCommand = SelectNavCommand;
         }
+
+        server.StatusChanged += (_, _) => OnPropertyChanged(nameof(ServerStatusText));
     }
 
-    public ObservableCollection<CatalogRow> Rows { get; } = [];
+    public CatalogViewModel Catalog { get; }
+
+    public ChannelsViewModel Channels { get; }
+
+    public SettingsViewModel Settings { get; }
+
+    public LogsViewModel Logs { get; }
+
+    private ServerService Server { get; }
 
     public IReadOnlyList<NavSection> Sections { get; }
 
-    private ILogger<MainWindowViewModel> Logger { get; }
-
-    private ThemeService Theme { get; }
-
-    [ObservableProperty]
-    private string _search = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DetailTitle), nameof(DetailSubtitle), nameof(DetailSize), nameof(DetailKind), nameof(DetailChannel), nameof(DetailYear), nameof(DetailDuration), nameof(HasSelection))]
-    private CatalogRow? _selectedRow;
-
-    [ObservableProperty]
-    private bool _isBusy;
+    public ObservableObject CurrentView { get; private set; }
 
     [ObservableProperty]
     private bool _isLightTheme;
 
-    public bool HasSelection => SelectedRow is not null;
-
-    public string DetailTitle => SelectedRow?.Name ?? "Nessuna selezione";
-
-    public string DetailSubtitle => SelectedRow?.Channel ?? "Seleziona un elemento del catalogo";
-
-    public string DetailSize => SelectedRow?.SizeText ?? "—";
-
-    public string DetailKind => SelectedRow?.KindLabel ?? "—";
-
-    public string DetailChannel => SelectedRow?.Channel ?? "—";
-
-    public string DetailYear => SelectedRow?.Year?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—";
-
-    public string DetailDuration => SelectedRow?.DurationText is { Length: > 0 } duration ? duration : "—";
-
-    public string ItemsText => $"{Rows.Count:N0} elementi";
-
-    public string TotalItemsText => $"{_all.Count:N0} in catalogo";
-
-    public string TotalSizeText => Format.Size(_all.Sum(row => row.Size));
-
-    public string ChannelsText => $"{_all.Select(row => row.Channel).Distinct().Count()} canali";
-
-    public string QueueText => "0 in coda";
+    public string ServerStatusText => Server.IsRunning ? $"Server attivo · {Server.Url}" : "Server non attivo";
 
     public string FreeSpaceText
     {
@@ -114,16 +97,11 @@ public partial class MainWindowViewModel : ObservableObject
 
     public string VersionText => "Teledisk Community 1.0 · .NET 11";
 
-    partial void OnSearchChanged(string value) => ApplyFilter();
-
-    [RelayCommand]
-    private async Task RefreshAsync() => await LoadAsync();
-
     [RelayCommand]
     private void ToggleTheme()
     {
-        Theme.Toggle();
-        IsLightTheme = Theme.Current == Avalonia.Styling.ThemeVariant.Light;
+        _theme.Toggle();
+        IsLightTheme = _theme.Current == ThemeVariant.Light;
     }
 
     [RelayCommand]
@@ -138,77 +116,62 @@ public partial class MainWindowViewModel : ObservableObject
         {
             candidate.IsSelected = ReferenceEquals(candidate, item);
         }
+
+        CurrentView = item.View switch
+        {
+            "channels" => Channels,
+            "settings" => Settings,
+            "logs" => Logs,
+            _ => Catalog,
+        };
+        OnPropertyChanged(nameof(CurrentView));
+
+        if (item.View == "channels" && Channels.Rows.Count == 0)
+        {
+            _ = Channels.LoadAsync();
+        }
     }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
-        IsBusy = true;
-        try
+        if (Catalog.Rows.Count == 0)
         {
-            _all = await _source.LoadAsync(cancellationToken).ConfigureAwait(true);
-            Logger.LogDebug("Catalogo caricato con {Count} elementi", _all.Count);
-            ApplyFilter();
+            await Catalog.LoadAsync(cancellationToken).ConfigureAwait(true);
         }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    public void ApplyFilter()
-    {
-        var query = Search?.Trim() ?? string.Empty;
-
-        var filtered = query.Length == 0
-            ? _all
-            : _all.Where(row =>
-                row.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                row.Channel.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
-
-        Rows.Clear();
-        foreach (var row in filtered)
-        {
-            Rows.Add(row);
-        }
-
-        OnPropertyChanged(nameof(ItemsText));
-        OnPropertyChanged(nameof(TotalItemsText));
-        OnPropertyChanged(nameof(TotalSizeText));
-        OnPropertyChanged(nameof(ChannelsText));
     }
 
     private static IReadOnlyList<NavSection> BuildSections() =>
     [
         new NavSection("Libreria",
         [
-            new NavItem("Catalogo", "Libreria"),
-            new NavItem("Canali", "Libreria"),
-            new NavItem("Generi", "Libreria"),
-            new NavItem("Etichette", "Libreria"),
+            new NavItem("Catalogo", "Libreria", "catalog"),
+            new NavItem("Canali", "Libreria", "channels"),
+            new NavItem("Generi", "Libreria", "catalog"),
+            new NavItem("Etichette", "Libreria", "catalog"),
         ]),
         new NavSection("Trasferimenti",
         [
-            new NavItem("Code", "Trasferimenti"),
-            new NavItem("Scaricati", "Trasferimenti"),
-            new NavItem("Backup", "Trasferimenti"),
+            new NavItem("Code", "Trasferimenti", "catalog"),
+            new NavItem("Scaricati", "Trasferimenti", "catalog"),
+            new NavItem("Backup", "Trasferimenti", "catalog"),
         ]),
         new NavSection("Accesso",
         [
-            new NavItem("Server HTTP", "Accesso"),
-            new NavItem("WebDAV", "Accesso"),
-            new NavItem("FUSE", "Accesso"),
-            new NavItem("Condivisione", "Accesso"),
+            new NavItem("Server HTTP", "Accesso", "settings"),
+            new NavItem("WebDAV", "Accesso", "settings"),
+            new NavItem("FUSE", "Accesso", "catalog"),
+            new NavItem("Condivisione", "Accesso", "catalog"),
         ]),
         new NavSection("Bot Telegram",
         [
-            new NavItem("Comandi", "Bot"),
-            new NavItem("Utenti", "Bot"),
-            new NavItem("Pagamenti", "Bot"),
+            new NavItem("Comandi", "Bot", "catalog"),
+            new NavItem("Utenti", "Bot", "catalog"),
+            new NavItem("Pagamenti", "Bot", "catalog"),
         ]),
         new NavSection("Sistema",
         [
-            new NavItem("Impostazioni", "Sistema"),
-            new NavItem("Log", "Sistema"),
+            new NavItem("Impostazioni", "Sistema", "settings"),
+            new NavItem("Log", "Sistema", "logs"),
         ]),
     ];
 }
