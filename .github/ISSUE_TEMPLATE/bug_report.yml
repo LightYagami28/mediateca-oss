@@ -1,0 +1,58 @@
+name: Segnalazione di un problema
+description: Descrivi un comportamento errato o un errore del programma
+labels: [bug]
+body:
+  - type: input
+    id: versione
+    attributes:
+      label: Versione
+      description: Versione di Teledisk Community o hash del commit
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sistema
+    attributes:
+      label: Sistema operativo
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - macOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: osservato
+    attributes:
+      label: Comportamento osservato
+      description: Cosa succede di sbagliato
+    validations:
+      required: true
+
+  - type: textarea
+    id: atteso
+    attributes:
+      label: Comportamento atteso
+      description: Cosa dovrebbe succedere
+    validations:
+      required: true
+
+  - type: textarea
+    id: passi
+    attributes:
+      label: Passi per riprodurre
+      placeholder: |
+        1. Avvia ...
+        2. Apri ...
+        3. Nota ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log e output
+      description: Output del comando, della vista Log o dello screenshot
+      render: shell

@@ -1,0 +1,10 @@
+blank_issues_enabled: true
+
+contact_links:
+  - name: Domande e discussioni
+    url: https://github.com/LightYagami28/teledisk-oss/discussions
+    about: Usa le discussioni per domande, proposte e confronti
+
+  - name: Segnalazioni di sicurezza
+    url: https://github.com/LightYagami28/teledisk-oss/security/advisories/new
+    about: Segnala qui le vulnerabilità in modo riservato
