@@ -17,7 +17,8 @@ namespace Teledisk.Ui.Tests;
 
 public class RenderTests
 {
-    private const string ArtifactDirectory = @"E:\repo\teledisk-oss\artifacts\ui";
+    private static readonly string ArtifactDirectory =
+        Path.Combine(Path.GetTempPath(), "teledisk-ui-artifacts");
 
     [AvaloniaFact]
     public async Task Finestra_principale_Disegna_il_catalogo()
