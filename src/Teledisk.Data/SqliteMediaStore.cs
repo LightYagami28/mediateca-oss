@@ -60,6 +60,36 @@ public sealed class SqliteMediaStore
         return Convert.ToInt64(command.ExecuteScalar());
     }
 
+    /// <summary>L'elemento con l'identificativo indicato, oppure <c>null</c>.</summary>
+    public MediaItem? Find(long id)
+    {
+        using var connection = _database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT id, channel_id, message_id, parent_id, name, kind, size, duration_s, width, height,
+                   title, year, season, episode, external_id, cover_path, updated_at
+            FROM media_items
+            WHERE id = $id
+            LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$id", id);
+
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? Read(reader) : null;
+    }
+
+    /// <summary>True quando la coppia canale/messaggio esiste già.</summary>
+    public bool Exists(long channelId, int messageId)
+    {
+        using var connection = _database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1 FROM media_items WHERE channel_id = $channel AND message_id = $message LIMIT 1;";
+        command.Parameters.AddWithValue("$channel", channelId);
+        command.Parameters.AddWithValue("$message", messageId);
+        using var reader = command.ExecuteReader();
+        return reader.Read();
+    }
+
     /// <summary>Inserisce o aggiorna un canale.</summary>
     public void UpsertChannel(Channel channel)
     {

@@ -5,12 +5,21 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Teledisk.Core.Security;
 using Teledisk.Data;
+using Teledisk.Server;
 using Teledisk.Ui.Services;
 
 namespace Teledisk.Ui.Tests;
 
 public class ServerServiceTests
 {
+    private static ServerService CreateService(UiOptions options, TelediskDatabase database, string mediaRoot)
+    {
+        return new ServerService(
+            Options.Create(options),
+            database,
+            new LogBuffer(),
+            new LocalMediaFileSource(mediaRoot));
+    }
     [Fact]
     public async Task ServerService_espone_la_health_e_chiude_pulito()
     {
@@ -20,10 +29,7 @@ public class ServerServiceTests
             var database = new TelediskDatabase(Path.Combine(directory, "teledisk.db"));
             database.Migrate();
             var port = FreePort();
-            var service = new ServerService(
-                Options.Create(new UiOptions { ServerBindAddress = "127.0.0.1", ServerPort = port }),
-                database,
-                new LogBuffer());
+            var service = CreateService(new UiOptions { ServerBindAddress = "127.0.0.1", ServerPort = port }, database, directory);
 
             Assert.False(service.IsRunning);
             await service.StartAsync(TestContext.Current.CancellationToken);
@@ -54,10 +60,7 @@ public class ServerServiceTests
             var database = new TelediskDatabase(Path.Combine(directory, "teledisk.db"));
             database.Migrate();
             var port = FreePort();
-            var service = new ServerService(
-                Options.Create(new UiOptions { ServerBindAddress = "0.0.0.0", ServerPort = port }),
-                database,
-                new LogBuffer());
+            var service = CreateService(new UiOptions { ServerBindAddress = "0.0.0.0", ServerPort = port }, database, directory);
 
             await service.StartAsync(TestContext.Current.CancellationToken);
 
@@ -79,10 +82,7 @@ public class ServerServiceTests
             var database = new TelediskDatabase(Path.Combine(directory, "teledisk.db"));
             database.Migrate();
             var port = FreePort();
-            var service = new ServerService(
-                Options.Create(new UiOptions { ServerBindAddress = "127.0.0.1", ServerPort = port }),
-                database,
-                new LogBuffer());
+            var service = CreateService(new UiOptions { ServerBindAddress = "127.0.0.1", ServerPort = port }, database, directory);
             await service.StartAsync(TestContext.Current.CancellationToken);
 
             using var client = new HttpClient();
@@ -113,16 +113,13 @@ public class ServerServiceTests
             var database = new TelediskDatabase(Path.Combine(directory, "teledisk.db"));
             database.Migrate();
             var port = FreePort();
-            var service = new ServerService(
-                Options.Create(new UiOptions
-                {
-                    ServerBindAddress = "127.0.0.1",
-                    ServerPort = port,
-                    WebDavEnabled = true,
-                    WebDavPasswordHash = PasswordHasher.Hash("corretta"),
-                }),
-                database,
-                new LogBuffer());
+            var service = CreateService(new UiOptions
+            {
+                ServerBindAddress = "127.0.0.1",
+                ServerPort = port,
+                WebDavEnabled = true,
+                WebDavPasswordHash = PasswordHasher.Hash("corretta"),
+            }, database, directory);
             await service.StartAsync(TestContext.Current.CancellationToken);
 
             using var client = new HttpClient();

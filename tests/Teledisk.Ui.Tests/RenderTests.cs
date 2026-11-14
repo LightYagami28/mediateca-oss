@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Teledisk.Data;
+using Teledisk.Server;
 using Teledisk.Ui.Services;
 using Teledisk.Ui.ViewModels;
 using Teledisk.Ui.Views;
@@ -85,7 +86,11 @@ public class RenderTests
             theme);
         var buffer = new LogBuffer();
         var logs = new LogsViewModel(buffer);
-        var server = new ServerService(Options.Create(new UiOptions()), database, buffer);
+        var server = new ServerService(
+            Options.Create(new UiOptions()),
+            database,
+            buffer,
+            new LocalMediaFileSource(Path.Combine(NewTempDirectory(), "media")));
         var viewModel = new MainWindowViewModel(catalog, channels, settings, logs, theme, server);
         var options = Options.Create(new UiOptions { SampleCatalogRows = rows });
         return new MainWindow(viewModel, theme, options);

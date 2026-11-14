@@ -41,6 +41,11 @@ public sealed class SettingsService
                 WebDavPasswordHash = document.WebDavPasswordHash ?? fallback.WebDavPasswordHash,
                 WebDavEnabled = document.WebDavEnabled ?? fallback.WebDavEnabled,
                 SearchDebounceMs = document.SearchDebounceMs ?? fallback.SearchDebounceMs,
+                BotToken = ProtectedSecrets.Decrypt(document.BotTokenProtected ?? string.Empty),
+                MtprotoApiId = document.MtprotoApiId ?? fallback.MtprotoApiId,
+                MtprotoApiHash = ProtectedSecrets.Decrypt(document.MtprotoApiHashProtected ?? string.Empty),
+                MtprotoSessionPath = document.MtprotoSessionPath ?? fallback.MtprotoSessionPath,
+                MtprotoCacheDirectory = document.MtprotoCacheDirectory ?? fallback.MtprotoCacheDirectory,
             };
         }
         catch (IOException)
@@ -73,6 +78,11 @@ public sealed class SettingsService
             WebDavPasswordHash = options.WebDavPasswordHash,
             WebDavEnabled = options.WebDavEnabled,
             SearchDebounceMs = options.SearchDebounceMs,
+            BotTokenProtected = ProtectedSecrets.Encrypt(options.BotToken),
+            MtprotoApiId = options.MtprotoApiId,
+            MtprotoApiHashProtected = ProtectedSecrets.Encrypt(options.MtprotoApiHash),
+            MtprotoSessionPath = options.MtprotoSessionPath,
+            MtprotoCacheDirectory = options.MtprotoCacheDirectory,
         };
 
         var json = JsonSerializer.Serialize(document, JsonOptions);
@@ -108,5 +118,15 @@ public sealed class SettingsService
         public bool? WebDavEnabled { get; init; }
 
         public int? SearchDebounceMs { get; init; }
+
+        public string? BotTokenProtected { get; init; }
+
+        public int? MtprotoApiId { get; init; }
+
+        public string? MtprotoApiHashProtected { get; init; }
+
+        public string? MtprotoSessionPath { get; init; }
+
+        public string? MtprotoCacheDirectory { get; init; }
     }
 }

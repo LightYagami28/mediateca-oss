@@ -52,6 +52,30 @@
         </StackPanel>
       </Border>
 
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Bot Telegram" Classes="section" />
+          <StackPanel Spacing="6">
+            <TextBlock Text="Token del bot (da @BotFather)" Classes="caption" />
+            <TextBox Text="{Binding BotToken}" PasswordChar="•" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Telegram MTProto (download e streaming dai canali)" Classes="section" />
+          <StackPanel Spacing="6">
+            <TextBlock Text="ApiId (da my.telegram.org)" Classes="caption" />
+            <TextBox Text="{Binding MtprotoApiId}" Width="200" HorizontalAlignment="Left" />
+          </StackPanel>
+          <StackPanel Spacing="6">
+            <TextBlock Text="ApiHash" Classes="caption" />
+            <TextBox Text="{Binding MtprotoApiHash}" PasswordChar="•" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <StackPanel Orientation="Horizontal" Spacing="10">
         <Button Classes="accent" Content="Salva" Command="{Binding SaveCommand}" />
         <TextBlock Text="{Binding StatusText}" Classes="caption" VerticalAlignment="Center" />

@@ -15,9 +15,10 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
     private readonly TelediskDatabase _database;
     private readonly LicenseAuthority _license;
     private readonly LogBuffer _logs;
+    private readonly IMediaFileSource _fileSource;
     private WebApplication? _app;
 
-    public ServerService(IOptions<UiOptions> options, TelediskDatabase database, LogBuffer logs)
+    public ServerService(IOptions<UiOptions> options, TelediskDatabase database, LogBuffer logs, IMediaFileSource fileSource)
     {
         var ui = options.Value;
         var bindAddress = ui.ServerBindAddress;
@@ -48,6 +49,7 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
         _database = database;
         _license = LicenseAuthority.CreateDefault();
         _logs = logs;
+        _fileSource = fileSource;
     }
 
     public event EventHandler? StatusChanged;
@@ -58,7 +60,7 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _app = TelediskServer.Build(_options, _database, _license);
+        _app = TelediskServer.Build(_options, _database, _license, fileSource: _fileSource);
         await _app.StartAsync(cancellationToken).ConfigureAwait(false);
         Url = _app.Urls.FirstOrDefault() ?? $"http://{_options.BindAddress}:{_options.Port}";
         _logs.CreateLogger("server").LogInformation("Server HTTP attivo su {Url}", Url);

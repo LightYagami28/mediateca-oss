@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="WTelegramClient" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Teledisk.Core\Teledisk.Core.csproj" />
+    <ProjectReference Include="..\Teledisk.Data\Teledisk.Data.csproj" />
+    <ProjectReference Include="..\Teledisk.Server\Teledisk.Server.csproj" />
+  </ItemGroup>
+
+</Project>

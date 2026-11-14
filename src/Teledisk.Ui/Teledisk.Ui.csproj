@@ -26,11 +26,13 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup>
+    <ItemGroup>
     <ProjectReference Include="..\Teledisk.Core\Teledisk.Core.csproj" />
     <ProjectReference Include="..\Teledisk.Data\Teledisk.Data.csproj" />
     <ProjectReference Include="..\Teledisk.Licensing\Teledisk.Licensing.csproj" />
+    <ProjectReference Include="..\Teledisk.Mtproto\Teledisk.Mtproto.csproj" />
     <ProjectReference Include="..\Teledisk.Server\Teledisk.Server.csproj" />
+    <ProjectReference Include="..\Teledisk.Telegram\Teledisk.Telegram.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -61,7 +61,8 @@ public static class TelediskServer
         ServerOptions options,
         TelediskDatabase database,
         LicenseAuthority license,
-        string? contentRoot = null)
+        string? contentRoot = null,
+        IMediaFileSource? fileSource = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(database);
@@ -148,8 +149,13 @@ public static class TelediskServer
         if (options.WebDavEnabled)
         {
             app.MapMethods(DavPrefix + "/{**path}", ["OPTIONS", "PROPFIND", "HEAD", "GET"], (HttpContext context, string? path) =>
-                WebDav.Handle(context, path ?? "", store, database, options));
+                WebDav.Handle(context, path ?? "", store, database, options, fileSource));
         }
+
+        app.MapMethods("/api/items/{id:long}/stream", ["GET", "HEAD"], async (HttpContext context, long id) =>
+            await MediaApi.Stream(context, id, store, fileSource, options).ConfigureAwait(false));
+
+        app.MapGet("/miniapp", () => Results.Content(Miniapp.Html, "text/html; charset=utf-8"));
 
         return app;
     }
@@ -167,7 +173,7 @@ public static class TelediskServer
         await app.WaitForShutdownAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static bool Authorize(HttpContext context, ServerOptions options)
+    internal static bool Authorize(HttpContext context, ServerOptions options)
     {
         if (string.IsNullOrEmpty(options.ApiToken))
         {
@@ -211,7 +217,8 @@ internal static class WebDav
         string path,
         SqliteMediaStore store,
         TelediskDatabase database,
-        ServerOptions options)
+        ServerOptions options,
+        IMediaFileSource? source)
     {
         if (IsThrottled(context))
         {
@@ -246,6 +253,19 @@ internal static class WebDav
 
             case "HEAD":
             case "GET":
+                if (source is not null)
+                {
+                    var matches = store.Search(path.Trim('/'), null, 1);
+                    if (matches.Count > 0)
+                    {
+                        await MediaApi.StreamItem(context, matches[0], source).ConfigureAwait(false);
+                        return;
+                    }
+
+                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    return;
+                }
+
                 var (status, _, _) = Describe(path, store, database);
                 context.Response.StatusCode = status;
                 context.Response.ContentType = "application/octet-stream";

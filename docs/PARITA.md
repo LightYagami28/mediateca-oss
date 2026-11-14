@@ -36,20 +36,20 @@ Le note dicono sempre dove sta il confine.
 | Impostazioni, profili, utilità | 6 — `config`, `settings_backend`, `profile_utils`, `utils`, `gui_actions`, `gui_backend` | **parziale** | Impostazioni JSON tipizzate con scrittura atomica e comando `settings`. Mancano profili multipli e i livelli richiesti dalla GUI. |
 | Licenza | 1 — `license_check` | **parziale** | Modello volutamente diverso: licenza offline opzionale, nessuna funzione bloccata, nessun server del vendor. Il progetto `Teledisk.LicenseServer` ricostruisce l'endpoint dell'originale per attivare il client 1.7. |
 | Crittografia | 1 — `crypto_utils` | **parziale** | PBKDF2-HMAC-SHA256 e AES-256-GCM al posto di Fernet. Manca il caso d'uso sulle sessioni Telethon, che non ci sono ancora. |
-| Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **mancante** | Nessun client MTProto: niente login, sessioni, normalizzazione degli identificativi. |
+| Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **parziale** | Client MTProto con WTelegramClient in `Teledisk.Mtproto`: login con sessione persistita, import dei canali con access hash, download in cache. End-to-end NON VERIFICATO (servono credenziali Telegram reali). |
 | Canali e download Telegram | 9 — `telegram_channel`, `telegram_download`, `telegram_multibot_download`, `download_queue`, `file_handler`, `multipart_files`, `thumbnail_downloader`, `media_caption`, `telegram_caption_sync` | **mancante** | Il catalogo ha già le colonne per canali, messaggi e code di trasferimento, ma nessuno le riempie da Telegram. |
 | File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Backup zip locale con ritenzione, destinazione `LocalBackupTarget` in `Teledisk.Backup` non ancora richiamata dal comando. Mancano backup per singolo canale, selezione dei file e Google Drive. |
 | Dati dei bot e rubrica | 5 — `bot_access_db`, `bot_channel_access`, `bot_runtime_manager`, `bot_token_registry`, `telegram_address_book_db` | **mancante** | Nessun registro di token, permessi o accessi. |
-| Import da smartphone | 1 — `smartphone_import` | **mancante** | Solo import da cartella locale. |
+| Import da smartphone | 1 — `smartphone_import` | **parziale** | Import da cartella locale con upsert idempotente e streaming; l'import del database mobile (`teledisk_media*.db`) resta da specificare. |
 
 ### plugin/server (49 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
 | Server HTTP, API e catalogo | 15 — `server`, `server_tab`, `server_ui_helpers`, `port_guard`, `catalog_api`, `media_api`, `media_db`, `media_scanner`, `media_cover_sync`, `media_index_backup`, `media_name_parser`, `caption_backfill`, `config`, `exceptions`, `__init__` | **parziale** | Server HTTP con `/health`, `/api/stats`, `/api/items`, bind configurabile e token Bearer. Mancano la scansione lato server, le copertine e l'analisi dei nomi. |
-| Streaming | 10 — `raw_getfile_streamer`, `telethon_streamer`, `stream_admission`, `stream_bot_pool`, `stream_events`, `stream_identity`, `stream_routes`, `generate_strm`, `strm_generator_thread`, `skip_intro_radar` | **mancante** | Il `GET` del server non restituisce ancora i byte: espone metadati. Niente pool di bot, `.strm`, radar degli intro. |
+| Streaming | 10 — `raw_getfile_streamer`, `telethon_streamer`, `stream_admission`, `stream_bot_pool`, `stream_events`, `stream_identity`, `stream_routes`, `generate_strm`, `strm_generator_thread`, `skip_intro_radar` | **parziale** | Il `GET` serve i byte con supporto Range (206/416) da sorgenti locali e da Telegram via cache; niente pool di bot, `.strm` e radar degli intro. |
 | WebDAV, VFS e FUSE | 6 — `webdav_support`, `webdav_tab`, `fuse_support`, `fuse_tab`, `teledisk_vfs_core`, `windows_longpaths` | **parziale** | WebDAV in sola lettura (`OPTIONS`, `PROPFIND`, `HEAD`) compatibile con i client di libreria. Mancano il corpo di `GET`, il montaggio FUSE/WinFsp e i percorsi lunghi. |
-| Scraper | 7 — `scrapers/__init__` e `base_scraper`, `local_image_scraper`, `musicbrainz_scraper`, `nfo_scraper`, `tidal_music_scraper`, `tmdb_scraper` | **parziale** | Contratto dei provider, registro e client TMDB presenti in `Teledisk.Media`, non ancora richiamati dai comandi. Mancano Tidal, MusicBrainz, NFO e immagini locali. |
+| Scraper | 7 — `scrapers/__init__` e `base_scraper`, `local_image_scraper`, `musicbrainz_scraper`, `nfo_scraper`, `tidal_music_scraper`, `tmdb_scraper` | **parziale** | TMDB, MusicBrainz, parser NFO e copertine locali presenti; mancano Tidal e le immagini remote. |
 | Libreria TV, bot di libreria, blacklist | 7 — `library_bot_core`, `library_bot_tab`, `library_bot_autostart`, `teledisk_tv_admin_db`, `teledisk_tv_admin_tab`, `blacklist_manager`, `blacklist_manager_ui` | **mancante** | Nessuna pubblicazione della libreria tramite bot né lista di esclusione. |
 | Ispezione e metadati MTProto | 4 — `media_inspector_tab`, `media_library_tab`, `media_library_hierarchy_inspector`, `mtproto_metadata` | **mancante** | Nessuna lettura dei metadati dai messaggi. |
 
@@ -58,15 +58,15 @@ Le note dicono sempre dove sta il confine.
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
 | Nucleo, comandi, aiuti | 15 — `admin_chat`, `core`, `commands`, `config`, `database`, `login`, `help`, `help_scope`, `app_package`, `bot_ui_helpers`, `ui`, `markdown_editor`, `icon_picker`, `system_commands`, `telegram_features` | **parziale** | Presente in `Teledisk.Telegram` un client essenziale della Bot API (identità del bot, invio di un messaggio, lettura aggiornamenti). Mancano comandi, menu, stato e login. |
-| Catalogo e ricerca | 4 — `catalog`, `user_library`, `user_search`, `tmdb` | **mancante** | — |
-| Pagamenti e amministrazione utenti | 3 — `payments`, `user_admin`, `stat` | **mancante** | Nessun pagamento con Telegram Stars. |
-| Messaggistica e Telegraph | 3 — `messaging`, `telegraph_catalog`, `telegraph_store` | **mancante** | Niente MiniApp né cataloghi su Telegraph. |
+| Catalogo e ricerca | 4 — `catalog`, `user_library`, `user_search`, `tmdb` | **fatto** | Comandi `/catalog`, `/search` e `/stats` con long polling e tastiere inline. |
+| Pagamenti e amministrazione utenti | 3 — `payments`, `user_admin`, `stat` | **parziale** | `createInvoiceLink` in Telegram Stars e comando `/stats`; mancano la conferma dei pagamenti e l'amministrazione utenti. |
+| Messaggistica e Telegraph | 3 — `messaging`, `telegraph_catalog`, `telegraph_store` | **parziale** | `TelegraphClient`, pagina MiniApp servita dal server su `/miniapp` e `setChatMenuButton`; mancano il catalogo completo su Telegraph e le risposte inline. |
 
 ### plugin/upload (18 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
-| Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **mancante** | Le tabelle `transfer_jobs` sono già pronte nel database, nessun worker le usa. |
+| Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **parziale** | Coda di trasferimento persistente (`transfer_jobs`) con stati e progresso, worker di download dalle sorgenti; mancano l'upload verso Telegram e il pool di bot. |
 
 ### plugin/telegram (2 moduli) e plugin di radice (3)
 
@@ -90,15 +90,16 @@ Le note dicono sempre dove sta il confine.
 ## Bilancio
 
 Fatto o utilizzabile: database e migrazioni, catalogo, import locale, server HTTP e WebDAV in sola
-lettura, backup locale, licenza offline, CLI e test.
+lettura, streaming dei byte con Range, code di trasferimento con worker di download, bot Telegram
+con long polling e comandi, licenza offline, CLI e test.
 
-Parziale: la parte Telegram (client della Bot API presente, logica del bot no), il backup nella sua
-integrazione con la CLI, e tutto ciò che dipende dai dati dell'originale (migrazione dei database,
-copertine, analisi dei nomi, streaming dei byte).
+Parziale: client MTProto (login e import funzionanti, end-to-end non verificato senza credenziali),
+pagamenti Stars e MiniApp (primo giro), scraper (mancano Tidal e immagini remote), backup nella sua
+integrazione con la CLI, upload verso Telegram.
 
-Mancante: client MTProto, comandi e menu del bot, code di upload, scraper non-TMDB, FUSE, MiniApp,
-pagamenti, import da smartphone. L'interfaccia grafica e' in corso (Avalonia 12, shell e catalogo
-già presenti con test e screenshot headless).
+Mancante: pool di bot, `.strm` e radar degli intro, amministrazione utenti, FUSE (WinFsp su
+Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti di ognuna),
+interfaccia per l'import dello smartphone.
 
 La matrice non copre le parti non-Moduli dell'originale: installer Inno Setup, protezione PyArmor,
 bootloader PyInstaller, chiavi pubbliche del vendor e servizio di attivazione (quest'ultimo

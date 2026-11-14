@@ -23,4 +23,14 @@ public sealed class UiOptions
     public bool WebDavEnabled { get; set; } = true;
 
     public int SearchDebounceMs { get; set; } = 150;
+
+    public string BotToken { get; set; } = string.Empty;
+
+    public int MtprotoApiId { get; set; }
+
+    public string MtprotoApiHash { get; set; } = string.Empty;
+
+    public string MtprotoSessionPath { get; set; } = string.Empty;
+
+    public string MtprotoCacheDirectory { get; set; } = string.Empty;
 }

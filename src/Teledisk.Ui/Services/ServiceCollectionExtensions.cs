@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Teledisk.Core.Infrastructure;
 using Teledisk.Data;
+using Teledisk.Server;
 using Teledisk.Ui.ViewModels;
 using Teledisk.Ui.Views;
 
@@ -43,6 +44,32 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ThemeService>();
         services.AddSingleton<ICatalogSource, SqliteCatalogSource>();
+        services.AddSingleton(provider =>
+        {
+            var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<UiOptions>>().Value;
+            var paths = TelediskPaths.Default();
+            var sources = new List<IMediaFileSource>
+            {
+                new LocalMediaFileSource(Path.Combine(paths.Root, "media")),
+            };
+            if (options.MtprotoApiId > 0 && options.MtprotoApiHash.Length > 0)
+            {
+                sources.Add(new Teledisk.Mtproto.TelegramMediaSource(
+                    new Teledisk.Mtproto.MtprotoOptions
+                    {
+                        ApiId = options.MtprotoApiId,
+                        ApiHash = options.MtprotoApiHash,
+                        SessionPath = options.MtprotoSessionPath.Length > 0 ? options.MtprotoSessionPath : Path.Combine(paths.Root, "telegram.session"),
+                        CacheDirectory = options.MtprotoCacheDirectory.Length > 0 ? options.MtprotoCacheDirectory : Path.Combine(paths.Root, "cache", "telegram"),
+                    },
+                    provider.GetRequiredService<TelediskDatabase>(),
+                    provider.GetRequiredService<ILogger<Teledisk.Mtproto.TelegramMediaSource>>()));
+            }
+
+            return new Teledisk.Server.CompositeMediaFileSource([.. sources]);
+        });
+        services.AddSingleton<BotCatalogAdapter>();
+        services.AddSingleton<BotStatisticsAdapter>();
         services.AddSingleton<CatalogViewModel>(provider =>
         {
             var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<UiOptions>>().Value;
@@ -57,6 +84,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
         services.AddHostedService<ServerService>();
+        services.AddHostedService<BotService>();
 
         return services;
     }

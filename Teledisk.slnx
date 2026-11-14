@@ -10,6 +10,7 @@
     <Project Path="src/Teledisk.Backup/Teledisk.Backup.csproj" />
     <Project Path="src/Teledisk.Cli/Teledisk.Cli.csproj" />
     <Project Path="src/Teledisk.Ui/Teledisk.Ui.csproj" />
+    <Project Path="src/Teledisk.Mtproto/Teledisk.Mtproto.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Teledisk.Tests/Teledisk.Tests.csproj" />

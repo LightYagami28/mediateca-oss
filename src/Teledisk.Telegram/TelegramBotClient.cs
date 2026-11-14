@@ -65,7 +65,11 @@ public sealed class TelegramBotClient
     /// <param name="chatId">Identificativo della chat di destinazione.</param>
     /// <param name="text">Testo da inviare.</param>
     /// <returns>True se Telegram ha accettato il messaggio.</returns>
-    public async Task<bool> SendMessageAsync(long chatId, string text, CancellationToken cancellationToken = default)
+    public async Task<bool> SendMessageAsync(long chatId, string text, CancellationToken cancellationToken = default) =>
+        await SendMessageAsync(chatId, text, null, cancellationToken);
+
+    /// <summary>Invia un messaggio di testo con una tastiera inline facoltativa (<c>sendMessage</c>).</summary>
+    public async Task<bool> SendMessageAsync(long chatId, string text, IReadOnlyList<InlineKeyboardButton>? buttons, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
         {
@@ -73,9 +77,81 @@ public sealed class TelegramBotClient
         }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
-        var body = JsonSerializer.Serialize(new SendMessageDto { ChatId = chatId, Text = text }, JsonOptions);
+        var body = JsonSerializer.Serialize(new SendMessageDto
+        {
+            ChatId = chatId,
+            Text = text,
+            ReplyMarkup = buttons is null or { Count: 0 } ? null : new TelegramDtos.ReplyMarkup
+            {
+                InlineKeyboard = buttons.Select(button => new List<TelegramDtos.KeyboardButton>
+                {
+                    new() { Text = button.Text, CallbackData = button.CallbackData },
+                }).ToList(),
+            },
+        }, JsonOptions);
         var sent = await CallAsync<MessageDto>("sendMessage", query: null, jsonBody: body, cancellationToken);
         return sent is not null;
+    }
+
+    /// <summary>Conferma una pressione su un bottone inline (<c>answerCallbackQuery</c>).</summary>
+    public async Task<bool> AnswerCallbackQueryAsync(string callbackQueryId, string? text, CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            return false;
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(callbackQueryId);
+        var body = JsonSerializer.Serialize(new AnswerCallbackQueryDto { CallbackQueryId = callbackQueryId, Text = text }, JsonOptions);
+        return await CallAsync<bool>("answerCallbackQuery", query: null, jsonBody: body, cancellationToken);
+    }
+
+    /// <summary>Crea un link di pagamento in Telegram Stars (<c>createInvoiceLink</c>).</summary>
+    public async Task<string?> CreateInvoiceLinkAsync(string title, string description, string payload, int stars, CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            return null;
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentException.ThrowIfNullOrWhiteSpace(payload);
+        ArgumentOutOfRangeException.ThrowIfLessThan(stars, 1);
+
+        var body = JsonSerializer.Serialize(new CreateInvoiceLinkDto
+        {
+            Title = title,
+            Description = description,
+            Payload = payload,
+            Currency = "XTR",
+            Prices = [new TelegramDtos.InvoicePrice { Label = title, Amount = stars }],
+        }, JsonOptions);
+        return await CallAsync<string>("createInvoiceLink", query: null, jsonBody: body, cancellationToken);
+    }
+
+    /// <summary>Risponde a una query di MiniApp con un articolo cliccabile (<c>answerWebAppQuery</c>).</summary>
+    public async Task<bool> AnswerWebAppQueryAsync(string webAppQueryId, string title, string description, string url, CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            return false;
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(webAppQueryId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+
+        var body = JsonSerializer.Serialize(new AnswerWebAppQueryDto
+        {
+            WebAppQueryId = webAppQueryId,
+            Result = new TelegramDtos.WebAppResult
+            {
+                Title = title,
+                Description = description,
+                Url = url,
+                InputMessageContent = new TelegramDtos.InputMessageContent { MessageText = url },
+            },
+        }, JsonOptions);
+        return await CallAsync<bool>("answerWebAppQuery", query: null, jsonBody: body, cancellationToken);
     }
 
     /// <summary>Legge gli aggiornamenti in attesa (<c>getUpdates</c>).</summary>
@@ -116,6 +192,26 @@ public sealed class TelegramBotClient
         }
 
         return result;
+    }
+
+    /// <summary>Imposta il bottone del menu della chat, tipicamente verso la MiniApp (<c>setChatMenuButton</c>).</summary>
+    public async Task<bool> SetChatMenuButtonAsync(string text, string webAppUrl, CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            return false;
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(webAppUrl);
+        var body = JsonSerializer.Serialize(new SetChatMenuButtonDto
+        {
+            MenuButton = new MenuButtonWebAppDto
+            {
+                Text = text,
+                WebApp = new WebAppInfoDto { Url = webAppUrl },
+            },
+        }, JsonOptions);
+        return await CallAsync<bool>("setChatMenuButton", query: null, jsonBody: body, cancellationToken);
     }
 
     /// <summary>Chiama un metodo della Bot API e restituisce il campo <c>result</c>.</summary>
@@ -223,5 +319,45 @@ public sealed class TelegramBotClient
     {
         [JsonPropertyName("chat_id")] public long ChatId { get; set; }
         [JsonPropertyName("text")] public string Text { get; set; } = "";
+        [JsonPropertyName("reply_markup")] public TelegramDtos.ReplyMarkup? ReplyMarkup { get; set; }
+    }
+
+    private sealed class AnswerCallbackQueryDto
+    {
+        [JsonPropertyName("callback_query_id")] public string CallbackQueryId { get; set; } = "";
+        [JsonPropertyName("text")] public string? Text { get; set; }
+    }
+
+    private sealed class CreateInvoiceLinkDto
+    {
+        [JsonPropertyName("title")] public string Title { get; set; } = "";
+        [JsonPropertyName("description")] public string Description { get; set; } = "";
+        [JsonPropertyName("payload")] public string Payload { get; set; } = "";
+        [JsonPropertyName("provider_token")] public string ProviderToken { get; set; } = "";
+        [JsonPropertyName("currency")] public string Currency { get; set; } = "";
+        [JsonPropertyName("prices")] public List<TelegramDtos.InvoicePrice> Prices { get; set; } = [];
+    }
+
+    private sealed class AnswerWebAppQueryDto
+    {
+        [JsonPropertyName("web_app_query_id")] public string WebAppQueryId { get; set; } = "";
+        [JsonPropertyName("result")] public TelegramDtos.WebAppResult? Result { get; set; }
+    }
+
+    private sealed class SetChatMenuButtonDto
+    {
+        [JsonPropertyName("menu_button")] public MenuButtonWebAppDto? MenuButton { get; set; }
+    }
+
+    private sealed class MenuButtonWebAppDto
+    {
+        [JsonPropertyName("type")] public string Type { get; set; } = "web_app";
+        [JsonPropertyName("text")] public string Text { get; set; } = "";
+        [JsonPropertyName("web_app")] public WebAppInfoDto? WebApp { get; set; }
+    }
+
+    private sealed class WebAppInfoDto
+    {
+        [JsonPropertyName("url")] public string Url { get; set; } = "";
     }
 }

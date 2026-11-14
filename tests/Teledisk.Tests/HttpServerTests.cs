@@ -213,6 +213,148 @@ public sealed class HttpServerTests
         }
     }
 
+    /// <summary>Lo streaming serve i byte con supporto Range: 200 pieno, 206 parziale, 416 fuori misura.</summary>
+    [Fact]
+    public async Task Stream_ServeByteConSupportoRange()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var store = new SqliteMediaStore(database);
+            store.UpsertChannel(new Channel { Id = 1, Title = "Sorgente" });
+            var bytes = Enumerable.Range(0, 1024).Select(static index => (byte)(index % 256)).ToArray();
+            File.WriteAllBytes(Path.Combine(directory, "media.bin"), bytes);
+            var itemId = store.Upsert(new MediaItem
+            {
+                ChannelId = 1,
+                MessageId = 7,
+                Name = "media.bin",
+                Size = bytes.Length,
+            });
+            var source = new LocalMediaFileSource(directory);
+            var app = TelediskServer.Build(
+                new ServerOptions { WebDavEnabled = true },
+                database,
+                LicenseAuthority.CreateDefault(),
+                fileSource: source);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var full = await http.GetAsync($"{baseUrl}/api/items/{itemId}/stream");
+                Assert.Equal(HttpStatusCode.OK, full.StatusCode);
+                Assert.Equal(bytes, await full.Content.ReadAsByteArrayAsync());
+                Assert.Equal("bytes", full.Headers.GetValues("Accept-Ranges").Single());
+
+                using var partialRequest = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/items/{itemId}/stream");
+                partialRequest.Headers.Range = new RangeHeaderValue(100, 199);
+                using var partial = await http.SendAsync(partialRequest);
+                Assert.Equal(HttpStatusCode.PartialContent, partial.StatusCode);
+                Assert.Equal("bytes 100-199/1024", partial.Content.Headers.ContentRange!.ToString());
+                Assert.Equal(bytes[100..200], await partial.Content.ReadAsByteArrayAsync());
+
+                using var unsatisfiableRequest = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/items/{itemId}/stream");
+                unsatisfiableRequest.Headers.Range = new RangeHeaderValue(5000, 6000);
+                using var unsatisfiable = await http.SendAsync(unsatisfiableRequest);
+                Assert.Equal(HttpStatusCode.RequestedRangeNotSatisfiable, unsatisfiable.StatusCode);
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>Un nome che punta fuori dalla radice non viene mai aperto.</summary>
+    [Fact]
+    public async Task Stream_NonEsceDallaRadiceDellaSorgente()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var outside = Path.Combine(Path.GetTempPath(), "teledisk-tests", Guid.NewGuid().ToString("N") + ".txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(outside)!);
+            File.WriteAllText(outside, "segreto");
+
+            var database = Migrated(directory);
+            var store = new SqliteMediaStore(database);
+            store.UpsertChannel(new Channel { Id = 1, Title = "Sorgente" });
+            var itemId = store.Upsert(new MediaItem
+            {
+                ChannelId = 1,
+                MessageId = 8,
+                Name = "..\\..\\" + Path.GetFileName(outside),
+                Size = 7,
+            });
+            var source = new LocalMediaFileSource(directory);
+            var app = TelediskServer.Build(
+                new ServerOptions { WebDavEnabled = true },
+                database,
+                LicenseAuthority.CreateDefault(),
+                fileSource: source);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var response = await http.GetAsync($"{baseUrl}/api/items/{itemId}/stream");
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            }
+            finally
+            {
+                await StopAsync(app);
+                File.Delete(outside);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>La MiniApp è una pagina HTML che interroga le API del server.</summary>
+    [Fact]
+    public async Task Miniapp_ServeLaPaginaHtml()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var app = TelediskServer.Build(
+                new ServerOptions { WebDavEnabled = false },
+                database,
+                LicenseAuthority.CreateDefault());
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var response = await http.GetAsync($"{baseUrl}/miniapp");
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var body = await response.Content.ReadAsStringAsync();
+                Assert.Contains("Teledisk Community", body);
+                Assert.Contains("api/stats", body);
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
     /// <summary>Avvia l'app su una porta loopback dinamica e restituisce la base URL reale.</summary>
     private static async Task<string> StartAsync(WebApplication app)
     {

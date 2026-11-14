@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Teledisk.Licensing\Teledisk.Licensing.csproj" />
     <ProjectReference Include="..\..\src\Teledisk.Media\Teledisk.Media.csproj" />
     <ProjectReference Include="..\..\src\Teledisk.Server\Teledisk.Server.csproj" />
+    <ProjectReference Include="..\..\src\Teledisk.Telegram\Teledisk.Telegram.csproj" />
   </ItemGroup>
 
 </Project>

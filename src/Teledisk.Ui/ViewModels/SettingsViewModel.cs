@@ -18,6 +18,8 @@ public partial class SettingsViewModel : ObservableObject
     private readonly int _sampleCatalogRows;
     private readonly int _searchDebounceMs;
     private readonly string _currentWebDavHash;
+    private readonly string _mtprotoSessionPath;
+    private readonly string _mtprotoCacheDirectory;
 
     public SettingsViewModel(SettingsService settings, IOptions<UiOptions> options, ThemeService theme)
     {
@@ -29,11 +31,16 @@ public partial class SettingsViewModel : ObservableObject
         _sampleCatalogRows = current.SampleCatalogRows;
         _searchDebounceMs = current.SearchDebounceMs;
         _currentWebDavHash = current.WebDavPasswordHash;
+        _mtprotoSessionPath = current.MtprotoSessionPath;
+        _mtprotoCacheDirectory = current.MtprotoCacheDirectory;
         IsLightTheme = current.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
         ServerBindAddress = current.ServerBindAddress;
         ServerPort = current.ServerPort.ToString(CultureInfo.InvariantCulture);
         ServerApiToken = current.ServerApiToken;
         WebDavEnabled = current.WebDavEnabled;
+        BotToken = current.BotToken;
+        MtprotoApiId = current.MtprotoApiId.ToString(CultureInfo.InvariantCulture);
+        MtprotoApiHash = current.MtprotoApiHash;
     }
 
     [ObservableProperty]
@@ -55,6 +62,15 @@ public partial class SettingsViewModel : ObservableObject
     private bool _webDavEnabled = true;
 
     [ObservableProperty]
+    private string _botToken = string.Empty;
+
+    [ObservableProperty]
+    private string _mtprotoApiId = string.Empty;
+
+    [ObservableProperty]
+    private string _mtprotoApiHash = string.Empty;
+
+    [ObservableProperty]
     private string _statusText = string.Empty;
 
     [RelayCommand]
@@ -69,6 +85,14 @@ public partial class SettingsViewModel : ObservableObject
         if (!IPAddress.TryParse(ServerBindAddress, out _))
         {
             StatusText = "Indirizzo di bind non valido.";
+            return;
+        }
+
+        var apiId = 0;
+        if (MtprotoApiId.Trim().Length > 0
+            && (!int.TryParse(MtprotoApiId, NumberStyles.Integer, CultureInfo.InvariantCulture, out apiId) || apiId < 0))
+        {
+            StatusText = "ApiId non valido: serve un numero positivo.";
             return;
         }
 
@@ -88,11 +112,16 @@ public partial class SettingsViewModel : ObservableObject
             WebDavPasswordHash = hash,
             WebDavEnabled = WebDavEnabled,
             SearchDebounceMs = _searchDebounceMs,
+            BotToken = BotToken.Trim(),
+            MtprotoApiId = apiId,
+            MtprotoApiHash = MtprotoApiHash.Trim(),
+            MtprotoSessionPath = _mtprotoSessionPath,
+            MtprotoCacheDirectory = _mtprotoCacheDirectory,
         };
 
         _settings.Save(updated);
         _theme.Set(IsLightTheme ? ThemeVariant.Light : ThemeVariant.Dark);
         WebDavPassword = string.Empty;
-        StatusText = $"Salvato ({DateTime.Now:HH:mm:ss}) — riavvia per applicare al server.";
+        StatusText = $"Salvato ({DateTime.Now:HH:mm:ss}) — riavvia per applicare al server e al bot.";
     }
 }
