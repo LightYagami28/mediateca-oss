@@ -6,7 +6,7 @@ body:
     id: versione
     attributes:
       label: Versione
-      description: Versione di Teledisk Community o hash del commit
+      description: Versione di Mediateca o hash del commit
       placeholder: 1.0.0
     validations:
       required: true

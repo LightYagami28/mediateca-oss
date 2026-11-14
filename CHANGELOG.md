@@ -10,7 +10,7 @@ senza client Telegram.
 
 ### Aggiunto
 
-- Percorsi dati unificati in `TelediskPaths`, con radice scelta da `TELEDISK_HOME` o dalla cartella
+- Percorsi dati unificati in `MediatecaPaths`, con radice scelta da `MEDIATECA_HOME` o dalla cartella
   applicativa dell'utente.
 - Impostazioni tipizzate su JSON con scrittura atomica e comando `settings`.
 - Hash delle password con PBKDF2-HMAC-SHA256 e cifratura autenticata dei segreti con AES-256-GCM.
@@ -20,7 +20,7 @@ senza client Telegram.
 - Backup compresso della radice dati con ritenzione configurabile.
 - Sistema di licenza offline opzionale: documento, envelope firmato RSA-PSS-SHA256, verifica con
   chiavi fidate, emissione e installazione, senza funzioni bloccate e senza chiave obbligatoria.
-- CLI `teledisk` con i comandi `machine`, `doctor`, `db`, `settings`, `scan`, `backup`, `serve` e
+- CLI `mediateca` con i comandi `machine`, `doctor`, `db`, `settings`, `scan`, `backup`, `serve` e
   `license`.
 - Server di attivazione locale per far funzionare il client originale Teledisk 1.7 senza il servizio
   del vendor.
@@ -33,4 +33,4 @@ senza client Telegram.
 - Nessun client Telegram MTProto e nessun bot: il catalogo si popola da cartelle locali.
 - Nessun pacchetto di distribuzione: si compila dai sorgenti.
 
-[0.1.0]: https://github.com/teledisk-community/teledisk/releases/tag/v0.1.0
+[0.1.0]: https://github.com/mediateca-community/mediateca/releases/tag/v0.1.0

@@ -52,7 +52,7 @@ jobs:
           dotnet-version: 11.0.x
 
       - name: Compilazione
-        run: dotnet build tests/Teledisk.Tests/Teledisk.Tests.csproj -c Release
+        run: dotnet build tests/Mediateca.Tests/Mediateca.Tests.csproj -c Release
 
       - name: Test
-        run: dotnet test tests/Teledisk.Tests/Teledisk.Tests.csproj --no-build -c Release
+        run: dotnet test tests/Mediateca.Tests/Mediateca.Tests.csproj --no-build -c Release
