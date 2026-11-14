@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Mediateca.Core/Mediateca.Core.csproj" />
+    <Project Path="src/Mediateca.Data/Mediateca.Data.csproj" />
+    <Project Path="src/Mediateca.Server/Mediateca.Server.csproj" />
+    <Project Path="src/Mediateca.Telegram/Mediateca.Telegram.csproj" />
+    <Project Path="src/Mediateca.Media/Mediateca.Media.csproj" />
+    <Project Path="src/Mediateca.Backup/Mediateca.Backup.csproj" />
+    <Project Path="src/Mediateca.Cli/Mediateca.Cli.csproj" />
+    <Project Path="src/Mediateca.Ui/Mediateca.Ui.csproj" />
+    <Project Path="src/Mediateca.Mtproto/Mediateca.Mtproto.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Mediateca.Tests/Mediateca.Tests.csproj" />
+    <Project Path="tests/Mediateca.Ui.Tests/Mediateca.Ui.Tests.csproj" />
+  </Folder>
+</Solution>

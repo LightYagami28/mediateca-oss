@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mediateca.Core\Mediateca.Core.csproj" />
+    <ProjectReference Include="..\Mediateca.Data\Mediateca.Data.csproj" />
+    <ProjectReference Include="..\Mediateca.Server\Mediateca.Server.csproj" />
+    <ProjectReference Include="..\Mediateca.Media\Mediateca.Media.csproj" />
+    <ProjectReference Include="..\Mediateca.Backup\Mediateca.Backup.csproj" />
+    <ProjectReference Include="..\Mediateca.Telegram\Mediateca.Telegram.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

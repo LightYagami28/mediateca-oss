@@ -11,13 +11,13 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <InvariantGlobalization>false</InvariantGlobalization>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Product>Teledisk Community</Product>
-    <Company>Teledisk Community contributors</Company>
+    <Product>Mediateca</Product>
+    <Company>Mediateca contributors</Company>
     <Version>1.0.0</Version>
-    <Authors>Teledisk Community contributors</Authors>
-    <RepositoryUrl>https://github.com/teledisk-community/teledisk</RepositoryUrl>
+    <Authors>Mediateca contributors</Authors>
+    <RepositoryUrl>https://github.com/LightYagami28/mediateca</RepositoryUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
-    <Copyright>Copyright (c) 2026 Teledisk Community contributors</Copyright>
+    <Copyright>Copyright (c) 2026 Mediateca contributors</Copyright>
   </PropertyGroup>
 
 </Project>

@@ -10,13 +10,13 @@ nessun database da avviare.
 
 ```powershell
 git clone <url del repository>
-cd teledisk-oss
+cd mediateca-oss
 dotnet restore
-dotnet build Teledisk.slnx -c Release
-dotnet test Teledisk.slnx -c Release
+dotnet build Mediateca.slnx -c Release
+dotnet test Mediateca.slnx -c Release
 ```
 
-I test stanno in `tests/Teledisk.Tests` e girano con xUnit. Una modifica al comportamento va
+I test stanno in `tests/Mediateca.Tests` e girano con xUnit. Una modifica al comportamento va
 accompagnata da un test che la copre; per le correzioni, il test che riproduce il difetto.
 
 ## Stile
