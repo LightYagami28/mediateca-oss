@@ -4,6 +4,7 @@ using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Options;
+using Teledisk.Core.Security;
 using Teledisk.Ui.Services;
 
 namespace Teledisk.Ui.ViewModels;
@@ -16,6 +17,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly double _windowHeight;
     private readonly int _sampleCatalogRows;
     private readonly int _searchDebounceMs;
+    private readonly string _currentWebDavHash;
 
     public SettingsViewModel(SettingsService settings, IOptions<UiOptions> options, ThemeService theme)
     {
@@ -26,6 +28,7 @@ public partial class SettingsViewModel : ObservableObject
         _windowHeight = current.WindowHeight;
         _sampleCatalogRows = current.SampleCatalogRows;
         _searchDebounceMs = current.SearchDebounceMs;
+        _currentWebDavHash = current.WebDavPasswordHash;
         IsLightTheme = current.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase);
         ServerBindAddress = current.ServerBindAddress;
         ServerPort = current.ServerPort.ToString(CultureInfo.InvariantCulture);
@@ -44,6 +47,9 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private string _serverApiToken = string.Empty;
+
+    [ObservableProperty]
+    private string _webDavPassword = string.Empty;
 
     [ObservableProperty]
     private bool _webDavEnabled = true;
@@ -66,6 +72,10 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
+        var hash = string.IsNullOrWhiteSpace(WebDavPassword)
+            ? _currentWebDavHash
+            : PasswordHasher.Hash(WebDavPassword);
+
         var updated = new UiOptions
         {
             Theme = IsLightTheme ? "Light" : "Dark",
@@ -75,12 +85,14 @@ public partial class SettingsViewModel : ObservableObject
             ServerBindAddress = ServerBindAddress.Trim(),
             ServerPort = port,
             ServerApiToken = ServerApiToken.Trim(),
+            WebDavPasswordHash = hash,
             WebDavEnabled = WebDavEnabled,
             SearchDebounceMs = _searchDebounceMs,
         };
 
         _settings.Save(updated);
         _theme.Set(IsLightTheme ? ThemeVariant.Light : ThemeVariant.Dark);
+        WebDavPassword = string.Empty;
         StatusText = $"Salvato ({DateTime.Now:HH:mm:ss}) — riavvia per applicare al server.";
     }
 }

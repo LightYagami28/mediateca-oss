@@ -72,6 +72,8 @@ public static class TelediskServer
             ContentRootPath = contentRoot ?? AppContext.BaseDirectory,
         });
 
+        builder.WebHost.ConfigureKestrel(kestrel => kestrel.AddServerHeader = false);
+
         // La porta e l'indirizzo delle opzioni devono arrivare a Kestrel: senza questo il server
         // ascolterebbe sulle impostazioni predefinite di ASP.NET e ignorerebbe la configurazione.
         // Se ASPNETCORE_URLS e' impostata (utile nei test) ha la precedenza.
@@ -82,6 +84,19 @@ public static class TelediskServer
 
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         var app = builder.Build();
+
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["Referrer-Policy"] = "no-referrer";
+            context.Response.Headers["X-Frame-Options"] = "DENY";
+            if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
+            {
+                context.Response.Headers["Cache-Control"] = "no-store";
+            }
+
+            await next().ConfigureAwait(false);
+        });
 
         var store = new SqliteMediaStore(database);
         // Nessuna chiave obbligatoria: ogni installazione ha tutte le funzionalità, quindi non
@@ -183,6 +198,14 @@ internal static class WebDav
 {
     private const string Namespace = "DAV:";
 
+    private const int MaxBasicFailures = 10;
+
+    private const long BasicWindowMs = 60_000;
+
+    private static readonly Dictionary<string, (int Count, long Window)> BasicFailures = [];
+
+    private static readonly Lock BasicGate = new();
+
     internal static async Task Handle(
         HttpContext context,
         string path,
@@ -190,12 +213,21 @@ internal static class WebDav
         TelediskDatabase database,
         ServerOptions options)
     {
+        if (IsThrottled(context))
+        {
+            context.Response.StatusCode = 429;
+            return;
+        }
+
         if (options.WebDavRequireAuth && !CheckBasic(context, options))
         {
+            RecordFailure(context);
             context.Response.Headers.WWWAuthenticate = "Basic realm=\"Teledisk\"";
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             return;
         }
+
+        ResetFailures(context);
 
         switch (context.Request.Method)
         {
@@ -275,8 +307,7 @@ internal static class WebDav
     }
 
     private static bool CheckBasic(HttpContext context, ServerOptions options)
-    {
-        var hasHash = !string.IsNullOrEmpty(options.WebDavPasswordHash);
+    {        var hasHash = !string.IsNullOrEmpty(options.WebDavPasswordHash);
         if (!hasHash && string.IsNullOrEmpty(options.WebDavPassword))
         {
             return true;
@@ -312,6 +343,38 @@ internal static class WebDav
         catch (FormatException)
         {
             return false;
+        }
+    }
+
+    private static bool IsThrottled(HttpContext context)
+    {
+        var key = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        lock (BasicGate)
+        {
+            return BasicFailures.TryGetValue(key, out var entry)
+                   && entry.Count >= MaxBasicFailures
+                   && entry.Window + BasicWindowMs >= DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+    }
+
+    private static void RecordFailure(HttpContext context)
+    {
+        var key = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        lock (BasicGate)
+        {
+            BasicFailures.TryGetValue(key, out var entry);
+            var window = entry.Window + BasicWindowMs >= now ? entry.Window : now;
+            BasicFailures[key] = (entry.Count + 1, window);
+        }
+    }
+
+    private static void ResetFailures(HttpContext context)
+    {
+        var key = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        lock (BasicGate)
+        {
+            BasicFailures.Remove(key);
         }
     }
 }

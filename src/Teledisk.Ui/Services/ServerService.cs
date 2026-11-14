@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -19,12 +20,30 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
     public ServerService(IOptions<UiOptions> options, TelediskDatabase database, LogBuffer logs)
     {
         var ui = options.Value;
+        var bindAddress = ui.ServerBindAddress;
+        var webDavEnabled = ui.WebDavEnabled;
+        var isLoopback = IPAddress.TryParse(bindAddress, out var parsed) && IPAddress.IsLoopback(parsed);
+        var logger = logs.CreateLogger("server");
+
+        if (!isLoopback && string.IsNullOrEmpty(ui.ServerApiToken))
+        {
+            logger.LogWarning("Bind {Bind} senza token API: il server resta in ascolto solo su 127.0.0.1.", bindAddress);
+            bindAddress = "127.0.0.1";
+        }
+
+        if (!isLoopback && webDavEnabled && string.IsNullOrEmpty(ui.WebDavPasswordHash))
+        {
+            logger.LogWarning("WebDAV senza password e bind {Bind}: l'area WebDAV resta disattivata.", bindAddress);
+            webDavEnabled = false;
+        }
+
         _options = new ServerOptions
         {
-            BindAddress = ui.ServerBindAddress,
+            BindAddress = bindAddress,
             Port = ui.ServerPort,
             ApiToken = ui.ServerApiToken,
-            WebDavEnabled = ui.WebDavEnabled,
+            WebDavEnabled = webDavEnabled,
+            WebDavPasswordHash = ui.WebDavPasswordHash,
         };
         _database = database;
         _license = LicenseAuthority.CreateDefault();

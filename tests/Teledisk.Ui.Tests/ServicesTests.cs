@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Teledisk.Core.Domain;
+using Teledisk.Core.Security;
 using Teledisk.Data;
 using Teledisk.Ui.Services;
 using Teledisk.Ui.ViewModels;
@@ -115,6 +117,25 @@ public class ServicesTests
         {
             Cleanup(directory);
         }
+    }
+
+    [Fact]
+    public void SettingsService_La_password_webdav_resta_solo_come_hash()
+    {
+        var path = Path.Combine(NewTempDirectory(), "settings.json");
+        var service = new SettingsService(path);
+        var viewModel = new SettingsViewModel(
+            service,
+            Options.Create(new UiOptions()),
+            new ThemeService());
+        viewModel.WebDavPassword = "password-segreta";
+
+        viewModel.SaveCommand.Execute(null);
+
+        var onDisk = File.ReadAllText(path);
+        Assert.DoesNotContain("password-segreta", onDisk);
+        var loaded = service.Load(new UiOptions());
+        Assert.True(PasswordHasher.Verify("password-segreta", loaded.WebDavPasswordHash));
     }
 
     private static string NewTempDirectory()

@@ -38,6 +38,7 @@ public sealed class SettingsService
                 ServerBindAddress = document.ServerBindAddress ?? fallback.ServerBindAddress,
                 ServerPort = document.ServerPort ?? fallback.ServerPort,
                 ServerApiToken = ProtectedSecrets.Decrypt(document.ServerApiTokenProtected ?? string.Empty),
+                WebDavPasswordHash = document.WebDavPasswordHash ?? fallback.WebDavPasswordHash,
                 WebDavEnabled = document.WebDavEnabled ?? fallback.WebDavEnabled,
                 SearchDebounceMs = document.SearchDebounceMs ?? fallback.SearchDebounceMs,
             };
@@ -69,6 +70,7 @@ public sealed class SettingsService
             ServerBindAddress = options.ServerBindAddress,
             ServerPort = options.ServerPort,
             ServerApiTokenProtected = ProtectedSecrets.Encrypt(options.ServerApiToken),
+            WebDavPasswordHash = options.WebDavPasswordHash,
             WebDavEnabled = options.WebDavEnabled,
             SearchDebounceMs = options.SearchDebounceMs,
         };
@@ -100,6 +102,8 @@ public sealed class SettingsService
         public int? ServerPort { get; init; }
 
         public string? ServerApiTokenProtected { get; init; }
+
+        public string? WebDavPasswordHash { get; init; }
 
         public bool? WebDavEnabled { get; init; }
 

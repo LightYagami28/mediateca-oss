@@ -18,6 +18,8 @@ public sealed class UiOptions
 
     public string ServerApiToken { get; set; } = string.Empty;
 
+    public string WebDavPasswordHash { get; set; } = string.Empty;
+
     public bool WebDavEnabled { get; set; } = true;
 
     public int SearchDebounceMs { get; set; } = 150;

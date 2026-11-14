@@ -38,6 +38,10 @@
             <TextBlock Text="Token API (vuoto = senza autenticazione)" Classes="caption" />
             <TextBox Text="{Binding ServerApiToken}" PasswordChar="•" />
           </StackPanel>
+          <StackPanel Spacing="6">
+            <TextBlock Text="Password WebDAV (vuoto = non modificare)" Classes="caption" />
+            <TextBox Text="{Binding WebDavPassword}" PasswordChar="•" />
+          </StackPanel>
           <Grid ColumnDefinitions="*,Auto">
             <StackPanel Spacing="2">
               <TextBlock Text="Area WebDAV in sola lettura" />
