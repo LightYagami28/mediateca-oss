@@ -28,20 +28,21 @@ Cose da tenere presenti quando si espone il server oltre `127.0.0.1`:
 - **WebDAV con autenticazione Basic.** La password è memorizzata come hash PBKDF2, ma il confronto
   avviene in chiaro sul filo: senza TLS, il Basic è leggibile da chi ascolta.
 - **API JSON con token Bearer facoltativo.** Se il server ascolta oltre il loopback conviene
-  impostare `TELEDISK_API_TOKEN` (o `serve --token`): senza token, `/api/*` risponde a chiunque
+  impostare `MEDIATECA_API_TOKEN` (o `serve --token`): senza token, `/api/*` risponde a chiunque
   raggiunga la porta.
 - **WebDAV in sola lettura.** Il server non modifica il catalogo: la superficie di scrittura è nei
   comandi, non nelle rotte.
 - **Bind di default su `127.0.0.1`.** Aprire su `0.0.0.0` è una scelta esplicita dell'utente.
-- **Segreti fuori dal repository.** La chiave privata della licenza non è versionata; la chiave API
-  di TMDB si legge da `TELEDISK_TMDB_API_KEY` o dalle impostazioni.
+- **Segreti fuori dal repository.** Il token API e l'ApiHash di Telegram sono cifrati con la
+  protezione dati dell'utente Windows prima di essere salvati; la chiave API di TMDB si legge da
+  `MEDIATECA_TMDB_API_KEY` o dalle impostazioni.
 
-Cose volutamente *non* difese: nessun limite di frequenza sulle richieste, nessun blocco dopo
-tentativi falliti, nessun audit degli accessi. Sono margini accettati per un'applicazione personale;
-chi la espone pubblicamente lo faccia sapendolo.
+Cose volutamente *non* difese: nessun limite di frequenza sulle richieste del catalogo, nessun
+audit degli accessi. Sono margini accettati per un'applicazione personale; chi la espone pubblicamente
+lo faccia sapendolo. Il server limita invece i tentativi Basic falliti e tiene il bind sul loopback
+senza token.
 
 ## Verifiche del pacchetto
 
-La licenza AGPL-3.0-or-later è nel file [LICENSE](LICENSE). La chiave pubblica ufficiale è in
-`keys/teledisk-community.pub.pem` ed è la stessa incorporata nell'applicazione: si può confrontare
-per escludere manomissioni della copia locale.
+Il codice è distribuito con licenza AGPL-3.0-or-later, nel file [LICENSE](LICENSE). Non esistono
+chiavi di attivazione né funzioni bloccate: ogni installazione ha tutte le funzionalità.

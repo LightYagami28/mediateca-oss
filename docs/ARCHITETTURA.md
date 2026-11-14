@@ -26,27 +26,27 @@ convenzione.
 
 | Componente | Ruolo |
 |---|---|
-| `Teledisk.Core.Domain` | Tipi del dominio: `Channel`, `MediaItem`, `MediaKind`, `ChannelKind`. |
-| `Teledisk.Core.Infrastructure.TelediskPaths` | Unica fonte dei percorsi; tutto ciò che è scrivibile deriva da `Root`. |
-| `Teledisk.Core.Abstractions` | `TelediskSettings` e `ISettingsStore`: impostazioni tipizzate, nessun percorso scritto nel codice. |
-| `Teledisk.Core.Settings.JsonSettingsStore` | Persistenza su JSON con scrittura atomica (file temporaneo e sostituzione). |
-| `Teledisk.Core.Security` | `PasswordHasher` (PBKDF2-HMAC-SHA256, formato versionato) e `SecretBox` (AES-256-GCM). |
-| `Teledisk.Data.TelediskDatabase` | Apertura del database, migrazioni versionate in transazione, `PRAGMA integrity_check`. |
-| `Teledisk.Data.SqliteMediaStore` | Lettura e scrittura del catalogo, ricerca e statistica. |
-| `Teledisk.Server.TelediskServer` | Server HTTP: API JSON e area WebDAV in sola lettura. |
-| `Teledisk.Licensing` | Documento, envelope, firma, verifica, chiavi fidate, entitlement effettivo. |
-| `Teledisk.Media` | Contratto dei provider di metadati (`IMediaScraper`), registro e client TMDB. |
-| `Teledisk.Backup` | Contratto delle destinazioni di backup (`IBackupTarget`) e destinazione locale su ZIP, con retention. |
-| `Teledisk.Telegram` | Client della Bot API di Telegram (`getMe`, invio messaggi, lettura aggiornamenti) e modelli. |
-| `Teledisk.Cli` | Comandi `machine`, `doctor`, `db`, `settings`, `scan`, `backup`, `serve`, `license`. |
+| `Mediateca.Core.Domain` | Tipi del dominio: `Channel`, `MediaItem`, `MediaKind`, `ChannelKind`. |
+| `Mediateca.Core.Infrastructure.MediatecaPaths` | Unica fonte dei percorsi; tutto ciò che è scrivibile deriva da `Root`. |
+| `Mediateca.Core.Abstractions` | `MediatecaSettings` e `ISettingsStore`: impostazioni tipizzate, nessun percorso scritto nel codice. |
+| `Mediateca.Core.Settings.JsonSettingsStore` | Persistenza su JSON con scrittura atomica (file temporaneo e sostituzione). |
+| `Mediateca.Core.Security` | `PasswordHasher` (PBKDF2-HMAC-SHA256, formato versionato) e `SecretBox` (AES-256-GCM). |
+| `Mediateca.Data.MediatecaDatabase` | Apertura del database, migrazioni versionate in transazione, `PRAGMA integrity_check`. |
+| `Mediateca.Data.SqliteMediaStore` | Lettura e scrittura del catalogo, ricerca e statistica. |
+| `Mediateca.Server.MediatecaServer` | Server HTTP: API JSON e area WebDAV in sola lettura. |
+| `Mediateca.Licensing` | Documento, envelope, firma, verifica, chiavi fidate, entitlement effettivo. |
+| `Mediateca.Media` | Contratto dei provider di metadati (`IMediaScraper`), registro e client TMDB. |
+| `Mediateca.Backup` | Contratto delle destinazioni di backup (`IBackupTarget`) e destinazione locale su ZIP, con retention. |
+| `Mediateca.Telegram` | Client della Bot API di Telegram (`getMe`, invio messaggi, lettura aggiornamenti) e modelli. |
+| `Mediateca.Cli` | Comandi `machine`, `doctor`, `db`, `settings`, `scan`, `backup`, `serve`, `license`. |
 
 ## Percorsi dati
 
-Tutti i percorsi derivano da un'unica radice, `TelediskPaths.Root`. La radice si risolve in
+Tutti i percorsi derivano da un'unica radice, `MediatecaPaths.Root`. La radice si risolve in
 quest'ordine:
 
-1. variabile `TELEDISK_HOME`, se impostata;
-2. `%APPDATA%\Teledisk` su Windows, `~/.local/share/Teledisk` altrove.
+1. variabile `MEDIATECA_HOME`, se impostata;
+2. `%APPDATA%\Mediateca` su Windows, `~/.local/share/Mediateca` altrove.
 
 | Percorso | Contenuto |
 |---|---|
@@ -58,7 +58,7 @@ quest'ordine:
 | `<radice>/cache/` | Copertine e anteprime. |
 | `<radice>/logs/` | Log applicativi. |
 
-Le cartelle vengono create da `TelediskPaths.EnsureCreated`, invocato dai comandi prima di qualunque
+Le cartelle vengono create da `MediatecaPaths.EnsureCreated`, invocato dai comandi prima di qualunque
 scrittura. Il bundle dell'applicazione resta di sola lettura, come nell'originale: nessun dato
 dell'utente finisce nella cartella di installazione.
 
@@ -76,13 +76,13 @@ un'interruzione lascia il database alla versione precedente, mai a metà.
 | `backups` | Backup eseguiti. |
 | `logs` | Eventi applicativi per livello e ambito. |
 
-`TelediskDatabase.CheckIntegrity` espone `PRAGMA integrity_check`; `teledisk db` lo richiama e
+`MediatecaDatabase.CheckIntegrity` espone `PRAGMA integrity_check`; `mediateca db` lo richiama e
 restituisce `2` se il database non è sano, così un controllo automatico può accorgersene.
 
 ## Server
 
-Il server si costruisce con `TelediskServer.Build` e si avvia con `RunAsync`; la CLI lo espone come
-`teledisk serve`, e il progetto `Teledisk.Server` ha un `Program` autonomo per lo sviluppo.
+Il server si costruisce con `MediatecaServer.Build` e si avvia con `RunAsync`; la CLI lo espone come
+`mediateca serve`, e il progetto `Mediateca.Server` ha un `Program` autonomo per lo sviluppo.
 
 | Rotta | Metodo | Autenticazione | Risposta |
 |---|---|---|---|
@@ -102,7 +102,7 @@ server espone metadati e dimensioni, non i byte, che nell'originale arrivano dal
 
 ## Impostazioni e segreti
 
-`TelediskSettings` è un record immutabile: le modifiche passano da `with` e da un salvataggio
+`MediatecaSettings` è un record immutabile: le modifiche passano da `with` e da un salvataggio
 completo, così il file non si trova mai in stati intermedi incoerenti. La scrittura è atomica.
 
 Le password non si memorizzano in chiaro: `PasswordHasher` produce
@@ -112,11 +112,11 @@ con nonce per ogni valore e stringa autodescrittiva `v1$nonce$tag$payload`.
 
 ## Punti aperti
 
-- Client Telegram MTProto: non esiste. C'è il client della Bot API (`Teledisk.Telegram`), che non
+- Client Telegram MTProto: non esiste. C'è il client della Bot API (`Mediateca.Telegram`), che non
   sostituisce Telethon per scaricare o pubblicare file nei canali.
-- `Teledisk.Backup` ha il contratto e la destinazione locale, ma il comando `backup` della CLI
+- `Mediateca.Backup` ha il contratto e la destinazione locale, ma il comando `backup` della CLI
   scrive ancora il proprio archivio: l'aggancio è da fare.
 - Il comando `scan` importa da cartella locale; la scansione di un canale Telegram arriverà quando
   ci sarà il client.
-- `Teledisk.Media` ha il contratto e il client TMDB, non ancora richiamati dai comandi.
+- `Mediateca.Media` ha il contratto e il client TMDB, non ancora richiamati dai comandi.
 - Nessuna interfaccia grafica: la CLI è l'unico punto di ingresso.

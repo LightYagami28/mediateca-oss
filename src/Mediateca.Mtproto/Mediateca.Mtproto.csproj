@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="WTelegramClient" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mediateca.Core\Mediateca.Core.csproj" />
+    <ProjectReference Include="..\Mediateca.Data\Mediateca.Data.csproj" />
+    <ProjectReference Include="..\Mediateca.Server\Mediateca.Server.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -27,13 +27,6 @@ BenchmarkDotNet.Artifacts/
 publish/
 *.publishsettings
 
-# Licenze emesse in locale
-*.tlicense
-
-# Chiavi private: la pubblica (keys/*.pub.pem) va invece versionata
-keys/*private*
-*-private.pem
-
 # MacOS
 .DS_Store
 
