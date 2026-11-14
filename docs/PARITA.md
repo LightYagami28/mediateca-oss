@@ -79,7 +79,7 @@ Le note dicono sempre dove sta il confine.
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
-| Interfaccia PyQt5: file manager, impostazioni, dialoghi, temi, tabelle, import smartphone, rubrica | 13 — `ui`, `filemanager_gui`, `settings_gui`, `dialog_utils`, `modern_theme`, `console_style`, `icon_helpers`, `notes_dialog`, `operation_dialog`, `table_utils`, `smartphone_import_gui`, `telegram_address_book_gui`, `__init__` | **mancante** | Nessuna interfaccia grafica: si usa la CLI. La scelta del toolkit è ancora aperta. |
+| Interfaccia PyQt5: file manager, impostazioni, dialoghi, temi, tabelle, import smartphone, rubrica | 13 — `ui`, `filemanager_gui`, `settings_gui`, `dialog_utils`, `modern_theme`, `console_style`, `icon_helpers`, `notes_dialog`, `operation_dialog`, `table_utils`, `smartphone_import_gui`, `telegram_address_book_gui`, `__init__` | **in corso** | Interfaccia in Avalonia 12 su .NET 11 (`src/Teledisk.Ui`): navigazione laterale multi-vista (catalogo, canali, impostazioni, log), catalogo con tabella virtualizzata e ricerca debounced su SQL, pannello di dettaglio, tema chiaro/scuro, scorciatoie da tastiera; server HTTP integrato come `IHostedService`; impostazioni persistenti con scrittura atomica e token cifrato con DPAPI. Progetti futuri: port nativi in Swift per macOS e Linux. |
 
 ### main (1 modulo)
 
@@ -97,7 +97,8 @@ integrazione con la CLI, e tutto ciò che dipende dai dati dell'originale (migra
 copertine, analisi dei nomi, streaming dei byte).
 
 Mancante: client MTProto, comandi e menu del bot, code di upload, scraper non-TMDB, FUSE, MiniApp,
-pagamenti, import da smartphone, interfaccia grafica.
+pagamenti, import da smartphone. L'interfaccia grafica e' in corso (Avalonia 12, shell e catalogo
+già presenti con test e screenshot headless).
 
 La matrice non copre le parti non-Moduli dell'originale: installer Inno Setup, protezione PyArmor,
 bootloader PyInstaller, chiavi pubbliche del vendor e servizio di attivazione (quest'ultimo

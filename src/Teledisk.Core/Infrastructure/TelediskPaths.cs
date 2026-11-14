@@ -67,6 +67,6 @@ public sealed class TelediskPaths
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         return string.IsNullOrWhiteSpace(appData)
             ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "Teledisk")
-            : Path.Combine(appData, "Teledisk");
+            : Path.Combine(appData, "TelediskCommunity");
     }
 }

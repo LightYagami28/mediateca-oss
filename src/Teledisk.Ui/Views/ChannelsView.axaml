@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Teledisk.Ui.Views.ChannelsView">
+
+  <Grid RowDefinitions="Auto,*">
+
+    <Border Grid.Row="0" Padding="18,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="Canali" Classes="h2" VerticalAlignment="Center" />
+        <Border Classes="pill">
+          <TextBlock Text="{Binding CountText}" Classes="caption" />
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="1" Margin="18,0,18,16" Classes="card" ClipToBounds="True">
+      <DataGrid ItemsSource="{Binding Rows}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                SelectionMode="Extended"
+                HeadersVisibility="Column"
+                RowHeight="38"
+                GridLinesVisibility="Horizontal">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Titolo" Width="2.2*" Binding="{Binding Title}" />
+          <DataGridTextColumn Header="Username" Width="1.2*" Binding="{Binding Username}" />
+          <DataGridTextColumn Header="Tipo" Width="0.9*" Binding="{Binding Kind}" />
+          <DataGridTextColumn Header="Elementi" Width="0.8*" Binding="{Binding ItemCount}" />
+          <DataGridTextColumn Header="Ultima scansione" Width="1.1*" Binding="{Binding LastScanText}" />
+          <DataGridTemplateColumn Header="Ruolo" Width="0.9*">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <Border Classes="badge" Background="{DynamicResource AccentSoftBrush}" IsVisible="{Binding IsSource}">
+                  <TextBlock Text="{Binding SourceText}" Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" />
+                </Border>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+        </DataGrid.Columns>
+      </DataGrid>
+    </Border>
+  </Grid>
+</UserControl>
