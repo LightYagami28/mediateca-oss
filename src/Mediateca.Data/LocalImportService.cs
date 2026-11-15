@@ -51,11 +51,17 @@ public sealed class LocalImportService(MediatecaDatabase database)
                 continue;
             }
 
+            var parsed = MediaNameParser.Parse(relative);
             _store.Upsert(new MediaItem
             {
                 ChannelId = LocalChannelId,
                 MessageId = messageId,
                 Name = relative,
+                Kind = parsed.Kind,
+                Title = parsed.Title,
+                Year = parsed.Year,
+                Season = parsed.Season,
+                Episode = parsed.Episode,
                 Size = info.Length,
                 UpdatedAt = new DateTimeOffset(info.LastWriteTimeUtc),
             });

@@ -1,3 +1,4 @@
+using Mediateca.Core.Domain;
 using Mediateca.Data;
 using Mediateca.Server;
 
@@ -37,8 +38,8 @@ public sealed class ImportTests
 
             var items = store.Search("", null, 10);
             Assert.Equal(2, items.Count);
-            Assert.Contains(items, item => item.Name == "a.mkv");
-            Assert.Contains(items, item => item.Name == "sub/b.epub");
+            Assert.Contains(items, item => item.Name == "a.mkv" && item.Kind == MediaKind.Movie && item.Title == "a");
+            Assert.Contains(items, item => item.Name == "sub/b.epub" && item.Kind == MediaKind.Book && item.Title == "b");
         }
         finally
         {
