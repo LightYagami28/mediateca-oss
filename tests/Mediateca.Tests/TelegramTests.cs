@@ -105,14 +105,9 @@ public sealed class TelegramTests
             return Task.CompletedTask;
         }, cancellation.Token);
 
-        try
-        {
-            await run.WaitAsync(TimeSpan.FromSeconds(10));
-        }
-        catch (OperationCanceledException)
-        {
-        }
+        await run.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
 
+        Assert.True(run.IsCompleted);
         Assert.Equal(2, handled.Count);
         var updates = handler.Requests.Where(request => request.RequestUri!.AbsolutePath.Contains("getUpdates")).ToList();
         Assert.True(updates.Count >= 2);
