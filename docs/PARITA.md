@@ -38,7 +38,7 @@ Le note dicono sempre dove sta il confine.
 | Crittografia | 1 — `crypto_utils` | **parziale** | PBKDF2-HMAC-SHA256 e AES-256-GCM al posto di Fernet. Manca il caso d'uso sulle sessioni Telethon, che non ci sono ancora. |
 | Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **parziale** | Client MTProto con WTelegramClient in `Mediateca.Mtproto`: login con sessione persistita, import dei canali con access hash, download in cache. End-to-end NON VERIFICATO (servono credenziali Telegram reali). |
 | Canali e download Telegram | 9 — `telegram_channel`, `telegram_download`, `telegram_multibot_download`, `download_queue`, `file_handler`, `multipart_files`, `thumbnail_downloader`, `media_caption`, `telegram_caption_sync` | **mancante** | Il catalogo ha già le colonne per canali, messaggi e code di trasferimento, ma nessuno le riempie da Telegram. |
-| File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Backup zip locale con ritenzione, destinazione `LocalBackupTarget` in `Mediateca.Backup` non ancora richiamata dal comando. Mancano backup per singolo canale, selezione dei file e Google Drive. |
+| File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Comando `backup` su `LocalBackupTarget` (zip con ritenzione) e, con `--drive`, `GoogleDriveBackupTarget`: upload resumable su Drive v3 con token OAuth da refresh token e ritenzione remota. Mancano backup per singolo canale e selezione dei file. |
 | Dati dei bot e rubrica | 5 — `bot_access_db`, `bot_channel_access`, `bot_runtime_manager`, `bot_token_registry`, `telegram_address_book_db` | **mancante** | Nessun registro di token, permessi o accessi. |
 | Import da smartphone | 1 — `smartphone_import` | **parziale** | Import da cartella locale con upsert idempotente e streaming; l'import del database mobile (`mediateca_media*.db`) resta da specificare. |
 
@@ -49,7 +49,7 @@ Le note dicono sempre dove sta il confine.
 | Server HTTP, API e catalogo | 15 — `server`, `server_tab`, `server_ui_helpers`, `port_guard`, `catalog_api`, `media_api`, `media_db`, `media_scanner`, `media_cover_sync`, `media_index_backup`, `media_name_parser`, `caption_backfill`, `config`, `exceptions`, `__init__` | **parziale** | Server HTTP con `/health`, `/api/stats`, `/api/items`, bind configurabile e token Bearer. Mancano la scansione lato server, le copertine e l'analisi dei nomi. |
 | Streaming | 10 — `raw_getfile_streamer`, `telethon_streamer`, `stream_admission`, `stream_bot_pool`, `stream_events`, `stream_identity`, `stream_routes`, `generate_strm`, `strm_generator_thread`, `skip_intro_radar` | **parziale** | Il `GET` serve i byte con supporto Range (206/416) da sorgenti locali e da Telegram via cache; niente pool di bot, `.strm` e radar degli intro. |
 | WebDAV, VFS e FUSE | 6 — `webdav_support`, `webdav_tab`, `fuse_support`, `fuse_tab`, `mediateca_vfs_core`, `windows_longpaths` | **parziale** | WebDAV in sola lettura (`OPTIONS`, `PROPFIND`, `HEAD`) compatibile con i client di libreria. Mancano il corpo di `GET`, il montaggio FUSE/WinFsp e i percorsi lunghi. |
-| Scraper | 7 — `scrapers/__init__` e `base_scraper`, `local_image_scraper`, `musicbrainz_scraper`, `nfo_scraper`, `tidal_music_scraper`, `tmdb_scraper` | **parziale** | TMDB, MusicBrainz, parser NFO e copertine locali presenti; mancano Tidal e le immagini remote. |
+| Scraper | 7 — `scrapers/__init__` e `base_scraper`, `local_image_scraper`, `musicbrainz_scraper`, `nfo_scraper`, ~~`tidal_music_scraper`~~, `tmdb_scraper` | **parziale** | TMDB, MusicBrainz, parser NFO e copertine locali presenti; mancano le immagini remote. Tidal escluso: richiede un abbonamento a pagamento, non ha senso in un progetto gratuito. |
 | Libreria TV, bot di libreria, blacklist | 7 — `library_bot_core`, `library_bot_tab`, `library_bot_autostart`, `mediateca_tv_admin_db`, `mediateca_tv_admin_tab`, `blacklist_manager`, `blacklist_manager_ui` | **mancante** | Nessuna pubblicazione della libreria tramite bot né lista di esclusione. |
 | Ispezione e metadati MTProto | 4 — `media_inspector_tab`, `media_library_tab`, `media_library_hierarchy_inspector`, `mtproto_metadata` | **mancante** | Nessuna lettura dei metadati dai messaggi. |
 
@@ -94,13 +94,12 @@ lettura, streaming dei byte con Range, code di trasferimento con worker di downl
 con long polling e comandi, CLI e test.
 
 Parziale: client MTProto (login e import funzionanti, end-to-end non verificato senza credenziali),
-pagamenti Stars e MiniApp (primo giro), scraper (mancano Tidal e immagini remote), backup nella sua
-integrazione con la CLI, upload verso Telegram.
+pagamenti Stars e MiniApp (primo giro), scraper (immagini remote), backup (per canale e
+selettivo), upload verso Telegram.
 
 Mancante: pool di bot, `.strm` e radar degli intro, amministrazione utenti, FUSE (WinFsp su
 Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti di ognuna),
 interfaccia per l'import dello smartphone.
 
-La matrice non copre le parti non-Moduli dell'originale: installer Inno Setup, protezione PyArmor,
-bootloader PyInstaller, chiavi pubbliche del vendor e servizio di attivazione. Nessuna di queste
-viene riprodotta: in questo progetto non esistono chiavi né attivazioni.
+Esclusioni deliberate: Tidal richiede API a pagamento (fuori perimetro); il sistema di licenza
+originale e le chiavi di attivazione non vengono riprodotti (nessuna chiave, nessuna attivazione).

@@ -36,7 +36,7 @@ convenzione.
 | `Mediateca.Server.MediatecaServer` | Server HTTP: API JSON e area WebDAV in sola lettura. |
 | `Mediateca.Licensing` | Documento, envelope, firma, verifica, chiavi fidate, entitlement effettivo. |
 | `Mediateca.Media` | Contratto dei provider di metadati (`IMediaScraper`), registro e client TMDB. |
-| `Mediateca.Backup` | Contratto delle destinazioni di backup (`IBackupTarget`) e destinazione locale su ZIP, con retention. |
+| `Mediateca.Backup` | Contratto delle destinazioni di backup (`IBackupTarget`), destinazione locale su ZIP con retention e destinazione Google Drive. |
 | `Mediateca.Telegram` | Client della Bot API di Telegram (`getMe`, invio messaggi, lettura aggiornamenti) e modelli. |
 | `Mediateca.Cli` | Comandi `machine`, `doctor`, `db`, `settings`, `scan`, `backup`, `serve`, `license`. |
 
@@ -114,8 +114,6 @@ con nonce per ogni valore e stringa autodescrittiva `v1$nonce$tag$payload`.
 
 - Client Telegram MTProto: non esiste. C'è il client della Bot API (`Mediateca.Telegram`), che non
   sostituisce Telethon per scaricare o pubblicare file nei canali.
-- `Mediateca.Backup` ha il contratto e la destinazione locale, ma il comando `backup` della CLI
-  scrive ancora il proprio archivio: l'aggancio è da fare.
 - Il comando `scan` importa da cartella locale; la scansione di un canale Telegram arriverà quando
   ci sarà il client.
 - `Mediateca.Media` ha il contratto e il client TMDB, non ancora richiamati dai comandi.

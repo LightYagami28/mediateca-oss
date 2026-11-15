@@ -3,6 +3,17 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le versioni seguono
 [Semantic Versioning](https://semver.org/lang/it/).
 
+## [Non rilasciato]
+
+### Aggiunto
+
+- Backup su Google Drive con `backup --drive`: upload resumable, token OAuth da refresh token,
+  cartella di destinazione facoltativa e ritenzione remota.
+
+### Modificato
+
+- Il comando `backup` usa `LocalBackupTarget`; gli archivi si chiamano `mediateca-backup-<data>.zip`.
+
 ## [0.1.0] - 2026-11-11
 
 Prima revisione pubblica: il nucleo è utilizzabile da riga di comando, senza interfaccia grafica e

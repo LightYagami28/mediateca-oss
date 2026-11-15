@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Mediateca.Backup\Mediateca.Backup.csproj" />
     <ProjectReference Include="..\..\src\Mediateca.Core\Mediateca.Core.csproj" />
     <ProjectReference Include="..\..\src\Mediateca.Data\Mediateca.Data.csproj" />
     <ProjectReference Include="..\..\src\Mediateca.Media\Mediateca.Media.csproj" />

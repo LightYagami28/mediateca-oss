@@ -45,7 +45,7 @@ Il dettaglio per area, confrontato con i moduli dell'originale, è in [docs/PARI
 | `Mediateca.Media` | Provider di metadati del catalogo (TMDB, MusicBrainz, NFO, copertine locali) |
 | `Mediateca.Telegram` | Client della Bot API: long polling, comandi, pagamenti Stars, MiniApp, Telegraph |
 | `Mediateca.Mtproto` | Client MTProto con WTelegramClient: login, import canali, download in cache |
-| `Mediateca.Backup` | Backup della radice dati: contratto `IBackupTarget` e destinazione locale con retention |
+| `Mediateca.Backup` | Backup della radice dati: contratto `IBackupTarget` e destinazione locale con retention, Google Drive |
 | `Mediateca.Ui` | Interfaccia grafica Avalonia 12: catalogo, canali, impostazioni, log, server e bot integrati |
 | `Mediateca.Cli` | Eseguibile `mediateca`: manutenzione, scansione, backup, server |
 | `Mediateca.Tests` / `Mediateca.Ui.Tests` | Test automatici con xUnit |
@@ -85,6 +85,7 @@ mediateca settings set port 8083       # modifica le impostazioni
 mediateca settings password <segreto>  # imposta la password WebDAV
 mediateca scan D:\Media --channel 1000 # importa una cartella nel catalogo
 mediateca backup --keep 14             # archivio compresso della radice dati
+mediateca backup --drive               # come sopra, poi caricato su Google Drive
 mediateca serve --port 8083            # server HTTP/WebDAV
 ```
 
@@ -92,6 +93,10 @@ Il comando `serve` accetta `--bind` e `--token` (token Bearer per le API JSON, i
 variabile `MEDIATECA_API_TOKEN`). Il server espone `/health`, `/api/stats`, `/api/items`,
 `/api/items/{id}/stream`, `/miniapp` e l'area `/dav`. La radice dati è
 `%APPDATA%\Mediateca` su Windows, sostituibile con `MEDIATECA_HOME`.
+
+Il backup su Google Drive legge `MEDIATECA_GDRIVE_CLIENT_ID`, `MEDIATECA_GDRIVE_CLIENT_SECRET`,
+`MEDIATECA_GDRIVE_REFRESH_TOKEN` (client OAuth desktop con ambito `drive.file`) e, facoltativa,
+`MEDIATECA_GDRIVE_FOLDER_ID`; `--keep` vale sia per gli archivi locali sia per quelli remoti.
 
 ## Licenza
 
