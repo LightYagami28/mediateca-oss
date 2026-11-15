@@ -128,12 +128,17 @@ internal static class Commands
         foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
         {
             var info = new FileInfo(file);
+            var parsed = MediaNameParser.Parse(info.Name);
             store.Upsert(new MediaItem
             {
                 ChannelId = channelId,
                 MessageId = ++messageId,
                 Name = info.Name,
-                Kind = Classify(info.Name),
+                Kind = parsed.Kind,
+                Title = parsed.Title,
+                Year = parsed.Year,
+                Season = parsed.Season,
+                Episode = parsed.Episode,
                 Size = info.Length,
                 UpdatedAt = info.LastWriteTimeUtc,
             });
@@ -210,17 +215,6 @@ internal static class Commands
             database);
 
         return 0;
-    }
-
-    private static MediaKind Classify(string name)
-    {
-        if (MediaExtensions.IsVideo(name)) return MediaKind.Movie;
-        if (MediaExtensions.IsAudio(name)) return MediaKind.Music;
-        if (MediaExtensions.IsImage(name)) return MediaKind.Image;
-        if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".rar", StringComparison.OrdinalIgnoreCase)) return MediaKind.Archive;
-        if (name.EndsWith(".epub", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".mobi", StringComparison.OrdinalIgnoreCase)) return MediaKind.Book;
-        if (name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".docx", StringComparison.OrdinalIgnoreCase)) return MediaKind.Document;
-        return MediaKind.Unknown;
     }
 
     private static string? Option(string[] args, string name)

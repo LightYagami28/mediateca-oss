@@ -9,6 +9,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le v
 
 - Backup su Google Drive con `backup --drive`: upload resumable, token OAuth da refresh token,
   cartella di destinazione facoltativa e ritenzione remota.
+- Analisi dei nomi dei file (`MediaNameParser`): tipo, titolo, anno, stagione ed episodio, salvati
+  nel catalogo da `scan` e dall'import locale.
 
 ### Modificato
 
