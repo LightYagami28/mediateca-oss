@@ -15,10 +15,17 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le v
   `/unblock` e `/admin` riservati agli amministratori, amministratori iniziali da `Ui:BotAdminIds`.
 - `TelegramBotPool`: chiamate a turno su più bot, sospensione dei bot limitati secondo `retry_after`;
   `TelegramApiException.RetryAfterSeconds` espone il valore restituito da Telegram.
+- Upload MTProto verso un canale importato (`TelegramMediaSource.UploadAsync`), con registrazione nel
+  catalogo.
 
 ### Modificato
 
 - Il comando `backup` usa `LocalBackupTarget`; gli archivi si chiamano `mediateca-backup-<data>.zip`.
+
+### Corretto
+
+- Il download MTProto legge i messaggi dei canali con `channels.getMessages` invece di
+  `messages.getMessages`, che non vede i messaggi dei canali; l'import dei canali applica l'analisi dei nomi.
 
 ## [0.1.0] - 2026-11-11
 

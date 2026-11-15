@@ -121,14 +121,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
                     _ => 0,
                 };
 
-                store.Upsert(new MediaItem
-                {
-                    ChannelId = channel.ID,
-                    MessageId = mediaMessage.ID,
-                    Name = name,
-                    Size = size,
-                    UpdatedAt = mediaMessage.Date,
-                });
+                store.Upsert(Catalogued(channel.ID, mediaMessage.ID, name, size, mediaMessage.Date));
                 imported++;
                 bytes += size;
             }
@@ -142,20 +135,70 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         return new ImportSummary(imported, bytes);
     }
 
+    public async Task<MediaItem> UploadAsync(long channelId, string filePath, string? caption = null, CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        var file = new FileInfo(filePath);
+        if (!file.Exists)
+        {
+            throw new FileNotFoundException("File da caricare inesistente.", file.FullName);
+        }
+
+        var channel = FindChannel(channelId)
+            ?? throw new InvalidOperationException($"Canale {channelId.ToString(CultureInfo.InvariantCulture)} sconosciuto o senza access hash: importalo prima.");
+
+        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var peer = new InputPeerChannel(channel.Id, channel.AccessHash!.Value);
+        var uploaded = await client.UploadFileAsync(file.FullName, Progress).WaitAsync(cancellationToken).ConfigureAwait(false);
+        var extension = file.Extension.TrimStart('.').ToLowerInvariant();
+        var message = await client.SendMediaAsync(peer, caption ?? string.Empty, uploaded, ContentTypeFor(extension)).WaitAsync(cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("Telegram non ha confermato il messaggio caricato.");
+
+        var item = Catalogued(channel.Id, message.ID, file.Name, file.Length, message.Date);
+        new SqliteMediaStore(_database).Upsert(item);
+        _logger.LogInformation("File {Name} caricato nel canale {Channel}", file.Name, channel.Title);
+        return item;
+
+        void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private DomainChannel? FindChannel(long channelId) =>
+        new SqliteMediaStore(_database).ListChannels().FirstOrDefault(candidate => candidate.Id == channelId && candidate.AccessHash is not null);
+
+    private static MediaItem Catalogued(long channelId, int messageId, string name, long size, DateTime date)
+    {
+        var parsed = MediaNameParser.Parse(name);
+        return new MediaItem
+        {
+            ChannelId = channelId,
+            MessageId = messageId,
+            Name = name,
+            Kind = parsed.Kind,
+            Title = parsed.Title,
+            Year = parsed.Year,
+            Season = parsed.Season,
+            Episode = parsed.Episode,
+            Size = size,
+            UpdatedAt = new DateTimeOffset(DateTime.SpecifyKind(date, DateTimeKind.Utc)),
+        };
+    }
+
     private async Task<bool> DownloadAsync(MediaItem item, string destination, CancellationToken cancellationToken)
     {
-        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-        var store = new SqliteMediaStore(_database);
-        var channel = store.ListChannels().FirstOrDefault(candidate => candidate.Id == item.ChannelId);
-        if (channel is null || channel.AccessHash is null)
+        var channel = FindChannel(item.ChannelId);
+        if (channel is null)
         {
             return false;
         }
 
-        var peer = channel.Kind == ChannelKind.Supergroup
-            ? (InputPeer)new InputPeerChannel(channel.Id, channel.AccessHash.Value)
-            : new InputPeerChannel(channel.Id, channel.AccessHash.Value);
-        var messages = await client.Messages_GetMessages([new InputMessageID { id = item.MessageId }]).ConfigureAwait(false);
+        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var input = new InputChannel(channel.Id, channel.AccessHash!.Value);
+        var messages = await client.Channels_GetMessages(input, [new InputMessageID { id = item.MessageId }]).ConfigureAwait(false);
         if (messages.Messages.Length == 0 || messages.Messages[0] is not Message message || message.media is null)
         {
             return false;
