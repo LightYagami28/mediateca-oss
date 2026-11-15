@@ -1,6 +1,5 @@
-using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text;
+using Mediateca.Backup;
 using Mediateca.Core.Abstractions;
 using Mediateca.Core.Domain;
 using Mediateca.Core.Infrastructure;
@@ -148,45 +147,34 @@ internal static class Commands
     }
 
     /// <summary>Crea un backup compresso della radice dati.</summary>
-    internal static int Backup(string[] args)
+    internal static async Task<int> Backup(string[] args)
     {
         var paths = Paths();
         paths.EnsureCreated();
 
-        var stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-        var target = Path.Combine(paths.BackupDirectory, $"mediateca-{stamp}.zip");
-
-        using (var archive = ZipFile.Open(target, ZipArchiveMode.Create))
-        {
-            foreach (var file in Directory.EnumerateFiles(paths.Root, "*", SearchOption.AllDirectories))
-            {
-                if (file.StartsWith(paths.BackupDirectory, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                archive.CreateEntryFromFile(file, Path.GetRelativePath(paths.Root, file), CompressionLevel.Optimal);
-            }
-        }
-
-        var bytes = new FileInfo(target).Length;
-        var digest = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(target))).ToLowerInvariant();
-
-        Console.WriteLine($"backup   : {target}");
-        Console.WriteLine($"dimensione: {bytes / 1024.0:N0} KiB");
-        Console.WriteLine($"sha256   : {digest}");
-
         var retention = int.TryParse(Option(args, "--keep"), out var keep) ? keep : 14;
-        var old = Directory.EnumerateFiles(paths.BackupDirectory, "mediateca-*.zip")
-            .OrderByDescending(File.GetCreationTimeUtc)
-            .Skip(retention)
-            .ToList();
-        foreach (var file in old)
+        var local = new LocalBackupTarget(retention);
+        BackupResult result;
+        if (args.Contains("--drive"))
         {
-            File.Delete(file);
-            Console.WriteLine($"rimosso  : {Path.GetFileName(file)}");
+            var options = GoogleDriveOptions.FromEnvironment() with { MaxBackups = retention };
+            using var http = new HttpClient { Timeout = TimeSpan.FromHours(1) };
+            result = await new GoogleDriveBackupTarget(http, options, local).CreateAsync(paths.Root, paths.BackupDirectory).ConfigureAwait(false);
+        }
+        else
+        {
+            result = await local.CreateAsync(paths.Root, paths.BackupDirectory).ConfigureAwait(false);
         }
 
+        Console.WriteLine($"backup   : {result.ArchivePath}");
+        Console.WriteLine($"dimensione: {result.SizeBytes / 1024.0:N0} KiB");
+        Console.WriteLine($"sha256   : {result.Sha256}");
+        if (result.RemoteId is not null)
+        {
+            Console.WriteLine($"drive    : {result.RemoteId}");
+        }
+
+        Console.WriteLine($"rimossi  : {result.RemovedOldArchives}");
         return 0;
     }
 

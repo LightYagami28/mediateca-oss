@@ -23,6 +23,8 @@ public sealed record BackupResult
     /// <summary>Numero di archivi rimossi dalla retention.</summary>
     public int RemovedOldArchives { get; init; }
 
+    public string? RemoteId { get; init; }
+
     /// <summary>Nome del file dell'archivio.</summary>
     public string FileName => Path.GetFileName(ArchivePath);
 }

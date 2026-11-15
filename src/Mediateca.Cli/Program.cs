@@ -23,7 +23,7 @@ public static class Program
           db                          create or update the database
           settings [show|set|password] read or change the user settings
           scan <directory>            catalogue a local directory
-          backup [--keep N]           zip the data directory into backups
+          backup [--keep N] [--drive] zip the data directory, optionally to Google Drive
           serve [--port N] [--bind A] start the HTTP/WebDAV server
 
         EXIT CODES
@@ -49,7 +49,7 @@ public static class Program
                 "db" => args.Length > 1 && args[1] == "info" ? Commands.DatabaseInit() : Commands.DatabaseInit(),
                 "settings" => Commands.Settings(args[1..]),
                 "scan" => Commands.Scan(args[1..]),
-                "backup" => Commands.Backup(args[1..]),
+                "backup" => Commands.Backup(args[1..]).GetAwaiter().GetResult(),
                 "serve" => Commands.Serve(args[1..]).GetAwaiter().GetResult(),
                 _ => Fail($"Unknown command '{args[0]}'."),
             };
