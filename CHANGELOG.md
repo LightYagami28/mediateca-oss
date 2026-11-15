@@ -13,6 +13,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le v
   nel catalogo da `scan` e dall'import locale.
 - Amministrazione degli utenti del bot: tabella `bot_users` (schema v2), comandi `/users`, `/block`,
   `/unblock` e `/admin` riservati agli amministratori, amministratori iniziali da `Ui:BotAdminIds`.
+- `TelegramBotPool`: chiamate a turno su più bot, sospensione dei bot limitati secondo `retry_after`;
+  `TelegramApiException.RetryAfterSeconds` espone il valore restituito da Telegram.
 
 ### Modificato
 

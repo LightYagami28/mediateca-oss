@@ -47,7 +47,7 @@ Le note dicono sempre dove sta il confine.
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
 | Server HTTP, API e catalogo | 15 — `server`, `server_tab`, `server_ui_helpers`, `port_guard`, `catalog_api`, `media_api`, `media_db`, `media_scanner`, `media_cover_sync`, `media_index_backup`, `media_name_parser`, `caption_backfill`, `config`, `exceptions`, `__init__` | **parziale** | Server HTTP con `/health`, `/api/stats`, `/api/items`, bind configurabile e token Bearer. L'analisi dei nomi (`MediaNameParser`: tipo, titolo, anno, stagione ed episodio) è applicata da `scan` e dall'import locale. Mancano la scansione lato server e le copertine. |
-| Streaming | 10 — `raw_getfile_streamer`, `telethon_streamer`, `stream_admission`, `stream_bot_pool`, `stream_events`, `stream_identity`, `stream_routes`, `generate_strm`, `strm_generator_thread`, `skip_intro_radar` | **parziale** | Il `GET` serve i byte con supporto Range (206/416) da sorgenti locali e da Telegram via cache; niente pool di bot, `.strm` e radar degli intro. |
+| Streaming | 10 — `raw_getfile_streamer`, `telethon_streamer`, `stream_admission`, `stream_bot_pool`, `stream_events`, `stream_identity`, `stream_routes`, `generate_strm`, `strm_generator_thread`, `skip_intro_radar` | **parziale** | Il `GET` serve i byte con supporto Range (206/416) da sorgenti locali e da Telegram via cache. `TelegramBotPool` distribuisce le chiamate tra più bot e sospende quelli limitati (429, `retry_after`), ma lo streaming non lo usa ancora; mancano `.strm` e radar degli intro. |
 | WebDAV, VFS e FUSE | 6 — `webdav_support`, `webdav_tab`, `fuse_support`, `fuse_tab`, `mediateca_vfs_core`, `windows_longpaths` | **parziale** | WebDAV in sola lettura (`OPTIONS`, `PROPFIND`, `HEAD`) compatibile con i client di libreria. Mancano il corpo di `GET`, il montaggio FUSE/WinFsp e i percorsi lunghi. |
 | Scraper | 7 — `scrapers/__init__` e `base_scraper`, `local_image_scraper`, `musicbrainz_scraper`, `nfo_scraper`, ~~`tidal_music_scraper`~~, `tmdb_scraper` | **parziale** | TMDB, MusicBrainz, parser NFO e copertine locali presenti; mancano le immagini remote. Tidal escluso: richiede un abbonamento a pagamento, non ha senso in un progetto gratuito. |
 | Libreria TV, bot di libreria, blacklist | 7 — `library_bot_core`, `library_bot_tab`, `library_bot_autostart`, `mediateca_tv_admin_db`, `mediateca_tv_admin_tab`, `blacklist_manager`, `blacklist_manager_ui` | **mancante** | Nessuna pubblicazione della libreria tramite bot né lista di esclusione. |
@@ -66,7 +66,7 @@ Le note dicono sempre dove sta il confine.
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
-| Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **parziale** | Coda di trasferimento persistente (`transfer_jobs`) con stati e progresso, worker di download dalle sorgenti; mancano l'upload verso Telegram e il pool di bot. |
+| Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **parziale** | Coda di trasferimento persistente (`transfer_jobs`) con stati e progresso, worker di download dalle sorgenti; mancano l'upload verso Telegram e l'aggancio del pool di bot (`TelegramBotPool`) alla coda. |
 
 ### plugin/telegram (2 moduli) e plugin di radice (3)
 
@@ -95,9 +95,9 @@ con long polling e comandi, CLI e test.
 
 Parziale: client MTProto (login e import funzionanti, end-to-end non verificato senza credenziali),
 pagamenti Stars e MiniApp (primo giro), scraper (immagini remote), backup (per canale e
-selettivo), upload verso Telegram.
+selettivo), upload verso Telegram, pool di bot (presente, non ancora agganciato).
 
-Mancante: pool di bot, `.strm` e radar degli intro, FUSE (WinFsp su
+Mancante: `.strm` e radar degli intro, FUSE (WinFsp su
 Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti di ognuna),
 interfaccia per l'import dello smartphone.
 

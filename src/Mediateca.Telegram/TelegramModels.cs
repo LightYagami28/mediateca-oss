@@ -125,4 +125,6 @@ public sealed class TelegramApiException : Exception
 
     /// <summary>Descrizione leggibile fornita da Telegram.</summary>
     public string? Description { get; }
+
+    public int? RetryAfterSeconds { get; init; }
 }

@@ -27,7 +27,8 @@ né in alcun modo supportato dagli autori dell'originale.
 | Interfaccia grafica Avalonia 12 (catalogo, canali, impostazioni, log, tema chiaro/scuro) | pronto |
 | Scraper TMDB e MusicBrainz, lettura NFO, copertine locali | pronto |
 | Backup compresso con ritenzione | pronto |
-| Pool di bot, `.strm`, radar degli intro, upload verso Telegram | mancanti |
+| Pool di bot (`TelegramBotPool`, a turno con sospensione sui 429) | in libreria, non ancora usato da streaming e upload |
+| `.strm`, radar degli intro, upload verso Telegram | mancanti |
 | FUSE (WinFsp su Windows, fuse3 su Linux) | mancante |
 | Scraper Tidal | mancante |
 | Migrazione dei database dell'originale | mancante |

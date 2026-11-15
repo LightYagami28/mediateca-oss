@@ -245,7 +245,10 @@ public sealed class TelegramBotClient
 
         if (!envelope.Ok)
         {
-            throw new TelegramApiException(method, envelope.ErrorCode ?? ErrorCodeOf(response), envelope.Description);
+            throw new TelegramApiException(method, envelope.ErrorCode ?? ErrorCodeOf(response), envelope.Description)
+            {
+                RetryAfterSeconds = envelope.Parameters?.RetryAfter,
+            };
         }
 
         return envelope.Result;
@@ -285,6 +288,12 @@ public sealed class TelegramBotClient
         [JsonPropertyName("error_code")] public int? ErrorCode { get; set; }
         [JsonPropertyName("description")] public string? Description { get; set; }
         [JsonPropertyName("result")] public T? Result { get; set; }
+        [JsonPropertyName("parameters")] public ResponseParametersDto? Parameters { get; set; }
+    }
+
+    private sealed class ResponseParametersDto
+    {
+        [JsonPropertyName("retry_after")] public int? RetryAfter { get; set; }
     }
 
     private sealed class UserDto
