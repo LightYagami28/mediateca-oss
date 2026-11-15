@@ -13,7 +13,7 @@ namespace Mediateca.Data;
 public sealed class MediatecaDatabase
 {
     /// <summary>Versione dello schema attesa dal codice.</summary>
-    public const int SchemaVersion = 2;
+    public const int SchemaVersion = 3;
 
     private readonly string _path;
 
@@ -191,6 +191,20 @@ public static class Migrations
             first_seen TEXT NOT NULL,
             last_seen  TEXT NOT NULL
         );
+        """,
+
+        """
+        CREATE TABLE IF NOT EXISTS address_book (
+            peer_id     INTEGER PRIMARY KEY,
+            access_hash INTEGER,
+            kind        TEXT NOT NULL DEFAULT 'user',
+            title       TEXT NOT NULL,
+            username    TEXT,
+            phone       TEXT,
+            updated_at  TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_address_book_title ON address_book(title);
         """,
     ];
 }

@@ -67,7 +67,7 @@ public sealed class DatabaseTests
 
             var expected = new HashSet<string>(StringComparer.Ordinal)
             {
-                "channels", "media_items", "transfer_jobs", "backups", "logs", "bot_users",
+                "channels", "media_items", "transfer_jobs", "backups", "logs", "bot_users", "address_book",
             };
             Assert.Superset(expected, names);
         }

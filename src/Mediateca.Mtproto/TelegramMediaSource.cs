@@ -167,6 +167,56 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
     }
 
+    public async Task<int> ImportAddressBookAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+        {
+            throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
+        }
+
+        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var entries = new List<AddressBookEntry>();
+
+        var contacts = await client.Contacts_GetContacts().WaitAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var user in contacts.users.Values)
+        {
+            entries.Add(new AddressBookEntry
+            {
+                PeerId = user.ID,
+                AccessHash = user.access_hash,
+                Kind = user.IsBot ? AddressBookKind.Bot : AddressBookKind.User,
+                Title = DisplayName(user),
+                Username = user.MainUsername,
+                Phone = string.IsNullOrWhiteSpace(user.phone) ? null : user.phone,
+            });
+        }
+
+        var chats = await client.Messages_GetAllChats().WaitAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var chat in chats.chats.Values.Where(static chat => chat.IsActive))
+        {
+            entries.Add(chat switch
+            {
+                TL.Channel channel => new AddressBookEntry
+                {
+                    PeerId = channel.ID,
+                    AccessHash = channel.access_hash,
+                    Kind = channel.IsChannel ? AddressBookKind.Channel : AddressBookKind.Group,
+                    Title = channel.Title,
+                    Username = channel.MainUsername,
+                },
+                _ => new AddressBookEntry { PeerId = chat.ID, Kind = AddressBookKind.Group, Title = chat.Title },
+            });
+        }
+
+        return new AddressBookStore(_database).Upsert(entries);
+    }
+
+    private static string DisplayName(User user)
+    {
+        var name = string.Join(' ', new[] { user.first_name, user.last_name }.Where(static part => !string.IsNullOrWhiteSpace(part)));
+        return name.Length > 0 ? name : user.MainUsername ?? user.ID.ToString(CultureInfo.InvariantCulture);
+    }
+
     private DomainChannel? FindChannel(long channelId) =>
         new SqliteMediaStore(_database).ListChannels().FirstOrDefault(candidate => candidate.Id == channelId && candidate.AccessHash is not null);
 
