@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Mediateca.Core.Domain;
 
 namespace Mediateca.Telegram;
 
@@ -40,6 +41,15 @@ public interface IBotCatalog
 public interface IBotStatistics
 {
     Task<BotStats> ReadAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IBotUserDirectory
+{
+    Task<BotUser> TouchAsync(long userId, string? username, CancellationToken cancellationToken = default);
+
+    Task<bool> SetRoleAsync(long userId, BotUserRole role, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<BotUser>> ListAsync(int limit, CancellationToken cancellationToken = default);
 }
 
 public static class TelegramDtos

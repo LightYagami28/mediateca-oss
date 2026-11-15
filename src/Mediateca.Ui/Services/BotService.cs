@@ -34,7 +34,7 @@ public sealed class BotService : IHostedService
         var client = new TelegramBotClient(
             new HttpClient(),
             new TelegramOptions { BotToken = _options.BotToken });
-        var dispatcher = new BotCommandDispatcher(client, new BotCatalogAdapter(_database), new BotStatisticsAdapter(_database));
+        var dispatcher = new BotCommandDispatcher(client, new BotCatalogAdapter(_database), new BotStatisticsAdapter(_database), new BotUserDirectoryAdapter(_database, _options.BotAdminIds));
         var polling = new BotPollingService(client, _logs.CreateLogger("bot"));
         _cancellation = new CancellationTokenSource();
         _loop = Task.Run(() => polling.PollAsync(dispatcher.HandleAsync, _cancellation.Token), CancellationToken.None);

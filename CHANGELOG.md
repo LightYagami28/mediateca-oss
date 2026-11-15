@@ -11,6 +11,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le v
   cartella di destinazione facoltativa e ritenzione remota.
 - Analisi dei nomi dei file (`MediaNameParser`): tipo, titolo, anno, stagione ed episodio, salvati
   nel catalogo da `scan` e dall'import locale.
+- Amministrazione degli utenti del bot: tabella `bot_users` (schema v2), comandi `/users`, `/block`,
+  `/unblock` e `/admin` riservati agli amministratori, amministratori iniziali da `Ui:BotAdminIds`.
 
 ### Modificato
 

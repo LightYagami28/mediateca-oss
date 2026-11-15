@@ -26,6 +26,8 @@ public sealed class UiOptions
 
     public string BotToken { get; set; } = string.Empty;
 
+    public long[] BotAdminIds { get; set; } = [];
+
     public int MtprotoApiId { get; set; }
 
     public string MtprotoApiHash { get; set; } = string.Empty;

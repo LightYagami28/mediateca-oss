@@ -34,9 +34,9 @@ public sealed class DatabaseTests
         {
             var database = NewDatabase(directory);
 
-            Assert.Equal(1, database.Migrate());
-            Assert.Equal(1, database.Migrate());
-            Assert.Equal(1, database.CurrentVersion());
+            Assert.Equal(MediatecaDatabase.SchemaVersion, database.Migrate());
+            Assert.Equal(MediatecaDatabase.SchemaVersion, database.Migrate());
+            Assert.Equal(MediatecaDatabase.SchemaVersion, database.CurrentVersion());
         }
         finally
         {
@@ -67,7 +67,7 @@ public sealed class DatabaseTests
 
             var expected = new HashSet<string>(StringComparer.Ordinal)
             {
-                "channels", "media_items", "transfer_jobs", "backups", "logs",
+                "channels", "media_items", "transfer_jobs", "backups", "logs", "bot_users",
             };
             Assert.Superset(expected, names);
         }
@@ -77,11 +77,11 @@ public sealed class DatabaseTests
         }
     }
 
-    /// <summary>Ogni versione dichiarata ha la propria istruzione di migrazione (oggi una sola).</summary>
+    /// <summary>Ogni versione dichiarata ha la propria istruzione di migrazione .</summary>
     [Fact]
     public void Migrazioni_CopronoTutteLeVersioni()
     {
-        Assert.Single(Migrations.Statements);
+        Assert.Equal(MediatecaDatabase.SchemaVersion, Migrations.Statements.Count);
     }
 
     /// <summary>L'integrità del database appena migrato è valida.</summary>

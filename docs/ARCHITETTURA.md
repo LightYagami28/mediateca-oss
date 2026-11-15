@@ -75,6 +75,7 @@ un'interruzione lascia il database alla versione precedente, mai a metà.
 | `transfer_jobs` | Code di trasferimento (campi pronti per download e upload). |
 | `backups` | Backup eseguiti. |
 | `logs` | Eventi applicativi per livello e ambito. |
+| `bot_users` | Utenti del bot con ruolo (`user`, `admin`, `blocked`), primo e ultimo accesso. |
 
 `MediatecaDatabase.CheckIntegrity` espone `PRAGMA integrity_check`; `mediateca db` lo richiama e
 restituisce `2` se il database non è sano, così un controllo automatico può accorgersene.

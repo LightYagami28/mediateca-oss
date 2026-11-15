@@ -22,7 +22,7 @@ né in alcun modo supportato dagli autori dell'originale.
 | Import di una cartella locale nel catalogo | pronto |
 | Server HTTP con API JSON, WebDAV in sola lettura e streaming dei byte con Range | pronto |
 | Code di trasferimento persistenti con worker di download | pronto |
-| Bot Telegram: long polling, comandi, tastiere inline, pagamenti Stars, MiniApp, Telegraph | pronto |
+| Bot Telegram: long polling, comandi, tastiere inline, amministrazione utenti, pagamenti Stars, MiniApp, Telegraph | pronto |
 | Client Telegram MTProto (login, import canali, download in cache) | pronto (end-to-end da verificare con credenziali) |
 | Interfaccia grafica Avalonia 12 (catalogo, canali, impostazioni, log, tema chiaro/scuro) | pronto |
 | Scraper TMDB e MusicBrainz, lettura NFO, copertine locali | pronto |
