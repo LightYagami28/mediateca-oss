@@ -13,7 +13,7 @@ namespace Mediateca.Data;
 public sealed class MediatecaDatabase
 {
     /// <summary>Versione dello schema attesa dal codice.</summary>
-    public const int SchemaVersion = 1;
+    public const int SchemaVersion = 2;
 
     private readonly string _path;
 
@@ -180,6 +180,16 @@ public static class Migrations
             scope      TEXT NOT NULL DEFAULT '',
             message    TEXT NOT NULL,
             created_at TEXT NOT NULL
+        );
+        """,
+
+        """
+        CREATE TABLE IF NOT EXISTS bot_users (
+            user_id    INTEGER PRIMARY KEY,
+            username   TEXT,
+            role       TEXT NOT NULL DEFAULT 'user',
+            first_seen TEXT NOT NULL,
+            last_seen  TEXT NOT NULL
         );
         """,
     ];

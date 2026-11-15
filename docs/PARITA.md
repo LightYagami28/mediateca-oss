@@ -39,7 +39,7 @@ Le note dicono sempre dove sta il confine.
 | Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **parziale** | Client MTProto con WTelegramClient in `Mediateca.Mtproto`: login con sessione persistita, import dei canali con access hash, download in cache. End-to-end NON VERIFICATO (servono credenziali Telegram reali). |
 | Canali e download Telegram | 9 — `telegram_channel`, `telegram_download`, `telegram_multibot_download`, `download_queue`, `file_handler`, `multipart_files`, `thumbnail_downloader`, `media_caption`, `telegram_caption_sync` | **mancante** | Il catalogo ha già le colonne per canali, messaggi e code di trasferimento, ma nessuno le riempie da Telegram. |
 | File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Comando `backup` su `LocalBackupTarget` (zip con ritenzione) e, con `--drive`, `GoogleDriveBackupTarget`: upload resumable su Drive v3 con token OAuth da refresh token e ritenzione remota. Mancano backup per singolo canale e selezione dei file. |
-| Dati dei bot e rubrica | 5 — `bot_access_db`, `bot_channel_access`, `bot_runtime_manager`, `bot_token_registry`, `telegram_address_book_db` | **mancante** | Nessun registro di token, permessi o accessi. |
+| Dati dei bot e rubrica | 5 — `bot_access_db`, `bot_channel_access`, `bot_runtime_manager`, `bot_token_registry`, `telegram_address_book_db` | **parziale** | Registro degli utenti del bot con ruoli in `bot_users` (`BotUserStore`). Mancano registro dei token, permessi per canale e rubrica. |
 | Import da smartphone | 1 — `smartphone_import` | **parziale** | Import da cartella locale con upsert idempotente e streaming; l'import del database mobile (`mediateca_media*.db`) resta da specificare. |
 
 ### plugin/server (49 moduli)
@@ -59,7 +59,7 @@ Le note dicono sempre dove sta il confine.
 |---|---|---|---|
 | Nucleo, comandi, aiuti | 15 — `admin_chat`, `core`, `commands`, `config`, `database`, `login`, `help`, `help_scope`, `app_package`, `bot_ui_helpers`, `ui`, `markdown_editor`, `icon_picker`, `system_commands`, `telegram_features` | **parziale** | Presente in `Mediateca.Telegram` un client essenziale della Bot API (identità del bot, invio di un messaggio, lettura aggiornamenti). Mancano comandi, menu, stato e login. |
 | Catalogo e ricerca | 4 — `catalog`, `user_library`, `user_search`, `tmdb` | **fatto** | Comandi `/catalog`, `/search` e `/stats` con long polling e tastiere inline. |
-| Pagamenti e amministrazione utenti | 3 — `payments`, `user_admin`, `stat` | **parziale** | `createInvoiceLink` in Telegram Stars e comando `/stats`; mancano la conferma dei pagamenti e l'amministrazione utenti. |
+| Pagamenti e amministrazione utenti | 3 — `payments`, `user_admin`, `stat` | **parziale** | `createInvoiceLink` in Telegram Stars, comando `/stats` e amministrazione utenti (`/users`, `/block`, `/unblock`, `/admin`; amministratori iniziali da `Ui:BotAdminIds`, utenti bloccati ignorati). Manca la conferma dei pagamenti. |
 | Messaggistica e Telegraph | 3 — `messaging`, `telegraph_catalog`, `telegraph_store` | **parziale** | `TelegraphClient`, pagina MiniApp servita dal server su `/miniapp` e `setChatMenuButton`; mancano il catalogo completo su Telegraph e le risposte inline. |
 
 ### plugin/upload (18 moduli)
@@ -97,7 +97,7 @@ Parziale: client MTProto (login e import funzionanti, end-to-end non verificato 
 pagamenti Stars e MiniApp (primo giro), scraper (immagini remote), backup (per canale e
 selettivo), upload verso Telegram.
 
-Mancante: pool di bot, `.strm` e radar degli intro, amministrazione utenti, FUSE (WinFsp su
+Mancante: pool di bot, `.strm` e radar degli intro, FUSE (WinFsp su
 Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti di ognuna),
 interfaccia per l'import dello smartphone.
 

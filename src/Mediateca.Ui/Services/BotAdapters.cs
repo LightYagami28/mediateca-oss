@@ -43,3 +43,17 @@ public sealed class BotStatisticsAdapter(MediatecaDatabase database) : IBotStati
         return Task.FromResult(new BotStats(items, bytes, channels));
     }
 }
+
+public sealed class BotUserDirectoryAdapter(MediatecaDatabase database, IEnumerable<long> bootstrapAdmins) : IBotUserDirectory
+{
+    private readonly BotUserStore _store = new(database, bootstrapAdmins);
+
+    public Task<BotUser> TouchAsync(long userId, string? username, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_store.Touch(userId, username));
+
+    public Task<bool> SetRoleAsync(long userId, BotUserRole role, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_store.SetRole(userId, role));
+
+    public Task<IReadOnlyList<BotUser>> ListAsync(int limit, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_store.List(limit));
+}

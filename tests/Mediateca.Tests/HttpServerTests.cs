@@ -37,7 +37,7 @@ public sealed class HttpServerTests
 
                 var body = await response.Content.ReadAsStringAsync();
                 Assert.Contains("\"status\":\"ok\"", body);
-                Assert.Contains("\"schema\":1", body);
+                Assert.Contains($"\"schema\":{MediatecaDatabase.SchemaVersion}", body);
                 Assert.DoesNotContain("tier", body);
             }
             finally
