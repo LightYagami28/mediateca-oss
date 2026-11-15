@@ -28,7 +28,8 @@ né in alcun modo supportato dagli autori dell'originale.
 | Scraper TMDB e MusicBrainz, lettura NFO, copertine locali | pronto |
 | Backup compresso con ritenzione | pronto |
 | Pool di bot (`TelegramBotPool`, a turno con sospensione sui 429) | in libreria, non ancora usato da streaming e upload |
-| `.strm`, radar degli intro, upload verso Telegram | mancanti |
+| Upload verso Telegram via MTProto (`TelegramMediaSource.UploadAsync`) | in libreria, end-to-end non verificato |
+| `.strm`, radar degli intro | mancanti |
 | FUSE (WinFsp su Windows, fuse3 su Linux) | mancante |
 | Scraper Tidal | mancante |
 | Migrazione dei database dell'originale | mancante |

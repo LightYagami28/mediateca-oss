@@ -36,7 +36,7 @@ Le note dicono sempre dove sta il confine.
 | Impostazioni, profili, utilità | 6 — `config`, `settings_backend`, `profile_utils`, `utils`, `gui_actions`, `gui_backend` | **parziale** | Impostazioni JSON tipizzate con scrittura atomica e comando `settings`. Mancano profili multipli e i livelli richiesti dalla GUI. |
 | Licenza | 1 — `license_check` | **nessuna** | Nessun sistema di licenza, nessuna chiave e nessuna attivazione: ogni installazione ha tutte le funzionalità. |
 | Crittografia | 1 — `crypto_utils` | **parziale** | PBKDF2-HMAC-SHA256 e AES-256-GCM al posto di Fernet. Manca il caso d'uso sulle sessioni Telethon, che non ci sono ancora. |
-| Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **parziale** | Client MTProto con WTelegramClient in `Mediateca.Mtproto`: login con sessione persistita, import dei canali con access hash, download in cache. End-to-end NON VERIFICATO (servono credenziali Telegram reali). |
+| Sessioni e identità Telegram | 4 — `telegram_auth`, `telethon_session_guard`, `telegram_ids`, `telegram_runtime_activity` | **parziale** | Client MTProto con WTelegramClient in `Mediateca.Mtproto`: login con sessione persistita, import dei canali con access hash e analisi dei nomi, download in cache (`channels.getMessages`), upload. End-to-end NON VERIFICATO (servono credenziali Telegram reali). |
 | Canali e download Telegram | 9 — `telegram_channel`, `telegram_download`, `telegram_multibot_download`, `download_queue`, `file_handler`, `multipart_files`, `thumbnail_downloader`, `media_caption`, `telegram_caption_sync` | **mancante** | Il catalogo ha già le colonne per canali, messaggi e code di trasferimento, ma nessuno le riempie da Telegram. |
 | File manager e backup | 4 — `file_manager`, `channel_backup`, `selective_backup`, `drive_backup` | **parziale** | Comando `backup` su `LocalBackupTarget` (zip con ritenzione) e, con `--drive`, `GoogleDriveBackupTarget`: upload resumable su Drive v3 con token OAuth da refresh token e ritenzione remota. Mancano backup per singolo canale e selezione dei file. |
 | Dati dei bot e rubrica | 5 — `bot_access_db`, `bot_channel_access`, `bot_runtime_manager`, `bot_token_registry`, `telegram_address_book_db` | **parziale** | Registro degli utenti del bot con ruoli in `bot_users` (`BotUserStore`). Mancano registro dei token, permessi per canale e rubrica. |
@@ -66,7 +66,7 @@ Le note dicono sempre dove sta il confine.
 
 | Area | Moduli dell'originale | Stato | Note |
 |---|---|---|---|
-| Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **parziale** | Coda di trasferimento persistente (`transfer_jobs`) con stati e progresso, worker di download dalle sorgenti; mancano l'upload verso Telegram e l'aggancio del pool di bot (`TelegramBotPool`) alla coda. |
+| Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **parziale** | Coda di trasferimento persistente (`transfer_jobs`) con stati e progresso, worker di download dalle sorgenti, upload MTProto in `TelegramMediaSource.UploadAsync` (file inviato come documento e registrato nel catalogo; end-to-end NON VERIFICATO senza credenziali). Mancano l'aggancio dell'upload e del pool di bot (`TelegramBotPool`) alla coda e la formattazione delle didascalie. |
 
 ### plugin/telegram (2 moduli) e plugin di radice (3)
 
@@ -95,7 +95,7 @@ con long polling e comandi, CLI e test.
 
 Parziale: client MTProto (login e import funzionanti, end-to-end non verificato senza credenziali),
 pagamenti Stars e MiniApp (primo giro), scraper (immagini remote), backup (per canale e
-selettivo), upload verso Telegram, pool di bot (presente, non ancora agganciato).
+selettivo), upload verso Telegram (in libreria, non agganciato alla coda), pool di bot (presente, non ancora agganciato).
 
 Mancante: `.strm` e radar degli intro, FUSE (WinFsp su
 Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti di ognuna),
