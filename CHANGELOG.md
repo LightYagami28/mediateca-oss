@@ -17,6 +17,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le v
   `TelegramApiException.RetryAfterSeconds` espone il valore restituito da Telegram.
 - Upload MTProto verso un canale importato (`TelegramMediaSource.UploadAsync`), con registrazione nel
   catalogo.
+- Rubrica Telegram: tabella `address_book` (schema v3), `AddressBookStore` e import di contatti, gruppi
+  e canali via MTProto (`TelegramMediaSource.ImportAddressBookAsync`).
 
 ### Modificato
 
