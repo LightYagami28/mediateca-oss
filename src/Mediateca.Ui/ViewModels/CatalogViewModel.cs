@@ -89,11 +89,8 @@ public partial class CatalogViewModel : ObservableObject
 
     private async Task DebounceAndSearchAsync(CancellationToken token)
     {
-        try
-        {
-            await Task.Delay(_searchDebounceMs, token).ConfigureAwait(false);
-        }
-        catch (TaskCanceledException)
+        await Task.Delay(_searchDebounceMs, token).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+        if (token.IsCancellationRequested)
         {
             return;
         }
@@ -104,8 +101,9 @@ public partial class CatalogViewModel : ObservableObject
             var results = await _source.SearchAsync(Search.Trim(), 2_000, token).ConfigureAwait(true);
             SetRows(results);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
+            return;
         }
         finally
         {

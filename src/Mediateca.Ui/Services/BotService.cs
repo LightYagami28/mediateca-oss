@@ -51,8 +51,9 @@ public sealed class BotService : IHostedService
             {
                 await _loop.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException exception)
             {
+                _logs.CreateLogger("bot").LogInformation(exception, "Arresto del bot Telegram interrotto prima della fine del polling.");
             }
         }
 
