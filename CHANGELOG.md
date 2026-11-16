@@ -7,6 +7,11 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e le v
 
 ### Aggiunto
 
+- Documentazione: `ROADMAP.md`, `FAQ.md`, `TROUBLESHOOTING.md`, `GLOSSARY.md`, `docs/adr/`, `AUTHORS.md`,
+  `ACKNOWLEDGMENTS.md`, `THIRD_PARTY_NOTICES.md`, `CITATION.cff`, `.env.example`.
+- Ambiente di sviluppo: `.devcontainer/` e `Makefile`.
+- GitHub: modelli per le Discussioni, `labels.yml` con sincronizzazione, `labeler.yml`, `release.yml`
+  e workflow SBOM allegato alle release.
 - Backup su Google Drive con `backup --drive`: upload resumable, token OAuth da refresh token,
   cartella di destinazione facoltativa e ritenzione remota.
 - Analisi dei nomi dei file (`MediaNameParser`): tipo, titolo, anno, stagione ed episodio, salvati

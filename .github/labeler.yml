@@ -1,0 +1,21 @@
+# Etichette per percorso, applicate da actions/labeler (.github/workflows/labeler.yml).
+documentazione:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**'
+dipendenze:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Directory.Packages.props'
+          - '.github/dependabot.yml'
+qualità:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'tests/**'
+          - '.editorconfig'
+sicurezza:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'SECURITY.md'
+          - '.github/workflows/codeql.yml'

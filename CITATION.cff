@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Se usi Mediateca in un lavoro, citalo così."
+title: "Mediateca"
+type: software
+authors:
+  - alias: "Light Yagami"
+repository-code: "https://github.com/LightYagami28/mediateca-oss"
+license: AGPL-3.0-or-later
+date-released: "2026-11-11"
+version: "0.1.0"
+abstract: "Client desktop e server locale in .NET per catalogare una libreria media ospitata su Telegram."

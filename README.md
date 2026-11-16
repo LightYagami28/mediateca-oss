@@ -111,6 +111,11 @@ funzionalità del programma, per sempre.
 
 - [docs/ARCHITETTURA.md](docs/ARCHITETTURA.md) — flusso dei dati, database, server, percorsi
 - [docs/PARITA.md](docs/PARITA.md) — confronto con i moduli dell'originale
+- [ROADMAP.md](ROADMAP.md) — cosa resta da fare
+- [FAQ.md](FAQ.md) e [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — domande frequenti e problemi noti
+- [GLOSSARY.md](GLOSSARY.md) — termini del progetto
+- [docs/adr/](docs/adr/README.md) — decisioni di architettura
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) — licenze delle dipendenze
 - [CHANGELOG.md](CHANGELOG.md) — cronologia delle versioni
 - [CONTRIBUTING.md](CONTRIBUTING.md) — come contribuire
 - [SECURITY.md](SECURITY.md) — segnalazioni di sicurezza

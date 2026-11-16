@@ -1,0 +1,10 @@
+{
+  "name": "Mediateca (.NET 11)",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:11.0",
+  "postCreateCommand": "dotnet restore Mediateca.slnx",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-dotnettools.csdevkit", "EditorConfig.EditorConfig"]
+    }
+  }
+}
