@@ -2,5 +2,8 @@ blank_issues_enabled: true
 
 contact_links:
   - name: Segnalazioni di sicurezza
-    url: https://github.com/LightYagami28/mediateca/security/advisories/new
+    url: https://github.com/LightYagami28/mediateca-oss/security/advisories/new
     about: Segnala qui le vulnerabilità in modo riservato
+  - name: Domande e proposte
+    url: https://github.com/LightYagami28/mediateca-oss/discussions
+    about: Per le domande e le idee usa le Discussioni

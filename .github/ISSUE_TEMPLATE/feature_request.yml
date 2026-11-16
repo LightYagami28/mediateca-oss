@@ -1,6 +1,6 @@
 name: Richiesta di funzionalità
 description: Proponi una funzione nuova o un miglioramento
-labels: [enhancement]
+labels: [miglioramento]
 body:
   - type: textarea
     id: problema
