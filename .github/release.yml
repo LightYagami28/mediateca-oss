@@ -1,0 +1,16 @@
+changelog:
+  exclude:
+    labels: [dipendenze]
+  categories:
+    - title: Nuove funzioni
+      labels: [miglioramento, roadmap]
+    - title: Correzioni
+      labels: [bug]
+    - title: Sicurezza
+      labels: [sicurezza]
+    - title: Documentazione
+      labels: [documentazione]
+    - title: Qualità
+      labels: [qualità]
+    - title: Altre modifiche
+      labels: ["*"]

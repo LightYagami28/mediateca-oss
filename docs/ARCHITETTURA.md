@@ -114,9 +114,4 @@ con nonce per ogni valore e stringa autodescrittiva `v1$nonce$tag$payload`.
 
 ## Punti aperti
 
-- Client Telegram MTProto: non esiste. C'è il client della Bot API (`Mediateca.Telegram`), che non
-  sostituisce Telethon per scaricare o pubblicare file nei canali.
-- Il comando `scan` importa da cartella locale; la scansione di un canale Telegram arriverà quando
-  ci sarà il client.
-- `Mediateca.Media` ha il contratto e il client TMDB, non ancora richiamati dai comandi.
-- Nessuna interfaccia grafica: la CLI è l'unico punto di ingresso.
+L'elenco aggiornato di ciò che manca è in [ROADMAP.md](../ROADMAP.md).
