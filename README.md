@@ -128,3 +128,10 @@ Teledisk 1.7 è un prodotto proprietario di terzi, distribuito come applicazione
 interfaccia PyQt5 e client Telegram Telethon. Questo repository non contiene codice né risorse
 dell'originale: è una riscrittura indipendente basata sull'osservazione del comportamento.
 `Teledisk` e `teledisk.net` appartengono ai rispettivi titolari.
+
+
+## Documentazione
+
+- [Indice della documentazione](docs/README.md)
+- [Architettura](ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
