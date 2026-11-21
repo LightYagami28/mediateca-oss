@@ -20,6 +20,9 @@ jobs:
     name: Analisi SonarCloud con copertura
     runs-on: windows-latest
     timeout-minutes: 30
+    # Il token Sonar non deve mai raggiungere codice di fork: l'analisi resta
+    # limitata a push, workflow_dispatch e PR dello stesso repository.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
       - name: Checkout

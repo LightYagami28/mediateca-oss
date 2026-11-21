@@ -29,7 +29,28 @@ jobs:
           dotnet-version: 11.0.x
 
       - name: Ripristino dei pacchetti
-        run: dotnet restore
+        run: dotnet restore --locked-mode
+
+      - name: Audit vulnerabilità NuGet
+        shell: pwsh
+        run: |
+          dotnet list package --vulnerable --include-transitive
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $raw = dotnet list package --vulnerable --include-transitive --format json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = ($raw -join [Environment]::NewLine) | ConvertFrom-Json
+          $issues = @()
+          foreach ($project in $report.projects) {
+            foreach ($framework in $project.frameworks) {
+              foreach ($library in $framework.libraries) {
+                if ($library.vulnerabilities) { $issues += "$($library.name) $($library.version)" }
+              }
+            }
+          }
+          if ($issues.Count -gt 0) {
+            Write-Error "Pacchetti vulnerabili: $($issues -join ', ')"
+            exit 1
+          }
 
       - name: Compilazione
         run: dotnet build --no-restore -c Release

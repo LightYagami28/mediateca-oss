@@ -7,15 +7,20 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   sbom:
-    name: Genera e allega l'SBOM
+    name: Genera, firma e attesta l'SBOM
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Installa cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
 
       - name: SBOM (SPDX)
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c  # v0.24.3
@@ -24,3 +29,17 @@ jobs:
           format: spdx-json
           artifact-name: mediateca.spdx.json
           upload-release-assets: true
+
+      - name: Firma l'SBOM con Sigstore (keyless)
+        run: cosign sign-blob --yes --bundle mediateca.spdx.json.sigstore.json mediateca.spdx.json
+
+      - name: Allega la firma alla release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" mediateca.spdx.json.sigstore.json --clobber
+
+      - name: Provenance SLSA dell'SBOM
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be  # v2.4.0
+        with:
+          subject-path: mediateca.spdx.json
