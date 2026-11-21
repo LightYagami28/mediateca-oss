@@ -35,13 +35,13 @@ public sealed record ServerOptions
     public string WebDavUser { get; init; } = "mediateca";
 
     /// <summary>Password WebDAV in chiaro, verificata all'avvio (alternativa all'hash).</summary>
-    public string WebDavPassword { get; init; } = "";
+    public string WebDavPassword { get; init; } = string.Empty;
 
     /// <summary>Hash PBKDF2 della password WebDAV: se presente ha la precedenza sul testo in chiaro.</summary>
-    public string WebDavPasswordHash { get; init; } = "";
+    public string WebDavPasswordHash { get; init; } = string.Empty;
 
     /// <summary>Token per le API JSON. Vuoto significa nessuna autenticazione.</summary>
-    public string ApiToken { get; init; } = "";
+    public string ApiToken { get; init; } = string.Empty;
 }
 
 /// <summary>

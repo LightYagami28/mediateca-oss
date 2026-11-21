@@ -19,7 +19,7 @@ public sealed record TelegramOptions
     public const string ApiHost = "api.telegram.org";
 
     /// <summary>Indirizzo predefinito della Bot API, composto senza URI assoluti hardcoded.</summary>
-    public static string DefaultBaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ApiHost).Uri.ToString().TrimEnd('/');
+    public static Uri DefaultBaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ApiHost).Uri;
 
     /// <summary>Timeout predefinito di una chiamata, in secondi.</summary>
     public const int DefaultTimeoutSeconds = 30;
@@ -28,10 +28,10 @@ public sealed record TelegramOptions
     private static readonly Regex TokenPattern = new(@"^\d{6,}:[A-Za-z0-9_-]{30,}\z", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
     /// <summary>Token del bot, nella forma <c>&lt;id&gt;:&lt;segreto&gt;</c>.</summary>
-    public string BotToken { get; init; } = Environment.GetEnvironmentVariable(BotTokenVariable)?.Trim() ?? "";
+    public string BotToken { get; init; } = Environment.GetEnvironmentVariable(BotTokenVariable)?.Trim() ?? string.Empty;
 
     /// <summary>Radice della Bot API.</summary>
-    public string BaseUrl { get; init; } = DefaultBaseUrl;
+    public Uri BaseUrl { get; init; } = DefaultBaseUrl;
 
     /// <summary>Timeout per singola chiamata in secondi; valori non positivi usano il timeout di <see cref="HttpClient"/>.</summary>
     public int TimeoutSeconds { get; init; } = DefaultTimeoutSeconds;

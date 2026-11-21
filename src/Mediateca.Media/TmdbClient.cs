@@ -23,16 +23,16 @@ public sealed record TmdbOptions
     public const string ApiHost = "api.themoviedb.org";
 
     /// <summary>Indirizzo predefinito delle API v3, composto senza URI assoluti hardcoded.</summary>
-    public static string DefaultBaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ApiHost, -1, "/3").Uri.ToString().TrimEnd('/');
+    public static Uri DefaultBaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ApiHost, -1, "/3").Uri;
 
     /// <summary>Lingua predefinita delle risposte.</summary>
     public const string DefaultLanguage = "it-IT";
 
     /// <summary>Chiave API, presa dalla variabile <see cref="ApiKeyVariable"/> se non specificata.</summary>
-    public string ApiKey { get; init; } = Environment.GetEnvironmentVariable(ApiKeyVariable)?.Trim() ?? "";
+    public string ApiKey { get; init; } = Environment.GetEnvironmentVariable(ApiKeyVariable)?.Trim() ?? string.Empty;
 
     /// <summary>Radice delle API; sovrascrivibile per proxy o mirror.</summary>
-    public string BaseUrl { get; init; } = DefaultBaseUrl;
+    public Uri BaseUrl { get; init; } = DefaultBaseUrl;
 
     /// <summary>Lingua delle risposte, nel formato TMDB (<c>it-IT</c>).</summary>
     public string Language { get; init; } = DefaultLanguage;
@@ -210,7 +210,7 @@ public sealed class TmdbClient : IMediaScraper, IDisposable
 
     private string BuildUrl(string path, List<(string Key, string Value)>? query = null)
     {
-        var builder = new StringBuilder(_options.BaseUrl.TrimEnd('/'));
+        var builder = new StringBuilder(_options.BaseUrl.AbsoluteUri.TrimEnd('/'));
         builder.Append(path);
         var separator = '?';
 

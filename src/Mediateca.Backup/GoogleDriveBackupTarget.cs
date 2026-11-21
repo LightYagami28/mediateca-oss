@@ -12,13 +12,13 @@ public sealed record GoogleDriveOptions
     public const string RefreshTokenVariable = "MEDIATECA_GDRIVE_REFRESH_TOKEN";
     public const string FolderIdVariable = "MEDIATECA_GDRIVE_FOLDER_ID";
 
-    public string ClientId { get; init; } = "";
+    public string ClientId { get; init; } = string.Empty;
 
-    public string ClientSecret { get; init; } = "";
+    public string ClientSecret { get; init; } = string.Empty;
 
-    public string RefreshToken { get; init; } = "";
+    public string RefreshToken { get; init; } = string.Empty;
 
-    public string FolderId { get; init; } = "";
+    public string FolderId { get; init; } = string.Empty;
 
     public int MaxBackups { get; init; } = 14;
 

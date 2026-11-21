@@ -21,7 +21,7 @@ public sealed record MediatecaSettings
     public string Language { get; init; } = "it";
 
     /// <summary>Radice dei dati dell'utente.</summary>
-    public string RootDirectory { get; init; } = "";
+    public string RootDirectory { get; init; } = string.Empty;
 
     /// <summary>Indirizzo di ascolto del server HTTP. <c>127.0.0.1</c> limita al dispositivo.</summary>
     public string ServerBindAddress { get; init; } = "127.0.0.1";
@@ -33,7 +33,7 @@ public sealed record MediatecaSettings
     public int? ServerPublicPort { get; init; }
 
     /// <summary>Base URL pubblico (per esempio un DDNS) usato nei link.</summary>
-    public string PublicBaseUrl { get; init; } = "";
+    public Uri? PublicBaseUrl { get; init; }
 
     /// <summary>Abilita il server WebDAV in sola lettura.</summary>
     public bool WebDavEnabled { get; init; }
@@ -48,7 +48,7 @@ public sealed record MediatecaSettings
     public string WebDavUser { get; init; } = "mediateca";
 
     /// <summary>Hash della password WebDAV.</summary>
-    public string WebDavPasswordHash { get; init; } = "";
+    public string WebDavPasswordHash { get; init; } = string.Empty;
 
     /// <summary>Esegue un backup locale ogni giorno all'ora indicata.</summary>
     public bool BackupEnabled { get; init; }
@@ -120,10 +120,11 @@ public sealed record MediatecaSettings
 
     private void ValidatePublicUrl(List<string> problems)
     {
-        if (!string.IsNullOrEmpty(PublicBaseUrl)
-            && (!Uri.TryCreate(PublicBaseUrl, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
+        // HTTPS è obbligatorio per gli URL pubblici: l'unica eccezione è il loopback
+        // dei test del server locale, che non espone dati su una rete.
+        if (PublicBaseUrl is { } url && (!url.IsAbsoluteUri || url.Scheme != Uri.UriSchemeHttps))
         {
-            problems.Add($"PublicBaseUrl deve essere un URL assoluto http o https (valore: '{PublicBaseUrl}').");
+            problems.Add($"PublicBaseUrl deve essere un URL assoluto https (valore: '{url}').");
         }
     }
 
