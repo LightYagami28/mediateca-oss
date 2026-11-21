@@ -88,6 +88,14 @@ conferma**.
 `structure_modular-files` sono regole soggettive sulla documentazione, non
 difetti di codice. **Richiedono conferma**.
 
+## Nota SonarCloud
+
+L'analisi di SonarCloud del commit `0d1439c` (guard di massa, poi revertito)
+ha aperto 302 issue `S3928`/`CA2208` sui `throw new ArgumentNullException()`
+senza nome parametro. Il codice è stato ripristinato con `c01cbf1`/`ccbe44a`
+e `/health` rimane protetto. Il gate tornerà OK alla prossima analisi del
+branch `main`.
+
 ## Albero delle decisioni
 
 Nessuna regola è stata disabilitata e non sono state aggiunte soppressioni.
