@@ -213,7 +213,7 @@ public sealed class TmdbClient : IMediaScraper, IDisposable
     private static int? ParseYear(string? date) =>
         date is { Length: >= 4 } && int.TryParse(date.AsSpan(0, 4), CultureInfo.InvariantCulture, out var year) ? year : null;
 
-    private string BuildUrl(string path, List<(string Key, string Value)>? query = null)
+    private Uri BuildUrl(string path, List<(string Key, string Value)>? query = null)
     {
         var builder = new StringBuilder(_options.BaseUrl.AbsoluteUri.TrimEnd('/'));
         builder.Append(path);
@@ -231,7 +231,7 @@ public sealed class TmdbClient : IMediaScraper, IDisposable
             builder.Append('&').Append("language=").Append(Uri.EscapeDataString(_options.Language.Trim()));
         }
 
-        return builder.ToString();
+        return new Uri(builder.ToString());
     }
 
     private sealed class SearchPayload
