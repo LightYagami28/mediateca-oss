@@ -35,11 +35,7 @@ public sealed class BotPollingService
             catch (Exception exception)
             {
                 _logger.LogWarning(exception, "getUpdates fallito: nuovo tentativo tra poco");
-                try
-                {
-                    await Task.Delay(ErrorDelay, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
+                if (!await DelayAsync(ErrorDelay, cancellationToken).ConfigureAwait(false))
                 {
                     break;
                 }
@@ -47,35 +43,51 @@ public sealed class BotPollingService
                 continue;
             }
 
-            foreach (var update in updates)
+            offset = await HandleUpdatesAsync(updates, offset, handler, cancellationToken).ConfigureAwait(false);
+            if (updates.Count == 0 && !await DelayAsync(PollInterval, cancellationToken).ConfigureAwait(false))
             {
-                try
-                {
-                    await handler(update, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception exception)
-                {
-                    _logger.LogError(exception, "Handler fallito per l'aggiornamento {UpdateId}", update.UpdateId);
-                }
+                break;
+            }
+        }
+    }
 
-                offset = Math.Max(offset, update.UpdateId + 1);
+    private async Task<int> HandleUpdatesAsync(
+        IReadOnlyList<BotUpdate> updates,
+        int offset,
+        Func<BotUpdate, CancellationToken, Task> handler,
+        CancellationToken cancellationToken)
+    {
+        foreach (var update in updates)
+        {
+            try
+            {
+                await handler(update, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Handler fallito per l'aggiornamento {UpdateId}", update.UpdateId);
             }
 
-            if (updates.Count == 0)
-            {
-                try
-                {
-                    await Task.Delay(PollInterval, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-            }
+            offset = Math.Max(offset, update.UpdateId + 1);
+        }
+
+        return offset;
+    }
+
+    private static async Task<bool> DelayAsync(TimeSpan delay, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
         }
     }
 }

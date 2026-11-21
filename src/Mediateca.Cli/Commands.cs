@@ -49,50 +49,65 @@ internal static class Commands
 
         if (args.Length == 0 || args[0] == "show")
         {
-            Console.WriteLine($"file          : {store.Path}");
-            Console.WriteLine($"lingua        : {settings.Language}");
-            Console.WriteLine($"bind          : {settings.ServerBindAddress}:{settings.ServerBindPort}");
-            Console.WriteLine($"url pubblico  : {(string.IsNullOrEmpty(settings.PublicBaseUrl) ? "(nessuno)" : settings.PublicBaseUrl)}");
-            Console.WriteLine($"webdav        : {(settings.WebDavEnabled ? "attivo" : "spento")} (auth: {settings.WebDavRequireAuth})");
-            Console.WriteLine($"backup        : {(settings.BackupEnabled ? $"giornaliero alle {settings.BackupTime}" : "spento")}");
+            ShowSettings(settings, store.Path);
             return 0;
         }
 
         if (args[0] == "set")
         {
-            for (var index = 1; index + 1 < args.Length; index += 2)
-            {
-                var key = args[index];
-                var value = args[index + 1];
-                settings = key switch
-                {
-                    "language" => settings with { Language = value },
-                    "bind" => settings with { ServerBindAddress = value },
-                    "port" => settings with { ServerBindPort = int.Parse(value) },
-                    "public-url" => settings with { PublicBaseUrl = value },
-                    "webdav" => settings with { WebDavEnabled = bool.Parse(value) },
-                    "backup" => settings with { BackupEnabled = bool.Parse(value) },
-                    "backup-time" => settings with { BackupTime = value },
-                    "theme" => settings with { Theme = value },
-                    _ => throw new ArgumentException($"chiave sconosciuta '{key}'"),
-                };
-            }
-
-            store.Save(settings);
-            Console.WriteLine($"salvate in {store.Path}");
+            ApplySettings(settings, store, args);
             return 0;
         }
 
         if (args[0] == "password")
         {
-            var password = args.Length > 1 ? args[1] : throw new ArgumentException("uso: settings password <valore>");
-            var hash = PasswordHasher.Hash(password);
-            store.Save(settings with { WebDavPasswordHash = hash, WebDavRequireAuth = true });
-            Console.WriteLine($"hash WebDAV impostato ({PasswordHasher.IsHash(hash)})");
+            SetPassword(settings, store, args);
             return 0;
         }
 
         throw new ArgumentException($"sottocomando sconosciuto '{args[0]}'");
+    }
+
+    private static void ShowSettings(MediatecaSettings settings, string path)
+    {
+        Console.WriteLine($"file          : {path}");
+        Console.WriteLine($"lingua        : {settings.Language}");
+        Console.WriteLine($"bind          : {settings.ServerBindAddress}:{settings.ServerBindPort}");
+        Console.WriteLine($"url pubblico  : {(string.IsNullOrEmpty(settings.PublicBaseUrl) ? "(nessuno)" : settings.PublicBaseUrl)}");
+        Console.WriteLine($"webdav        : {(settings.WebDavEnabled ? "attivo" : "spento")} (auth: {settings.WebDavRequireAuth})");
+        Console.WriteLine($"backup        : {(settings.BackupEnabled ? $"giornaliero alle {settings.BackupTime}" : "spento")}");
+    }
+
+    private static void ApplySettings(MediatecaSettings settings, JsonSettingsStore store, string[] args)
+    {
+        for (var index = 1; index + 1 < args.Length; index += 2)
+        {
+            var key = args[index];
+            var value = args[index + 1];
+            settings = key switch
+            {
+                "language" => settings with { Language = value },
+                "bind" => settings with { ServerBindAddress = value },
+                "port" => settings with { ServerBindPort = int.Parse(value) },
+                "public-url" => settings with { PublicBaseUrl = value },
+                "webdav" => settings with { WebDavEnabled = bool.Parse(value) },
+                "backup" => settings with { BackupEnabled = bool.Parse(value) },
+                "backup-time" => settings with { BackupTime = value },
+                "theme" => settings with { Theme = value },
+                _ => throw new ArgumentException($"chiave sconosciuta '{key}'"),
+            };
+        }
+
+        store.Save(settings);
+        Console.WriteLine($"salvate in {store.Path}");
+    }
+
+    private static void SetPassword(MediatecaSettings settings, JsonSettingsStore store, string[] args)
+    {
+        var password = args.Length > 1 ? args[1] : throw new ArgumentException("uso: settings password <valore>");
+        var hash = PasswordHasher.Hash(password);
+        store.Save(settings with { WebDavPasswordHash = hash, WebDavRequireAuth = true });
+        Console.WriteLine($"hash WebDAV impostato ({PasswordHasher.IsHash(hash)})");
     }
 
     /// <summary>Importa nel catalogo i file di una cartella locale.</summary>
@@ -197,7 +212,7 @@ internal static class Commands
         var database = new MediatecaDatabase(paths.DatabasePath);
         database.Migrate();
 
-        Console.WriteLine($"mediateca server su http://{bind}:{port}");
+        Console.WriteLine($"mediateca server su {Uri.UriSchemeHttps}://{bind}:{port}");
         Console.WriteLine($"webdav {(settings.WebDavEnabled ? "attivo" : "spento")}, api token {(string.IsNullOrEmpty(token) ? "assente" : "presente")}");
         Console.WriteLine("Ctrl+C per fermare");
 

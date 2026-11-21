@@ -79,17 +79,30 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         }
 
         var store = new SqliteMediaStore(_database);
-        store.UpsertChannel(new DomainChannel
-        {
-            Id = channel.ID,
-            AccessHash = channel.access_hash,
-            Title = channel.Title,
-            Username = channel.MainUsername ?? username,
-            Kind = channel.IsGroup ? ChannelKind.Supergroup : ChannelKind.Channel,
-            IsSource = true,
-        });
+        store.UpsertChannel(ToDomainChannel(channel, username));
 
-        var peer = (InputPeer)channel;
+        var (imported, bytes) = await ImportHistoryAsync(
+            client, (InputPeer)channel, store, channel.ID, cancellationToken).ConfigureAwait(false);
+        return new ImportSummary(imported, bytes);
+    }
+
+    private static DomainChannel ToDomainChannel(TL.Channel channel, string username) => new()
+    {
+        Id = channel.ID,
+        AccessHash = channel.access_hash,
+        Title = channel.Title,
+        Username = channel.MainUsername ?? username,
+        Kind = channel.IsGroup ? ChannelKind.Supergroup : ChannelKind.Channel,
+        IsSource = true,
+    };
+
+    private static async Task<(int Imported, long Bytes)> ImportHistoryAsync(
+        Client client,
+        InputPeer peer,
+        SqliteMediaStore store,
+        long channelId,
+        CancellationToken cancellationToken)
+    {
         var imported = 0;
         long bytes = 0;
         var lastMessageId = 0;
@@ -104,25 +117,8 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
             foreach (var message in history.Messages)
             {
                 lastMessageId = Math.Max(lastMessageId, message.ID);
-                if (message is not Message mediaMessage || mediaMessage.media is null)
-                {
-                    continue;
-                }
-
-                var name = MediaName(mediaMessage);
-                if (name is null)
-                {
-                    continue;
-                }
-
-                var size = mediaMessage.media switch
-                {
-                    MessageMediaDocument { document: Document document } => document.size,
-                    _ => 0,
-                };
-
-                store.Upsert(Catalogued(channel.ID, mediaMessage.ID, name, size, mediaMessage.Date));
-                imported++;
+                var (count, size) = CatalogMessage(store, channelId, message);
+                imported += count;
                 bytes += size;
             }
 
@@ -132,7 +128,30 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
             }
         }
 
-        return new ImportSummary(imported, bytes);
+        return (imported, bytes);
+    }
+
+    private static (int Imported, long Bytes) CatalogMessage(SqliteMediaStore store, long channelId, MessageBase message)
+    {
+        if (message is not Message mediaMessage || mediaMessage.media is null)
+        {
+            return (0, 0);
+        }
+
+        var name = MediaName(mediaMessage);
+        if (name is null)
+        {
+            return (0, 0);
+        }
+
+        var size = mediaMessage.media switch
+        {
+            MessageMediaDocument { document: Document document } => document.size,
+            _ => 0,
+        };
+
+        store.Upsert(Catalogued(channelId, mediaMessage.ID, name, size, mediaMessage.Date));
+        return (1, size);
     }
 
     public async Task<MediaItem> UploadAsync(long channelId, string filePath, string? caption = null, CancellationToken cancellationToken = default)

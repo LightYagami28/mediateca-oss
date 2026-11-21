@@ -82,11 +82,31 @@ public sealed record MediatecaSettings
     {
         List<string> problems = [];
 
+        ValidateLanguage(problems);
+        ValidatePorts(problems);
+        ValidatePublicUrl(problems);
+        ValidateWebDav(problems);
+        ValidateBackup(problems);
+        ValidateInterface(problems);
+        ValidateRootDirectory(problems);
+
+        ValidateExtensions(VideoExtensions, nameof(VideoExtensions), problems);
+        ValidateExtensions(ImageExtensions, nameof(ImageExtensions), problems);
+        ValidateExtensions(DocumentExtensions, nameof(DocumentExtensions), problems);
+
+        return problems;
+    }
+
+    private void ValidateLanguage(List<string> problems)
+    {
         if (!string.IsNullOrEmpty(Language) && (Language.Length != 2 || !Language.All(char.IsLetter)))
         {
             problems.Add($"Language deve essere un codice ISO a due lettere (valore: '{Language}').");
         }
+    }
 
+    private void ValidatePorts(List<string> problems)
+    {
         if (ServerBindPort is < MinPort or > MaxPort)
         {
             problems.Add($"ServerBindPort deve essere tra {MinPort} e {MaxPort} (valore: {ServerBindPort}).");
@@ -96,21 +116,27 @@ public sealed record MediatecaSettings
         {
             problems.Add($"ServerPublicPort deve essere tra {MinPort} e {MaxPort} (valore: {publicPort}).");
         }
+    }
 
-        if (!string.IsNullOrEmpty(PublicBaseUrl))
+    private void ValidatePublicUrl(List<string> problems)
+    {
+        if (!string.IsNullOrEmpty(PublicBaseUrl)
+            && (!Uri.TryCreate(PublicBaseUrl, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
         {
-            if (!Uri.TryCreate(PublicBaseUrl, UriKind.Absolute, out var uri)
-                || uri.Scheme is not ("http" or "https"))
-            {
-                problems.Add($"PublicBaseUrl deve essere un URL assoluto http o https (valore: '{PublicBaseUrl}').");
-            }
+            problems.Add($"PublicBaseUrl deve essere un URL assoluto http o https (valore: '{PublicBaseUrl}').");
         }
+    }
 
+    private void ValidateWebDav(List<string> problems)
+    {
         if (WebDavEnabled && WebDavRequireAuth && string.IsNullOrWhiteSpace(WebDavUser))
         {
             problems.Add("WebDavUser non può essere vuoto quando l'autenticazione WebDAV è richiesta.");
         }
+    }
 
+    private void ValidateBackup(List<string> problems)
+    {
         if (!TimeSpan.TryParseExact(BackupTime, @"hh\:mm", CultureInfo.InvariantCulture, out _))
         {
             problems.Add($"BackupTime deve essere nel formato HH:mm (valore: '{BackupTime}').");
@@ -120,7 +146,10 @@ public sealed record MediatecaSettings
         {
             problems.Add($"BackupRetention deve essere almeno 1 (valore: {BackupRetention}).");
         }
+    }
 
+    private void ValidateInterface(List<string> problems)
+    {
         if (double.IsNaN(UiScale) || double.IsInfinity(UiScale) || UiScale is < MinUiScale or > MaxUiScale)
         {
             problems.Add($"UiScale deve essere tra {MinUiScale} e {MaxUiScale} (valore: {UiScale}).");
@@ -130,17 +159,14 @@ public sealed record MediatecaSettings
         {
             problems.Add($"Theme deve essere system, light o dark (valore: '{Theme}').");
         }
+    }
 
+    private void ValidateRootDirectory(List<string> problems)
+    {
         if (RootDirectory is { Length: > 0 } root && !Path.IsPathFullyQualified(root))
         {
             problems.Add("RootDirectory deve essere un percorso assoluto quando specificato.");
         }
-
-        ValidateExtensions(VideoExtensions, nameof(VideoExtensions), problems);
-        ValidateExtensions(ImageExtensions, nameof(ImageExtensions), problems);
-        ValidateExtensions(DocumentExtensions, nameof(DocumentExtensions), problems);
-
-        return problems;
     }
 
     private static void ValidateExtensions(IReadOnlyList<string>? extensions, string name, List<string> problems)
