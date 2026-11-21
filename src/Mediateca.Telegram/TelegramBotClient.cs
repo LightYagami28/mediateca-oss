@@ -71,88 +71,130 @@ public sealed class TelegramBotClient
     /// <summary>Invia un messaggio di testo con una tastiera inline facoltativa (<c>sendMessage</c>).</summary>
     public async Task<bool> SendMessageAsync(long chatId, string text, IReadOnlyList<InlineKeyboardButton>? buttons, CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
+        if (text != null)
         {
-            return false;
-        }
-
-        ArgumentException.ThrowIfNullOrWhiteSpace(text);
-        var body = JsonSerializer.Serialize(new SendMessageDto
-        {
-            ChatId = chatId,
-            Text = text,
-            ReplyMarkup = buttons is null or { Count: 0 } ? null : new TelegramDtos.ReplyMarkup
+            if (!IsConfigured)
             {
-                InlineKeyboard = buttons.Select(button => new List<TelegramDtos.KeyboardButton>
+                return false;
+            }
+
+            ArgumentException.ThrowIfNullOrWhiteSpace(text);
+            var body = JsonSerializer.Serialize(new SendMessageDto
+            {
+                ChatId = chatId,
+                Text = text,
+                ReplyMarkup = buttons is null or { Count: 0 } ? null : new TelegramDtos.ReplyMarkup
                 {
-                    new() { Text = button.Text, CallbackData = button.CallbackData },
-                }).ToList(),
-            },
-        }, JsonOptions);
-        var sent = await CallAsync<MessageDto>("sendMessage", query: null, jsonBody: body, cancellationToken);
-        return sent is not null;
+                    InlineKeyboard = buttons.Select(button => new List<TelegramDtos.KeyboardButton>
+                    {
+                        new() { Text = button.Text, CallbackData = button.CallbackData },
+                    }).ToList(),
+                },
+            }, JsonOptions);
+            var sent = await CallAsync<MessageDto>("sendMessage", query: null, jsonBody: body, cancellationToken);
+            return sent is not null;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Conferma una pressione su un bottone inline (<c>answerCallbackQuery</c>).</summary>
     public async Task<bool> AnswerCallbackQueryAsync(string callbackQueryId, string? text, CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
+        if (callbackQueryId != null)
         {
-            return false;
-        }
+            if (!IsConfigured)
+            {
+                return false;
+            }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(callbackQueryId);
-        var body = JsonSerializer.Serialize(new AnswerCallbackQueryDto { CallbackQueryId = callbackQueryId, Text = text }, JsonOptions);
-        return await CallAsync<bool>("answerCallbackQuery", query: null, jsonBody: body, cancellationToken);
+            ArgumentException.ThrowIfNullOrWhiteSpace(callbackQueryId);
+            var body = JsonSerializer.Serialize(new AnswerCallbackQueryDto { CallbackQueryId = callbackQueryId, Text = text }, JsonOptions);
+            return await CallAsync<bool>("answerCallbackQuery", query: null, jsonBody: body, cancellationToken);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Crea un link di pagamento in Telegram Stars (<c>createInvoiceLink</c>).</summary>
     public async Task<string?> CreateInvoiceLinkAsync(string title, string description, string payload, int stars, CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
+        if (title != null)
         {
-            return null;
+            if (payload != null)
+            {
+                if (!IsConfigured)
+                {
+                    return null;
+                }
+
+                ArgumentException.ThrowIfNullOrWhiteSpace(title);
+                ArgumentException.ThrowIfNullOrWhiteSpace(payload);
+                ArgumentOutOfRangeException.ThrowIfLessThan(stars, 1);
+
+                var body = JsonSerializer.Serialize(new CreateInvoiceLinkDto
+                {
+                    Title = title,
+                    Description = description,
+                    Payload = payload,
+                    Currency = "XTR",
+                    Prices = [new TelegramDtos.InvoicePrice { Label = title, Amount = stars }],
+                }, JsonOptions);
+                return await CallAsync<string>("createInvoiceLink", query: null, jsonBody: body, cancellationToken);
+            }
+            else
+            {
+                throw new ArgumentNullException();
+            }
         }
-
-        ArgumentException.ThrowIfNullOrWhiteSpace(title);
-        ArgumentException.ThrowIfNullOrWhiteSpace(payload);
-        ArgumentOutOfRangeException.ThrowIfLessThan(stars, 1);
-
-        var body = JsonSerializer.Serialize(new CreateInvoiceLinkDto
+        else
         {
-            Title = title,
-            Description = description,
-            Payload = payload,
-            Currency = "XTR",
-            Prices = [new TelegramDtos.InvoicePrice { Label = title, Amount = stars }],
-        }, JsonOptions);
-        return await CallAsync<string>("createInvoiceLink", query: null, jsonBody: body, cancellationToken);
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Risponde a una query di MiniApp con un articolo cliccabile (<c>answerWebAppQuery</c>).</summary>
     public async Task<bool> AnswerWebAppQueryAsync(string webAppQueryId, string title, string description, Uri url, CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
+        if (webAppQueryId != null)
         {
-            return false;
-        }
-
-        ArgumentException.ThrowIfNullOrWhiteSpace(webAppQueryId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(title);
-        EnsureHttps(url);
-
-        var body = JsonSerializer.Serialize(new AnswerWebAppQueryDto
-        {
-            WebAppQueryId = webAppQueryId,
-            Result = new TelegramDtos.WebAppResult
+            if (url != null)
             {
-                Title = title,
-                Description = description,
-                Url = url,
-                InputMessageContent = new TelegramDtos.InputMessageContent { MessageText = url.ToString() },
-            },
-        }, JsonOptions);
-        return await CallAsync<bool>("answerWebAppQuery", query: null, jsonBody: body, cancellationToken);
+                if (!IsConfigured)
+                {
+                    return false;
+                }
+
+                ArgumentException.ThrowIfNullOrWhiteSpace(webAppQueryId);
+                ArgumentException.ThrowIfNullOrWhiteSpace(title);
+                EnsureHttps(url);
+
+                var body = JsonSerializer.Serialize(new AnswerWebAppQueryDto
+                {
+                    WebAppQueryId = webAppQueryId,
+                    Result = new TelegramDtos.WebAppResult
+                    {
+                        Title = title,
+                        Description = description,
+                        Url = url,
+                        InputMessageContent = new TelegramDtos.InputMessageContent { MessageText = url.ToString() },
+                    },
+                }, JsonOptions);
+                return await CallAsync<bool>("answerWebAppQuery", query: null, jsonBody: body, cancellationToken);
+            }
+            else
+            {
+                throw new ArgumentNullException();
+            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Legge gli aggiornamenti in attesa (<c>getUpdates</c>).</summary>
@@ -190,21 +232,28 @@ public sealed class TelegramBotClient
     /// <summary>Imposta il bottone del menu della chat, tipicamente verso la MiniApp (<c>setChatMenuButton</c>).</summary>
     public async Task<bool> SetChatMenuButtonAsync(string text, Uri webAppUrl, CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured)
+        if (webAppUrl != null)
         {
-            return false;
-        }
-
-        EnsureHttps(webAppUrl);
-        var body = JsonSerializer.Serialize(new SetChatMenuButtonDto
-        {
-            MenuButton = new MenuButtonWebAppDto
+            if (!IsConfigured)
             {
-                Text = text,
-                WebApp = new WebAppInfoDto { Url = webAppUrl },
-            },
-        }, JsonOptions);
-        return await CallAsync<bool>("setChatMenuButton", query: null, jsonBody: body, cancellationToken);
+                return false;
+            }
+
+            EnsureHttps(webAppUrl);
+            var body = JsonSerializer.Serialize(new SetChatMenuButtonDto
+            {
+                MenuButton = new MenuButtonWebAppDto
+                {
+                    Text = text,
+                    WebApp = new WebAppInfoDto { Url = webAppUrl },
+                },
+            }, JsonOptions);
+            return await CallAsync<bool>("setChatMenuButton", query: null, jsonBody: body, cancellationToken);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Chiama un metodo della Bot API e restituisce il campo <c>result</c>.</summary>
@@ -212,57 +261,71 @@ public sealed class TelegramBotClient
     /// <exception cref="TimeoutException">Se la chiamata supera <see cref="TelegramOptions.TimeoutSeconds"/>.</exception>
     private async Task<T?> CallAsync<T>(string method, string? query, string? jsonBody, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(jsonBody is null ? HttpMethod.Get : HttpMethod.Post, BuildUrl(method, query));
-        if (jsonBody is not null)
+        if (method != null)
         {
-            request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-        }
-
-        using var response = await SendAsync(request, method, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        ApiEnvelope<T>? envelope;
-        try
-        {
-            envelope = JsonSerializer.Deserialize<ApiEnvelope<T>>(body, JsonOptions);
-        }
-        catch (JsonException exc)
-        {
-            throw new TelegramApiException(method, ErrorCodeOf(response), "risposta non leggibile", exc);
-        }
-
-        if (envelope is null)
-        {
-            throw new TelegramApiException(method, ErrorCodeOf(response), "risposta vuota");
-        }
-
-        if (!envelope.Ok)
-        {
-            throw new TelegramApiException(method, envelope.ErrorCode ?? ErrorCodeOf(response), envelope.Description)
+            using var request = new HttpRequestMessage(jsonBody is null ? HttpMethod.Get : HttpMethod.Post, BuildUrl(method, query));
+            if (jsonBody is not null)
             {
-                RetryAfterSeconds = envelope.Parameters?.RetryAfter,
-            };
-        }
+                request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            }
 
-        return envelope.Result;
+            using var response = await SendAsync(request, method, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            ApiEnvelope<T>? envelope;
+            try
+            {
+                envelope = JsonSerializer.Deserialize<ApiEnvelope<T>>(body, JsonOptions);
+            }
+            catch (JsonException exc)
+            {
+                throw new TelegramApiException(method, ErrorCodeOf(response), "risposta non leggibile", exc);
+            }
+
+            if (envelope is null)
+            {
+                throw new TelegramApiException(method, ErrorCodeOf(response), "risposta vuota");
+            }
+
+            if (!envelope.Ok)
+            {
+                throw new TelegramApiException(method, envelope.ErrorCode ?? ErrorCodeOf(response), envelope.Description)
+                {
+                    RetryAfterSeconds = envelope.Parameters?.RetryAfter,
+                };
+            }
+
+            return envelope.Result;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, string method, CancellationToken cancellationToken)
     {
-        if (_options.TimeoutSeconds <= 0)
+        if (request != null)
         {
-            return await _http.SendAsync(request, cancellationToken);
-        }
+            if (_options.TimeoutSeconds <= 0)
+            {
+                return await _http.SendAsync(request, cancellationToken);
+            }
 
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds));
-        try
-        {
-            return await _http.SendAsync(request, timeout.Token);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds));
+            try
+            {
+                return await _http.SendAsync(request, timeout.Token);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException($"Telegram non ha risposto a {method} entro {_options.TimeoutSeconds} secondi.");
+            }
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        else
         {
-            throw new TimeoutException($"Telegram non ha risposto a {method} entro {_options.TimeoutSeconds} secondi.");
+            throw new ArgumentNullException();
         }
     }
 
@@ -271,17 +334,31 @@ public sealed class TelegramBotClient
 
     private static void EnsureHttps(Uri url)
     {
-        ArgumentNullException.ThrowIfNull(url);
-        if (!url.IsAbsoluteUri || url.Scheme != Uri.UriSchemeHttps)
+        if (url != null)
         {
-            throw new ArgumentException("L'URL della MiniApp deve essere assoluto e HTTPS.", nameof(url));
+            ArgumentNullException.ThrowIfNull(url);
+            if (!url.IsAbsoluteUri || url.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new ArgumentException("L'URL della MiniApp deve essere assoluto e HTTPS.", nameof(url));
+            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
         }
     }
 
     private static int ErrorCodeOf(HttpResponseMessage response)
     {
-        var status = (int)response.StatusCode;
-        return status >= 400 ? status : 0;
+        if (response != null)
+        {
+            var status = (int)response.StatusCode;
+            return status >= 400 ? status : 0;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private sealed class ApiEnvelope<T>

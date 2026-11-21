@@ -27,15 +27,22 @@ public sealed class SampleCatalogSource(int count = 5_000) : ICatalogSource
 
     public Task<IReadOnlyList<CatalogRow>> SearchAsync(string query, int limit, CancellationToken cancellationToken = default)
     {
-        var trimmed = query.Trim();
-        var rows = BuildRows(cancellationToken);
-        var filtered = trimmed.Length == 0
-            ? rows
-            : rows.Where(row =>
-                row.Name.Contains(trimmed, StringComparison.OrdinalIgnoreCase) ||
-                row.Channel.Contains(trimmed, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (query != null)
+        {
+            var trimmed = query.Trim();
+            var rows = BuildRows(cancellationToken);
+            var filtered = trimmed.Length == 0
+                ? rows
+                : rows.Where(row =>
+                    row.Name.Contains(trimmed, StringComparison.OrdinalIgnoreCase) ||
+                    row.Channel.Contains(trimmed, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        return Task.FromResult<IReadOnlyList<CatalogRow>>(filtered.Take(Math.Max(limit, 1)).ToList());
+            return Task.FromResult<IReadOnlyList<CatalogRow>>(filtered.Take(Math.Max(limit, 1)).ToList());
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private List<CatalogRow> BuildRows(CancellationToken cancellationToken)

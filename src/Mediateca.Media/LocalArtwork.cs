@@ -6,23 +6,30 @@ public static class LocalArtwork
 
     public static string? FindCover(string mediaFilePath)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(mediaFilePath);
-        var directory = Path.GetDirectoryName(mediaFilePath);
-        if (string.IsNullOrEmpty(directory))
+        if (mediaFilePath != null)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(mediaFilePath);
+            var directory = Path.GetDirectoryName(mediaFilePath);
+            if (string.IsNullOrEmpty(directory))
+            {
+                return null;
+            }
+
+            var baseName = Path.GetFileNameWithoutExtension(mediaFilePath);
+            foreach (var candidate in new[] { $"{baseName}.jpg", $"{baseName}.png" }.Concat(CoverNames))
+            {
+                var full = Path.Combine(directory, candidate);
+                if (File.Exists(full))
+                {
+                    return full;
+                }
+            }
+
             return null;
         }
-
-        var baseName = Path.GetFileNameWithoutExtension(mediaFilePath);
-        foreach (var candidate in new[] { $"{baseName}.jpg", $"{baseName}.png" }.Concat(CoverNames))
+        else
         {
-            var full = Path.Combine(directory, candidate);
-            if (File.Exists(full))
-            {
-                return full;
-            }
+            throw new ArgumentNullException();
         }
-
-        return null;
     }
 }

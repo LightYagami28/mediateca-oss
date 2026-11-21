@@ -27,10 +27,17 @@ public sealed class SecretBox
     /// <summary>Deriva una cassaforte da una password e da un salt memorizzato.</summary>
     public static SecretBox FromPassword(string password, byte[] salt)
     {
-        ArgumentException.ThrowIfNullOrEmpty(password);
-        ArgumentNullException.ThrowIfNull(salt);
-        var key = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(password), salt, Iterations, HashAlgorithmName.SHA256, KeyBytes);
-        return new SecretBox(key);
+        if (password != null)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(password);
+            ArgumentNullException.ThrowIfNull(salt);
+            var key = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(password), salt, Iterations, HashAlgorithmName.SHA256, KeyBytes);
+            return new SecretBox(key);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Crea un salt nuovo.</summary>
@@ -39,52 +46,73 @@ public sealed class SecretBox
     /// <summary>Cifra un testo e restituisce una stringa autodescrittiva.</summary>
     public string Encrypt(string plaintext)
     {
-        ArgumentNullException.ThrowIfNull(plaintext);
-        var nonce = RandomNumberGenerator.GetBytes(NonceBytes);
-        var plain = Encoding.UTF8.GetBytes(plaintext);
-        var cipher = new byte[plain.Length];
-        var tag = new byte[TagBytes];
+        if (plaintext != null)
+        {
+            ArgumentNullException.ThrowIfNull(plaintext);
+            var nonce = RandomNumberGenerator.GetBytes(NonceBytes);
+            var plain = Encoding.UTF8.GetBytes(plaintext);
+            var cipher = new byte[plain.Length];
+            var tag = new byte[TagBytes];
 
-        using var aes = new AesGcm(_key, TagBytes);
-        aes.Encrypt(nonce, plain, cipher, tag);
+            using var aes = new AesGcm(_key, TagBytes);
+            aes.Encrypt(nonce, plain, cipher, tag);
 
-        return string.Join('$', Prefix, Convert.ToBase64String(nonce), Convert.ToBase64String(tag), Convert.ToBase64String(cipher));
+            return string.Join('$', Prefix, Convert.ToBase64String(nonce), Convert.ToBase64String(tag), Convert.ToBase64String(cipher));
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Decifra una stringa prodotta da <see cref="Encrypt"/>.</summary>
     /// <exception cref="CryptographicException">Se il testo è stato manomesso o la chiave è sbagliata.</exception>
     public string Decrypt(string payload)
     {
-        ArgumentException.ThrowIfNullOrEmpty(payload);
-        var parts = payload.Split('$');
-        if (parts.Length != 4 || parts[0] != Prefix)
+        if (payload != null)
         {
-            throw new CryptographicException("Formato del testo cifrato non riconosciuto.");
+            ArgumentException.ThrowIfNullOrEmpty(payload);
+            var parts = payload.Split('$');
+            if (parts.Length != 4 || parts[0] != Prefix)
+            {
+                throw new CryptographicException("Formato del testo cifrato non riconosciuto.");
+            }
+
+            var nonce = Convert.FromBase64String(parts[1]);
+            var tag = Convert.FromBase64String(parts[2]);
+            var cipher = Convert.FromBase64String(parts[3]);
+            var plain = new byte[cipher.Length];
+
+            using var aes = new AesGcm(_key, TagBytes);
+            aes.Decrypt(nonce, cipher, tag, plain);
+            return Encoding.UTF8.GetString(plain);
         }
-
-        var nonce = Convert.FromBase64String(parts[1]);
-        var tag = Convert.FromBase64String(parts[2]);
-        var cipher = Convert.FromBase64String(parts[3]);
-        var plain = new byte[cipher.Length];
-
-        using var aes = new AesGcm(_key, TagBytes);
-        aes.Decrypt(nonce, cipher, tag, plain);
-        return Encoding.UTF8.GetString(plain);
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Prova a decifrare, restituendo <paramref name="fallback"/> se il testo non è valido.</summary>
     public string TryDecrypt(string payload, string fallback = "")
     {
-        if (string.IsNullOrEmpty(payload))
+        if (payload != null)
         {
-            return fallback;
-        }
+            if (string.IsNullOrEmpty(payload))
+            {
+                return fallback;
+            }
 
-        try
-        {
-            return Decrypt(payload);
+            try
+            {
+                return Decrypt(payload);
+            }
+            catch (Exception)
+            {
+                return fallback;
+            }
         }
-        catch (Exception)
+        else
         {
             return fallback;
         }

@@ -74,9 +74,16 @@ public sealed class MtprotoUploadTests
 
     private static MediatecaDatabase NewDatabase(string directory)
     {
-        var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
-        database.Migrate();
-        return database;
+        if (directory != null)
+        {
+            var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
+            database.Migrate();
+            return database;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private static string NewTempDirectory()
@@ -88,26 +95,33 @@ public sealed class MtprotoUploadTests
 
     private static void Cleanup(string directory)
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        for (var attempt = 0; attempt < 5; attempt++)
+        if (directory != null)
         {
-            try
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            for (var attempt = 0; attempt < 5; attempt++)
             {
-                if (Directory.Exists(directory))
+                try
                 {
-                    Directory.Delete(directory, recursive: true);
-                }
+                    if (Directory.Exists(directory))
+                    {
+                        Directory.Delete(directory, recursive: true);
+                    }
 
-                return;
+                    return;
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(50);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Thread.Sleep(50);
+                }
             }
-            catch (IOException)
-            {
-                Thread.Sleep(50);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                Thread.Sleep(50);
-            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
         }
     }
 }

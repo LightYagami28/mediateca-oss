@@ -93,105 +93,126 @@ public sealed class TmdbClient : IMediaScraper, IDisposable
     /// <inheritdoc />
     public async Task<IReadOnlyList<MediaCandidate>> SearchAsync(MediaKind kind, string query, int? year = null, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(query);
-        if (!IsConfigured)
+        if (query != null)
         {
-            return [];
-        }
-
-        var (segment, yearParameter) = Endpoint(kind);
-        var parameters = new List<(string Key, string Value)> { ("query", query) };
-        if (year is > 0)
-        {
-            parameters.Add((yearParameter, year.Value.ToString(CultureInfo.InvariantCulture)));
-        }
-
-        using var response = await _http.GetAsync(BuildUrl($"/search/{segment}", parameters), cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var payload = await JsonSerializer.DeserializeAsync<SearchPayload>(stream, JsonOptions, cancellationToken);
-        if (payload?.Results is null)
-        {
-            return [];
-        }
-
-        var results = new List<MediaCandidate>(payload.Results.Count);
-        foreach (var item in payload.Results)
-        {
-            var title = item.Title ?? item.Name;
-            if (item.Id <= 0 || string.IsNullOrWhiteSpace(title))
+            ArgumentException.ThrowIfNullOrWhiteSpace(query);
+            if (!IsConfigured)
             {
-                continue;
+                return [];
             }
 
-            results.Add(new MediaCandidate
+            var (segment, yearParameter) = Endpoint(kind);
+            var parameters = new List<(string Key, string Value)> { ("query", query) };
+            if (year is > 0)
             {
-                Id = item.Id.ToString(CultureInfo.InvariantCulture),
-                Kind = kind,
-                Title = title,
-                Year = ParseYear(item.ReleaseDate ?? item.FirstAirDate),
-                Overview = item.Overview,
-                PosterPath = item.PosterPath,
-                BackdropPath = item.BackdropPath,
-                VoteAverage = item.VoteAverage,
-            });
-        }
+                parameters.Add((yearParameter, year.Value.ToString(CultureInfo.InvariantCulture)));
+            }
 
-        return results;
+            using var response = await _http.GetAsync(BuildUrl($"/search/{segment}", parameters), cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var payload = await JsonSerializer.DeserializeAsync<SearchPayload>(stream, JsonOptions, cancellationToken);
+            if (payload?.Results is null)
+            {
+                return [];
+            }
+
+            var results = new List<MediaCandidate>(payload.Results.Count);
+            foreach (var item in payload.Results)
+            {
+                var title = item.Title ?? item.Name;
+                if (item.Id <= 0 || string.IsNullOrWhiteSpace(title))
+                {
+                    continue;
+                }
+
+                results.Add(new MediaCandidate
+                {
+                    Id = item.Id.ToString(CultureInfo.InvariantCulture),
+                    Kind = kind,
+                    Title = title,
+                    Year = ParseYear(item.ReleaseDate ?? item.FirstAirDate),
+                    Overview = item.Overview,
+                    PosterPath = item.PosterPath,
+                    BackdropPath = item.BackdropPath,
+                    VoteAverage = item.VoteAverage,
+                });
+            }
+
+            return results;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <inheritdoc />
     public async Task<MediaDetails?> DetailsAsync(MediaKind kind, string id, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id);
-        if (!IsConfigured)
+        if (id != null)
         {
-            return null;
-        }
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
+            if (!IsConfigured)
+            {
+                return null;
+            }
 
-        var (segment, _) = Endpoint(kind);
-        using var response = await _http.GetAsync(BuildUrl($"/{segment}/{Uri.EscapeDataString(id.Trim())}"), cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NotFound)
+            var (segment, _) = Endpoint(kind);
+            using var response = await _http.GetAsync(BuildUrl($"/{segment}/{Uri.EscapeDataString(id.Trim())}"), cancellationToken);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var payload = await JsonSerializer.DeserializeAsync<DetailsPayload>(stream, JsonOptions, cancellationToken);
+            var title = payload?.Title ?? payload?.Name;
+            if (payload is null || string.IsNullOrWhiteSpace(title))
+            {
+                return null;
+            }
+
+            return ToDetails(payload, title, id.Trim(), kind);
+        }
+        else
         {
-            return null;
+            throw new ArgumentNullException();
         }
-
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var payload = await JsonSerializer.DeserializeAsync<DetailsPayload>(stream, JsonOptions, cancellationToken);
-        var title = payload?.Title ?? payload?.Name;
-        if (payload is null || string.IsNullOrWhiteSpace(title))
-        {
-            return null;
-        }
-
-        return ToDetails(payload, title, id.Trim(), kind);
     }
 
     private static MediaDetails ToDetails(DetailsPayload payload, string title, string id, MediaKind kind)
     {
-        var genres = payload.Genres?
-            .Where(g => !string.IsNullOrWhiteSpace(g.Name))
-            .Select(g => g.Name!)
-            .ToList() ?? [];
-
-        return new MediaDetails
+        if (payload != null)
         {
-            Id = id,
-            Kind = kind,
-            Title = title,
-            Year = ParseYear(payload.ReleaseDate ?? payload.FirstAirDate),
-            Overview = payload.Overview,
-            PosterPath = payload.PosterPath,
-            BackdropPath = payload.BackdropPath,
-            VoteAverage = payload.VoteAverage,
-            Genres = genres,
-            RuntimeMinutes = payload.Runtime is > 0 ? payload.Runtime : payload.EpisodeRunTime?.FirstOrDefault(value => value > 0),
-            SeasonCount = payload.NumberOfSeasons,
-            EpisodeCount = payload.NumberOfEpisodes,
-        };
+            var genres = payload.Genres?
+                .Where(g => !string.IsNullOrWhiteSpace(g.Name))
+                .Select(g => g.Name!)
+                .ToList() ?? [];
+
+            return new MediaDetails
+            {
+                Id = id,
+                Kind = kind,
+                Title = title,
+                Year = ParseYear(payload.ReleaseDate ?? payload.FirstAirDate),
+                Overview = payload.Overview,
+                PosterPath = payload.PosterPath,
+                BackdropPath = payload.BackdropPath,
+                VoteAverage = payload.VoteAverage,
+                Genres = genres,
+                RuntimeMinutes = payload.Runtime is > 0 ? payload.Runtime : payload.EpisodeRunTime?.FirstOrDefault(value => value > 0),
+                SeasonCount = payload.NumberOfSeasons,
+                EpisodeCount = payload.NumberOfEpisodes,
+            };
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     /// <summary>Smaltisce l'<see cref="HttpClient"/> solo quando è stato creato da <see cref="CreateDefault"/>.</summary>

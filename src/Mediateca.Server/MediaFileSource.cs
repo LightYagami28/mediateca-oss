@@ -16,33 +16,47 @@ public sealed class LocalMediaFileSource(string root) : IMediaFileSource
 
     public Task<MediaStream?> OpenReadAsync(MediaItem item, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(item);
-
-        foreach (var candidate in Candidates(item))
+        if (item != null)
         {
-            var full = Path.GetFullPath(candidate);
-            if (!IsBelowRoot(full) || !File.Exists(full))
+            ArgumentNullException.ThrowIfNull(item);
+
+            foreach (var candidate in Candidates(item))
             {
-                continue;
+                var full = Path.GetFullPath(candidate);
+                if (!IsBelowRoot(full) || !File.Exists(full))
+                {
+                    continue;
+                }
+
+                var stream = new FileStream(
+                    full,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete,
+                    bufferSize: 64 * 1024,
+                    useAsync: true);
+                return Task.FromResult<MediaStream?>(new MediaStream(stream, stream.Length, ContentTypeFor(item.Extension)));
             }
 
-            var stream = new FileStream(
-                full,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete,
-                bufferSize: 64 * 1024,
-                useAsync: true);
-            return Task.FromResult<MediaStream?>(new MediaStream(stream, stream.Length, ContentTypeFor(item.Extension)));
+            return Task.FromResult<MediaStream?>(null);
         }
-
-        return Task.FromResult<MediaStream?>(null);
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private IEnumerable<string> Candidates(MediaItem item)
     {
-        yield return Path.Combine(_root, item.ChannelId.ToString(CultureInfo.InvariantCulture), item.Name);
-        yield return Path.Combine(_root, item.Name);
+        if (item != null)
+        {
+            yield return Path.Combine(_root, item.ChannelId.ToString(CultureInfo.InvariantCulture), item.Name);
+            yield return Path.Combine(_root, item.Name);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private bool IsBelowRoot(string path) =>

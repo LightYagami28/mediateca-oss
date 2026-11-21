@@ -100,23 +100,37 @@ public sealed class MtprotoMediaSourceTests
     [InlineData("film.bin", "application/octet-stream")]
     public async Task Il_content_type_deriva_dall_estensione_del_file(string name, string expected)
     {
-        var directory = NewTempDirectory();
-        try
+        if (name != null)
         {
-            var cache = Path.Combine(directory, "cache");
-            Directory.CreateDirectory(cache);
-            await File.WriteAllBytesAsync(Path.Combine(cache, "7-42-" + name), [1]);
-            await using var source = NewSource(directory, ApiId, cache);
+            if (expected != null)
+            {
+                var directory = NewTempDirectory();
+                try
+                {
+                    var cache = Path.Combine(directory, "cache");
+                    Directory.CreateDirectory(cache);
+                    await File.WriteAllBytesAsync(Path.Combine(cache, "7-42-" + name), [1]);
+                    await using var source = NewSource(directory, ApiId, cache);
 
-            var media = await source.OpenReadAsync(NewItem(name));
+                    var media = await source.OpenReadAsync(NewItem(name));
 
-            Assert.NotNull(media);
-            Assert.Equal(expected, media.ContentType);
-            await media.Stream.DisposeAsync();
+                    Assert.NotNull(media);
+                    Assert.Equal(expected, media.ContentType);
+                    await media.Stream.DisposeAsync();
+                }
+                finally
+                {
+                    await Cleanup(directory);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException();
+            }
         }
-        finally
+        else
         {
-            await Cleanup(directory);
+            throw new ArgumentNullException();
         }
     }
 
@@ -149,9 +163,16 @@ public sealed class MtprotoMediaSourceTests
 
     private static MediatecaDatabase NewDatabase(string directory)
     {
-        var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
-        database.Migrate();
-        return database;
+        if (directory != null)
+        {
+            var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
+            database.Migrate();
+            return database;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private static MediaItem NewItem(string name = "film.mkv") =>
@@ -166,26 +187,33 @@ public sealed class MtprotoMediaSourceTests
 
     private static async Task Cleanup(string directory)
     {
-        SqliteConnection.ClearAllPools();
-        for (var attempt = 0; attempt < 5; attempt++)
+        if (directory != null)
         {
-            try
+            SqliteConnection.ClearAllPools();
+            for (var attempt = 0; attempt < 5; attempt++)
             {
-                if (Directory.Exists(directory))
+                try
                 {
-                    Directory.Delete(directory, recursive: true);
-                }
+                    if (Directory.Exists(directory))
+                    {
+                        Directory.Delete(directory, recursive: true);
+                    }
 
-                return;
+                    return;
+                }
+                catch (IOException)
+                {
+                    await Task.Delay(50);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    await Task.Delay(50);
+                }
             }
-            catch (IOException)
-            {
-                await Task.Delay(50);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                await Task.Delay(50);
-            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
         }
     }
 }

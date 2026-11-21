@@ -7,34 +7,48 @@ public static class ProtectedSecrets
 {
     public static string Encrypt(string plaintext)
     {
-        if (string.IsNullOrEmpty(plaintext))
+        if (plaintext != null)
         {
-            return string.Empty;
-        }
+            if (string.IsNullOrEmpty(plaintext))
+            {
+                return string.Empty;
+            }
 
-        var protectedBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(plaintext), null, DataProtectionScope.CurrentUser);
-        return Convert.ToBase64String(protectedBytes);
+            var protectedBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(plaintext), null, DataProtectionScope.CurrentUser);
+            return Convert.ToBase64String(protectedBytes);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     public static string Decrypt(string payload)
     {
-        if (string.IsNullOrEmpty(payload))
+        if (payload != null)
         {
-            return string.Empty;
-        }
+            if (string.IsNullOrEmpty(payload))
+            {
+                return string.Empty;
+            }
 
-        try
-        {
-            var plain = ProtectedData.Unprotect(Convert.FromBase64String(payload), null, DataProtectionScope.CurrentUser);
-            return Encoding.UTF8.GetString(plain);
+            try
+            {
+                var plain = ProtectedData.Unprotect(Convert.FromBase64String(payload), null, DataProtectionScope.CurrentUser);
+                return Encoding.UTF8.GetString(plain);
+            }
+            catch (CryptographicException)
+            {
+                return string.Empty;
+            }
+            catch (FormatException)
+            {
+                return string.Empty;
+            }
         }
-        catch (CryptographicException)
+        else
         {
-            return string.Empty;
-        }
-        catch (FormatException)
-        {
-            return string.Empty;
+            throw new ArgumentNullException();
         }
     }
 }

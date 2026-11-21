@@ -155,32 +155,39 @@ public sealed class TelegramTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Requests.Add(request);
-            if (FailOn?.Invoke(request) == true)
+            if (request != null)
             {
-                throw new HttpRequestException("Errore simulato di rete.");
-            }
+                Requests.Add(request);
+                if (FailOn?.Invoke(request) == true)
+                {
+                    throw new HttpRequestException("Errore simulato di rete.");
+                }
 
-            LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
-            var path = request.RequestUri!.AbsolutePath;
-            if (path.Contains("getUpdates"))
-            {
-                CancelAfterGetUpdates?.Invoke(Requests.Count(candidate => candidate.RequestUri!.AbsolutePath.Contains("getUpdates")));
-            }
+                LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                var path = request.RequestUri!.AbsolutePath;
+                if (path.Contains("getUpdates"))
+                {
+                    CancelAfterGetUpdates?.Invoke(Requests.Count(candidate => candidate.RequestUri!.AbsolutePath.Contains("getUpdates")));
+                }
 
-            var json = path switch
+                var json = path switch
+                {
+                    _ when path.Contains("getUpdates") => _updates.Count > 0 ? _updates.Dequeue() : """{"ok":true,"result":[]}""",
+                    _ when path.Contains("getMe") => """{"ok":true,"result":{"id":123456789,"is_bot":true,"first_name":"T","username":"mediatecabot"}}""",
+                    _ when path.Contains("createInvoiceLink") => """{"ok":true,"result":"https://t.me/$invoicelink"}""",
+                    _ when path.Contains("answerWebAppQuery") => """{"ok":true,"result":true}""",
+                    _ when path.Contains("setChatMenuButton") => """{"ok":true,"result":true}""",
+                    _ => """{"ok":true,"result":{"message_id":1,"from":{"id":1,"is_bot":true},"chat":{"id":42},"date":1700000000,"text":"x"}}""",
+                };
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+                });
+            }
+            else
             {
-                _ when path.Contains("getUpdates") => _updates.Count > 0 ? _updates.Dequeue() : """{"ok":true,"result":[]}""",
-                _ when path.Contains("getMe") => """{"ok":true,"result":{"id":123456789,"is_bot":true,"first_name":"T","username":"mediatecabot"}}""",
-                _ when path.Contains("createInvoiceLink") => """{"ok":true,"result":"https://t.me/$invoicelink"}""",
-                _ when path.Contains("answerWebAppQuery") => """{"ok":true,"result":true}""",
-                _ when path.Contains("setChatMenuButton") => """{"ok":true,"result":true}""",
-                _ => """{"ok":true,"result":{"message_id":1,"from":{"id":1,"is_bot":true},"chat":{"id":42},"date":1700000000,"text":"x"}}""",
-            };
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
-            });
+                throw new ArgumentNullException();
+            }
         }
     }
 
@@ -265,13 +272,20 @@ public sealed class TelegramTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            LastUrl = request.RequestUri;
-            LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult() ?? "";
-            var json = """{"ok":true,"result":{"path":"Catalogo-01-01","url":"https://telegra.ph/Catalogo-01-01"}}""";
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            if (request != null)
             {
-                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
-            });
+                LastUrl = request.RequestUri;
+                LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult() ?? "";
+                var json = """{"ok":true,"result":{"path":"Catalogo-01-01","url":"https://telegra.ph/Catalogo-01-01"}}""";
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+                });
+            }
+            else
+            {
+                throw new ArgumentNullException();
+            }
         }
     }
 

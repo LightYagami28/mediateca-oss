@@ -14,12 +14,19 @@ public class ServerServiceTests
 {
     private static ServerService CreateService(UiOptions options, MediatecaDatabase database, string mediaRoot)
     {
-        options.ServerUseHttps = false;
-        return new ServerService(
-            Options.Create(options),
-            database,
-            new LogBuffer(),
-            new LocalMediaFileSource(mediaRoot));
+        if (options != null)
+        {
+            options.ServerUseHttps = false;
+            return new ServerService(
+                Options.Create(options),
+                database,
+                new LogBuffer(),
+                new LocalMediaFileSource(mediaRoot));
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
     [Fact]
     public async Task ServerService_espone_la_health_e_chiude_pulito()
@@ -168,26 +175,33 @@ public class ServerServiceTests
 
     private static void Cleanup(string directory)
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        for (var attempt = 0; attempt < 5; attempt++)
+        if (directory != null)
         {
-            try
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            for (var attempt = 0; attempt < 5; attempt++)
             {
-                if (Directory.Exists(directory))
+                try
                 {
-                    Directory.Delete(directory, recursive: true);
-                }
+                    if (Directory.Exists(directory))
+                    {
+                        Directory.Delete(directory, recursive: true);
+                    }
 
-                return;
+                    return;
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(50);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Thread.Sleep(50);
+                }
             }
-            catch (IOException)
-            {
-                Thread.Sleep(50);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                Thread.Sleep(50);
-            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
         }
     }
 }

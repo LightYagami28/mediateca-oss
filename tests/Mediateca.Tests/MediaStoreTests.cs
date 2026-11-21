@@ -242,27 +242,34 @@ public sealed class MediaStoreTests
 
     private static void Cleanup(string directory)
     {
-        SqliteConnection.ClearAllPools();
-        for (var attempt = 0; attempt < 5; attempt++)
+        if (directory != null)
         {
-            try
+            SqliteConnection.ClearAllPools();
+            for (var attempt = 0; attempt < 5; attempt++)
             {
-                if (!Directory.Exists(directory))
+                try
                 {
+                    if (!Directory.Exists(directory))
+                    {
+                        return;
+                    }
+
+                    Directory.Delete(directory, recursive: true);
                     return;
                 }
-
-                Directory.Delete(directory, recursive: true);
-                return;
+                catch (IOException)
+                {
+                    Thread.Sleep(50);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Thread.Sleep(50);
+                }
             }
-            catch (IOException)
-            {
-                Thread.Sleep(50);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                Thread.Sleep(50);
-            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
         }
     }
 }

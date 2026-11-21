@@ -109,7 +109,21 @@ public class RenderTests
 
     private static void SavePng(Bitmap bitmap, string path)
     {
-        using var stream = File.Create(path);
-        bitmap.Save(stream, new PngBitmapEncoderOptions());
+        if (path != null)
+        {
+            if (bitmap != null)
+            {
+                using var stream = File.Create(path);
+                bitmap.Save(stream, new PngBitmapEncoderOptions());
+            }
+            else
+            {
+                throw new ArgumentNullException();
+            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 }

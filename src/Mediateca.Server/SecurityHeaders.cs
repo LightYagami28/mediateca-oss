@@ -26,20 +26,34 @@ internal static class SecurityHeaders
     /// <summary>Applica gli header e passa al middleware successivo.</summary>
     internal static async Task Apply(HttpContext context, RequestDelegate next)
     {
-        var headers = context.Response.Headers;
-        headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains; preload";
-        headers.UpgradeInsecureRequests = "1";
-        headers.ContentSecurityPolicy = Csp;
-        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-        headers.XContentTypeOptions = "nosniff";
-        headers.XFrameOptions = "DENY";
-        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
-
-        if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
+        if (context != null)
         {
-            headers.CacheControl = "no-store";
-        }
+            if (next != null)
+            {
+                var headers = context.Response.Headers;
+                headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains; preload";
+                headers.UpgradeInsecureRequests = "1";
+                headers.ContentSecurityPolicy = Csp;
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+                headers.XContentTypeOptions = "nosniff";
+                headers.XFrameOptions = "DENY";
+                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
 
-        await next(context).ConfigureAwait(false);
+                if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
+                {
+                    headers.CacheControl = "no-store";
+                }
+
+                await next(context).ConfigureAwait(false);
+            }
+            else
+            {
+                throw new ArgumentNullException();
+            }
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 }

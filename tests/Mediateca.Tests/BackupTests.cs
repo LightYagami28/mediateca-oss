@@ -130,54 +130,61 @@ public sealed class BackupTests
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var uri = request.RequestUri!;
-            if (request.Headers.Authorization is { } authorization)
+            if (request != null)
             {
-                AuthorizedRequests.Add(authorization.ToString());
-            }
-
-            if (uri.Host == "oauth2.googleapis.com")
-            {
-                TokenBody = await request.Content!.ReadAsStringAsync(cancellationToken);
-                return RejectToken
-                    ? Json(HttpStatusCode.BadRequest, """{"error":"invalid_grant"}""")
-                    : Json(HttpStatusCode.OK, """{"access_token":"accesso","expires_in":3599,"token_type":"Bearer"}""");
-            }
-
-            if (request.Method == HttpMethod.Post && uri.AbsolutePath == "/upload/drive/v3/files")
-            {
-                StartBody = await request.Content!.ReadAsStringAsync(cancellationToken);
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Headers.Location = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=sessione");
-                return response;
-            }
-
-            if (request.Method == HttpMethod.Put)
-            {
-                UploadedBytes = (await request.Content!.ReadAsByteArrayAsync(cancellationToken)).LongLength;
-                return Json(HttpStatusCode.OK, """{"id":"nuovo-id","name":"archivio.zip"}""");
-            }
-
-            if (request.Method == HttpMethod.Get && uri.AbsolutePath == "/drive/v3/files")
-            {
-                ListQuery = Uri.UnescapeDataString(uri.Query);
-                var files = new StringBuilder("""{"files":[{"id":"nuovo-id","name":"mediateca-backup-2026-11-14_10-00-00.zip"}""");
-                for (var index = 0; index < existingArchives - 1; index++)
+                var uri = request.RequestUri!;
+                if (request.Headers.Authorization is { } authorization)
                 {
-                    files.Append($$""",{"id":"vecchio-{{index}}","name":"mediateca-backup-2026-11-0{{index + 1}}_10-00-00.zip"}""");
+                    AuthorizedRequests.Add(authorization.ToString());
                 }
 
-                files.Append("]}");
-                return Json(HttpStatusCode.OK, files.ToString());
-            }
+                if (uri.Host == "oauth2.googleapis.com")
+                {
+                    TokenBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+                    return RejectToken
+                        ? Json(HttpStatusCode.BadRequest, """{"error":"invalid_grant"}""")
+                        : Json(HttpStatusCode.OK, """{"access_token":"accesso","expires_in":3599,"token_type":"Bearer"}""");
+                }
 
-            if (request.Method == HttpMethod.Delete)
+                if (request.Method == HttpMethod.Post && uri.AbsolutePath == "/upload/drive/v3/files")
+                {
+                    StartBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+                    var response = new HttpResponseMessage(HttpStatusCode.OK);
+                    response.Headers.Location = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=sessione");
+                    return response;
+                }
+
+                if (request.Method == HttpMethod.Put)
+                {
+                    UploadedBytes = (await request.Content!.ReadAsByteArrayAsync(cancellationToken)).LongLength;
+                    return Json(HttpStatusCode.OK, """{"id":"nuovo-id","name":"archivio.zip"}""");
+                }
+
+                if (request.Method == HttpMethod.Get && uri.AbsolutePath == "/drive/v3/files")
+                {
+                    ListQuery = Uri.UnescapeDataString(uri.Query);
+                    var files = new StringBuilder("""{"files":[{"id":"nuovo-id","name":"mediateca-backup-2026-11-14_10-00-00.zip"}""");
+                    for (var index = 0; index < existingArchives - 1; index++)
+                    {
+                        files.Append($$""",{"id":"vecchio-{{index}}","name":"mediateca-backup-2026-11-0{{index + 1}}_10-00-00.zip"}""");
+                    }
+
+                    files.Append("]}");
+                    return Json(HttpStatusCode.OK, files.ToString());
+                }
+
+                if (request.Method == HttpMethod.Delete)
+                {
+                    Deleted.Add(uri.Segments[^1]);
+                    return new HttpResponseMessage(HttpStatusCode.NoContent);
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+            else
             {
-                Deleted.Add(uri.Segments[^1]);
-                return new HttpResponseMessage(HttpStatusCode.NoContent);
+                throw new ArgumentNullException();
             }
-
-            return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
 
         private static HttpResponseMessage Json(HttpStatusCode status, string body) =>

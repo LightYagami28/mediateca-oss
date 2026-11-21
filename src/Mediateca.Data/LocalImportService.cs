@@ -16,65 +16,79 @@ public sealed class LocalImportService(MediatecaDatabase database)
 
     public Task<ImportReport> ImportFolderAsync(string folder, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(folder);
-        var root = Path.GetFullPath(folder);
-
-        _store.UpsertChannel(new Channel
+        if (folder != null)
         {
-            Id = LocalChannelId,
-            Title = LocalChannelTitle,
-            Kind = ChannelKind.Chat,
-            IsSource = false,
-        });
+            ArgumentException.ThrowIfNullOrWhiteSpace(folder);
+            var root = Path.GetFullPath(folder);
 
-        var added = 0;
-        var skipped = 0;
-        var alreadyPresent = 0;
-        long bytes = 0;
-
-        foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var info = new FileInfo(file);
-            if (info.Length == 0)
+            _store.UpsertChannel(new Channel
             {
-                skipped++;
-                continue;
-            }
-
-            var relative = Path.GetRelativePath(root, file).Replace(Path.DirectorySeparatorChar, '/');
-            var messageId = StableId(relative);
-            if (_store.Exists(LocalChannelId, messageId))
-            {
-                alreadyPresent++;
-                continue;
-            }
-
-            var parsed = MediaNameParser.Parse(relative);
-            _store.Upsert(new MediaItem
-            {
-                ChannelId = LocalChannelId,
-                MessageId = messageId,
-                Name = relative,
-                Kind = parsed.Kind,
-                Title = parsed.Title,
-                Year = parsed.Year,
-                Season = parsed.Season,
-                Episode = parsed.Episode,
-                Size = info.Length,
-                UpdatedAt = new DateTimeOffset(info.LastWriteTimeUtc),
+                Id = LocalChannelId,
+                Title = LocalChannelTitle,
+                Kind = ChannelKind.Chat,
+                IsSource = false,
             });
-            added++;
-            bytes += info.Length;
-        }
 
-        return Task.FromResult(new ImportReport(added, skipped, bytes, alreadyPresent));
+            var added = 0;
+            var skipped = 0;
+            var alreadyPresent = 0;
+            long bytes = 0;
+
+            foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var info = new FileInfo(file);
+                if (info.Length == 0)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                var relative = Path.GetRelativePath(root, file).Replace(Path.DirectorySeparatorChar, '/');
+                var messageId = StableId(relative);
+                if (_store.Exists(LocalChannelId, messageId))
+                {
+                    alreadyPresent++;
+                    continue;
+                }
+
+                var parsed = MediaNameParser.Parse(relative);
+                _store.Upsert(new MediaItem
+                {
+                    ChannelId = LocalChannelId,
+                    MessageId = messageId,
+                    Name = relative,
+                    Kind = parsed.Kind,
+                    Title = parsed.Title,
+                    Year = parsed.Year,
+                    Season = parsed.Season,
+                    Episode = parsed.Episode,
+                    Size = info.Length,
+                    UpdatedAt = new DateTimeOffset(info.LastWriteTimeUtc),
+                });
+                added++;
+                bytes += info.Length;
+            }
+
+            return Task.FromResult(new ImportReport(added, skipped, bytes, alreadyPresent));
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private static int StableId(string relativePath)
     {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(relativePath));
-        return BitConverter.ToInt32(hash, 0) & 0x7FFFFFFF;
+        if (relativePath != null)
+        {
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(relativePath));
+            return BitConverter.ToInt32(hash, 0) & 0x7FFFFFFF;
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 }

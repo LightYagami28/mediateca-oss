@@ -40,19 +40,26 @@ public partial class MainWindow : Window
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        base.OnKeyDown(e);
-
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.K)
+        if (e != null)
         {
-            this.FindControl<TextBox>("SearchBox")?.Focus();
-            e.Handled = true;
-            return;
+            base.OnKeyDown(e);
+
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.K)
+            {
+                this.FindControl<TextBox>("SearchBox")?.Focus();
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key == Key.Escape && DataContext is MainWindowViewModel viewModel && viewModel.Catalog.Search.Length > 0)
+            {
+                viewModel.Catalog.Search = string.Empty;
+                e.Handled = true;
+            }
         }
-
-        if (e.Key == Key.Escape && DataContext is MainWindowViewModel viewModel && viewModel.Catalog.Search.Length > 0)
+        else
         {
-            viewModel.Catalog.Search = string.Empty;
-            e.Handled = true;
+            throw new ArgumentNullException();
         }
     }
 

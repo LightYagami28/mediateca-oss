@@ -50,63 +50,84 @@ public sealed class SettingsService
         {
             if (fallback != null)
             {
-                return new UiOptions
+                if (document != null)
                 {
-                    Theme = Reference(document.Theme, fallback.Theme),
-                    WindowWidth = Value(document.WindowWidth, fallback.WindowWidth),
-                    WindowHeight = Value(document.WindowHeight, fallback.WindowHeight),
-                    SampleCatalogRows = Value(document.SampleCatalogRows, fallback.SampleCatalogRows),
-                    ServerBindAddress = Reference(document.ServerBindAddress, fallback.ServerBindAddress),
-                    ServerPort = Value(document.ServerPort, fallback.ServerPort),
-                    ServerApiToken = ProtectedSecrets.Decrypt(Reference(document.ServerApiTokenProtected, string.Empty)),
-                    WebDavPasswordHash = Reference(document.WebDavPasswordHash, fallback.WebDavPasswordHash),
-                    WebDavEnabled = Value(document.WebDavEnabled, fallback.WebDavEnabled),
-                    SearchDebounceMs = Value(document.SearchDebounceMs, fallback.SearchDebounceMs),
-                    BotToken = ProtectedSecrets.Decrypt(Reference(document.BotTokenProtected, string.Empty)),
-                    MtprotoApiId = Value(document.MtprotoApiId, fallback.MtprotoApiId),
-                    MtprotoApiHash = ProtectedSecrets.Decrypt(Reference(document.MtprotoApiHashProtected, string.Empty)),
-                    MtprotoSessionPath = Reference(document.MtprotoSessionPath, fallback.MtprotoSessionPath),
-                    MtprotoCacheDirectory = Reference(document.MtprotoCacheDirectory, fallback.MtprotoCacheDirectory),
-                };
+                    if (fallback != null)
+                    {
+                        return new UiOptions
+                        {
+                            Theme = Reference(document.Theme, fallback.Theme),
+                            WindowWidth = Value(document.WindowWidth, fallback.WindowWidth),
+                            WindowHeight = Value(document.WindowHeight, fallback.WindowHeight),
+                            SampleCatalogRows = Value(document.SampleCatalogRows, fallback.SampleCatalogRows),
+                            ServerBindAddress = Reference(document.ServerBindAddress, fallback.ServerBindAddress),
+                            ServerPort = Value(document.ServerPort, fallback.ServerPort),
+                            ServerApiToken = ProtectedSecrets.Decrypt(Reference(document.ServerApiTokenProtected, string.Empty)),
+                            WebDavPasswordHash = Reference(document.WebDavPasswordHash, fallback.WebDavPasswordHash),
+                            WebDavEnabled = Value(document.WebDavEnabled, fallback.WebDavEnabled),
+                            SearchDebounceMs = Value(document.SearchDebounceMs, fallback.SearchDebounceMs),
+                            BotToken = ProtectedSecrets.Decrypt(Reference(document.BotTokenProtected, string.Empty)),
+                            MtprotoApiId = Value(document.MtprotoApiId, fallback.MtprotoApiId),
+                            MtprotoApiHash = ProtectedSecrets.Decrypt(Reference(document.MtprotoApiHashProtected, string.Empty)),
+                            MtprotoSessionPath = Reference(document.MtprotoSessionPath, fallback.MtprotoSessionPath),
+                            MtprotoCacheDirectory = Reference(document.MtprotoCacheDirectory, fallback.MtprotoCacheDirectory),
+                        };
+                    }
+                }
+
+                throw new ArgumentNullException(nameof(document));
+            }
+            else
+            {
+                throw new ArgumentNullException();
             }
         }
-
-        throw new ArgumentNullException(nameof(document));
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     public void Save(UiOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var document = new SettingsDocument
+        if (options != null)
         {
-            Theme = options.Theme,
-            WindowWidth = options.WindowWidth,
-            WindowHeight = options.WindowHeight,
-            SampleCatalogRows = options.SampleCatalogRows,
-            ServerBindAddress = options.ServerBindAddress,
-            ServerPort = options.ServerPort,
-            ServerApiTokenProtected = ProtectedSecrets.Encrypt(options.ServerApiToken),
-            WebDavPasswordHash = options.WebDavPasswordHash,
-            WebDavEnabled = options.WebDavEnabled,
-            SearchDebounceMs = options.SearchDebounceMs,
-            BotTokenProtected = ProtectedSecrets.Encrypt(options.BotToken),
-            MtprotoApiId = options.MtprotoApiId,
-            MtprotoApiHashProtected = ProtectedSecrets.Encrypt(options.MtprotoApiHash),
-            MtprotoSessionPath = options.MtprotoSessionPath,
-            MtprotoCacheDirectory = options.MtprotoCacheDirectory,
-        };
+            ArgumentNullException.ThrowIfNull(options);
 
-        var json = JsonSerializer.Serialize(document, JsonOptions);
-        var directory = Path.GetDirectoryName(_path);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
+            var document = new SettingsDocument
+            {
+                Theme = options.Theme,
+                WindowWidth = options.WindowWidth,
+                WindowHeight = options.WindowHeight,
+                SampleCatalogRows = options.SampleCatalogRows,
+                ServerBindAddress = options.ServerBindAddress,
+                ServerPort = options.ServerPort,
+                ServerApiTokenProtected = ProtectedSecrets.Encrypt(options.ServerApiToken),
+                WebDavPasswordHash = options.WebDavPasswordHash,
+                WebDavEnabled = options.WebDavEnabled,
+                SearchDebounceMs = options.SearchDebounceMs,
+                BotTokenProtected = ProtectedSecrets.Encrypt(options.BotToken),
+                MtprotoApiId = options.MtprotoApiId,
+                MtprotoApiHashProtected = ProtectedSecrets.Encrypt(options.MtprotoApiHash),
+                MtprotoSessionPath = options.MtprotoSessionPath,
+                MtprotoCacheDirectory = options.MtprotoCacheDirectory,
+            };
+
+            var json = JsonSerializer.Serialize(document, JsonOptions);
+            var directory = Path.GetDirectoryName(_path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var temporary = _path + ".tmp";
+            File.WriteAllText(temporary, json);
+            File.Move(temporary, _path, overwrite: true);
         }
-
-        var temporary = _path + ".tmp";
-        File.WriteAllText(temporary, json);
-        File.Move(temporary, _path, overwrite: true);
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private sealed class SettingsDocument

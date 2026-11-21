@@ -39,29 +39,36 @@ public sealed class TelegramBotPool
 
     public async Task<T> ExecuteAsync<T>(Func<TelegramBotClient, CancellationToken, Task<T>> action, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(action);
-
-        TelegramApiException? lastLimit = null;
-        for (var attempt = 0; attempt < _clients.Length; attempt++)
+        if (action != null)
         {
-            var index = Acquire();
-            if (index < 0)
+            ArgumentNullException.ThrowIfNull(action);
+
+            TelegramApiException? lastLimit = null;
+            for (var attempt = 0; attempt < _clients.Length; attempt++)
             {
-                break;
+                var index = Acquire();
+                if (index < 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    return await action(_clients[index], cancellationToken).ConfigureAwait(false);
+                }
+                catch (TelegramApiException error) when (error.ErrorCode == TooManyRequests)
+                {
+                    lastLimit = error;
+                    Suspend(index, TimeSpan.FromSeconds(Math.Max(1, error.RetryAfterSeconds ?? 1)));
+                }
             }
 
-            try
-            {
-                return await action(_clients[index], cancellationToken).ConfigureAwait(false);
-            }
-            catch (TelegramApiException error) when (error.ErrorCode == TooManyRequests)
-            {
-                lastLimit = error;
-                Suspend(index, TimeSpan.FromSeconds(Math.Max(1, error.RetryAfterSeconds ?? 1)));
-            }
+            throw new InvalidOperationException("Tutti i bot del pool sono fermi per il limite di frequenza di Telegram.", lastLimit);
         }
-
-        throw new InvalidOperationException("Tutti i bot del pool sono fermi per il limite di frequenza di Telegram.", lastLimit);
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private int Acquire()

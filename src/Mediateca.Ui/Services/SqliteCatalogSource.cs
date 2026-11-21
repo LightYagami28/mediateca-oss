@@ -21,16 +21,23 @@ public sealed class SqliteCatalogSource(MediatecaDatabase database) : ICatalogSo
 
     public Task<IReadOnlyList<CatalogRow>> SearchAsync(string query, int limit, CancellationToken cancellationToken = default)
     {
-        database.Migrate();
-        if (_channels.Count == 0)
+        if (query != null)
         {
-            _channels = LoadChannels();
-        }
+            database.Migrate();
+            if (_channels.Count == 0)
+            {
+                _channels = LoadChannels();
+            }
 
-        var rows = _store.Search(query.Trim(), null, Math.Clamp(limit, 1, 10_000))
-            .Select(item => ToRow(item))
-            .ToList();
-        return Task.FromResult<IReadOnlyList<CatalogRow>>(rows);
+            var rows = _store.Search(query.Trim(), null, Math.Clamp(limit, 1, 10_000))
+                .Select(item => ToRow(item))
+                .ToList();
+            return Task.FromResult<IReadOnlyList<CatalogRow>>(rows);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 
     private Dictionary<long, string> LoadChannels() =>

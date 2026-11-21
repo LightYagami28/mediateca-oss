@@ -10,26 +10,33 @@ public sealed class BotCatalogAdapter(MediatecaDatabase database) : IBotCatalog
 
     public Task<IReadOnlyList<CatalogHit>> SearchAsync(string query, int limit, CancellationToken cancellationToken = default)
     {
-        var hits = _store.Search(query.Trim(), null, Math.Clamp(limit, 1, 50))
-            .Select(item => new CatalogHit
-            {
-                Title = item.Name,
-                SizeBytes = item.Size,
-                Kind = item.Kind switch
+        if (query != null)
+        {
+            var hits = _store.Search(query.Trim(), null, Math.Clamp(limit, 1, 50))
+                .Select(item => new CatalogHit
                 {
-                    MediaKind.Movie => "Film",
-                    MediaKind.Series => "Serie",
-                    MediaKind.Episode => "Episodio",
-                    MediaKind.Music => "Musica",
-                    MediaKind.Book => "Libro",
-                    MediaKind.Document => "Documento",
-                    MediaKind.Image => "Immagine",
-                    MediaKind.Archive => "Archivio",
-                    _ => "Altro",
-                },
-            })
-            .ToList();
-        return Task.FromResult<IReadOnlyList<CatalogHit>>(hits);
+                    Title = item.Name,
+                    SizeBytes = item.Size,
+                    Kind = item.Kind switch
+                    {
+                        MediaKind.Movie => "Film",
+                        MediaKind.Series => "Serie",
+                        MediaKind.Episode => "Episodio",
+                        MediaKind.Music => "Musica",
+                        MediaKind.Book => "Libro",
+                        MediaKind.Document => "Documento",
+                        MediaKind.Image => "Immagine",
+                        MediaKind.Archive => "Archivio",
+                        _ => "Altro",
+                    },
+                })
+                .ToList();
+            return Task.FromResult<IReadOnlyList<CatalogHit>>(hits);
+        }
+        else
+        {
+            throw new ArgumentNullException();
+        }
     }
 }
 
