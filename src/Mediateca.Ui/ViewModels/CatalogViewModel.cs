@@ -120,9 +120,9 @@ public partial class CatalogViewModel : ObservableObject
             var results = await _source.SearchAsync(Search.Trim(), 2_000, token).ConfigureAwait(true);
             SetRows(results);
         }
-        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (token.IsCancellationRequested)
         {
-            Logger.LogDebug("Ricerca annullata prima della fine.");
+            Logger.LogDebug(exception, "Ricerca annullata prima della fine.");
         }
         finally
         {
