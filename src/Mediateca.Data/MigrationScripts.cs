@@ -3,9 +3,7 @@ namespace Mediateca.Data;
 /// <summary>Script SQL di migrazione, separati dalla logica di applicazione.</summary>
 internal static class MigrationScripts
 {
-    internal static string For(int version) => version switch
-    {
-        1 => """
+    internal const string Script1 = """
             
                                     CREATE TABLE IF NOT EXISTS channels (
                                         id              INTEGER PRIMARY KEY,
@@ -73,8 +71,9 @@ internal static class MigrationScripts
                                         created_at TEXT NOT NULL
                                     );
             
-            """,
-        2 => """
+            """;
+
+    internal const string Script2 = """
             
                                 CREATE TABLE IF NOT EXISTS bot_users (
                                     user_id    INTEGER PRIMARY KEY,
@@ -84,8 +83,9 @@ internal static class MigrationScripts
                                     last_seen  TEXT NOT NULL
                                 );
             
-            """,
-        _ => """
+            """;
+
+    internal const string Script3 = """
             
                                 CREATE TABLE IF NOT EXISTS address_book (
                                     peer_id     INTEGER PRIMARY KEY,
@@ -99,7 +99,6 @@ internal static class MigrationScripts
             
                                 CREATE INDEX IF NOT EXISTS idx_address_book_title ON address_book(title);
             
-            """,
-    };
+            """;
 }
 

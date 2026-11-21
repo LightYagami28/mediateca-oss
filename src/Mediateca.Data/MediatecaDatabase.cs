@@ -68,7 +68,18 @@ public sealed class MediatecaDatabase
         {
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
-            command.CommandText = MigrationScripts.For(version);
+            if (version == 1)
+            {
+                command.CommandText = MigrationScripts.Script1;
+            }
+            else if (version == 2)
+            {
+                command.CommandText = MigrationScripts.Script2;
+            }
+            else
+            {
+                command.CommandText = MigrationScripts.Script3;
+            }
 
             command.ExecuteNonQuery();
         }
