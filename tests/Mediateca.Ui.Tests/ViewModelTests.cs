@@ -53,6 +53,7 @@ public class ViewModelTests
 
         var row = viewModel.Rows[3];
         viewModel.SelectedRow = row;
+        viewModel.SelectedRow = row;
 
         Assert.True(viewModel.HasSelection);
         Assert.Equal(row.Name, viewModel.DetailTitle);

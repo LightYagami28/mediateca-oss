@@ -31,6 +31,22 @@ public sealed class ScraperTests
     }
 
     [Fact]
+    public void Il_registro_restituisce_una_copia_dei_provider_registrati()
+    {
+        using var http = new HttpClient();
+        var scraper = new MusicBrainzScraper(http);
+        var registry = new ScraperRegistry();
+        registry.Register(scraper);
+
+        var first = registry.GetScrapers();
+        var second = registry.GetScrapers();
+
+        Assert.Single(first);
+        Assert.Same(scraper, first[0]);
+        Assert.NotSame(first, second);
+    }
+
+    [Fact]
     public async Task MusicBrainz_mappa_i_risultati_delle_registrazioni()
     {
         var handler = new FakeMusicBrainzHandler();
