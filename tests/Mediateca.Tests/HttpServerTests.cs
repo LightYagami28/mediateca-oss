@@ -2,11 +2,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Data.Sqlite;
 using Mediateca.Core.Domain;
 using Mediateca.Data;
 using Mediateca.Server;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Data.Sqlite;
 
 namespace Mediateca.Tests;
 

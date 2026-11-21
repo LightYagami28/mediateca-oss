@@ -1,8 +1,8 @@
 using Avalonia;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Mediateca.Ui;
 using Mediateca.Ui.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddMediatecaUi(builder.Configuration, builder.Environment);

@@ -5,13 +5,13 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Mediateca.Data;
 using Mediateca.Server;
 using Mediateca.Ui.Services;
 using Mediateca.Ui.ViewModels;
 using Mediateca.Ui.Views;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Mediateca.Ui.Tests;
 

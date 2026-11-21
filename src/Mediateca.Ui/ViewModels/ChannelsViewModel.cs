@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Extensions.Logging;
 using Mediateca.Data;
 using Mediateca.Ui.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Mediateca.Ui.ViewModels;
 

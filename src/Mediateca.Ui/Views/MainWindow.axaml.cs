@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Mediateca.Ui.Services;
 using Mediateca.Ui.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Mediateca.Ui.Views;
 

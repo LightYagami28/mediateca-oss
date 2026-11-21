@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Mediateca.Ui.Models;
 using Mediateca.Ui.Services;
 using Mediateca.Ui.ViewModels;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Mediateca.Ui.Tests;
 

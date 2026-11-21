@@ -1,11 +1,11 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Mediateca.Core.Domain;
 using Mediateca.Core.Security;
 using Mediateca.Data;
 using Mediateca.Ui.Services;
 using Mediateca.Ui.ViewModels;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Mediateca.Ui.Tests;
 

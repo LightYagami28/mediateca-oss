@@ -1,6 +1,6 @@
-using Microsoft.Data.Sqlite;
 using Mediateca.Core.Abstractions;
 using Mediateca.Core.Settings;
+using Microsoft.Data.Sqlite;
 
 namespace Mediateca.Tests;
 

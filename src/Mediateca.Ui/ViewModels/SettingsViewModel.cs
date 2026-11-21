@@ -3,9 +3,9 @@ using System.Net;
 using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Options;
 using Mediateca.Core.Security;
 using Mediateca.Ui.Services;
+using Microsoft.Extensions.Options;
 
 namespace Mediateca.Ui.ViewModels;
 

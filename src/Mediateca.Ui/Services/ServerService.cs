@@ -1,10 +1,10 @@
 using System.Net;
+using Mediateca.Data;
+using Mediateca.Server;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Mediateca.Data;
-using Mediateca.Server;
 
 namespace Mediateca.Ui.Services;
 

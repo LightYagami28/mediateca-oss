@@ -1,5 +1,5 @@
-using Microsoft.Data.Sqlite;
 using Mediateca.Core.Domain;
+using Microsoft.Data.Sqlite;
 
 namespace Mediateca.Data;
 

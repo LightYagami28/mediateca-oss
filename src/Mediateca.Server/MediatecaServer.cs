@@ -2,14 +2,14 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+using Mediateca.Core.Abstractions;
+using Mediateca.Core.Domain;
+using Mediateca.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Mediateca.Core.Abstractions;
-using Mediateca.Core.Domain;
-using Mediateca.Data;
 
 namespace Mediateca.Server;
 
@@ -317,7 +317,8 @@ internal static class WebDav
     }
 
     private static bool CheckBasic(HttpContext context, ServerOptions options)
-    {        var hasHash = !string.IsNullOrEmpty(options.WebDavPasswordHash);
+    {
+        var hasHash = !string.IsNullOrEmpty(options.WebDavPasswordHash);
         if (!hasHash && string.IsNullOrEmpty(options.WebDavPassword))
         {
             return true;

@@ -73,7 +73,7 @@ public sealed class SecretBox
     }
 
     /// <summary>Prova a decifrare, restituendo <paramref name="fallback"/> se il testo non è valido.</summary>
-    public string TryDecrypt(string payload, string fallback = "") 
+    public string TryDecrypt(string payload, string fallback = "")
     {
         if (string.IsNullOrEmpty(payload))
         {

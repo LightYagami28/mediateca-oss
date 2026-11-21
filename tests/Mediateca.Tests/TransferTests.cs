@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging.Abstractions;
 using Mediateca.Core.Domain;
 using Mediateca.Data;
 using Mediateca.Server;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Mediateca.Tests;
 

@@ -1,6 +1,6 @@
-using Microsoft.Data.Sqlite;
 using Mediateca.Core.Domain;
 using Mediateca.Data;
+using Microsoft.Data.Sqlite;
 
 namespace Mediateca.Tests;
 
@@ -223,15 +223,15 @@ public sealed class MediaStoreTests
         long size = 100,
         string? titolo = null,
         DateTimeOffset? updated = null) => new()
-    {
-        ChannelId = channelId,
-        MessageId = messageId,
-        Name = name,
-        Kind = kind,
-        Size = size,
-        Title = titolo,
-        UpdatedAt = updated ?? DateTimeOffset.UtcNow,
-    };
+        {
+            ChannelId = channelId,
+            MessageId = messageId,
+            Name = name,
+            Kind = kind,
+            Size = size,
+            Title = titolo,
+            UpdatedAt = updated ?? DateTimeOffset.UtcNow,
+        };
 
     private static string NewTempDirectory()
     {

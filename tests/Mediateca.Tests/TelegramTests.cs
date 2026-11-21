@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.Extensions.Logging.Abstractions;
 using Mediateca.Telegram;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Mediateca.Tests;
 

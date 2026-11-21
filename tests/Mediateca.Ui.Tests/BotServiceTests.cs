@@ -1,8 +1,8 @@
-using Microsoft.Extensions.Options;
 using Mediateca.Core.Domain;
 using Mediateca.Data;
 using Mediateca.Server;
 using Mediateca.Ui.Services;
+using Microsoft.Extensions.Options;
 
 namespace Mediateca.Ui.Tests;
 
