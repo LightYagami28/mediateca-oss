@@ -18,7 +18,7 @@ concurrency:
 jobs:
   sonar:
     name: Analisi SonarCloud con copertura
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 30
 
     steps:
@@ -50,10 +50,7 @@ jobs:
       - name: Compilazione e test con copertura
         run: |
           dotnet build Mediateca.slnx -c Release
-          dotnet test Mediateca.slnx --no-build -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=coverage.opencover.xml
+          dotnet test Mediateca.slnx --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=coverage.opencover.xml
 
       - name: Pubblica analisi
         env:
