@@ -44,7 +44,10 @@ public sealed class BotService : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        _cancellation?.Cancel();
+        if (_cancellation is not null)
+        {
+            await _cancellation.CancelAsync().ConfigureAwait(false);
+        }
         if (_loop is not null)
         {
             try

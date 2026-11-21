@@ -71,7 +71,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
             throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
         }
 
-        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
         var resolved = await client.Contacts_ResolveUsername(username).ConfigureAwait(false);
         if (resolved.UserOrChat is not TL.Channel channel)
         {
@@ -171,7 +171,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         var channel = FindChannel(channelId)
             ?? throw new InvalidOperationException($"Canale {channelId.ToString(CultureInfo.InvariantCulture)} sconosciuto o senza access hash: importalo prima.");
 
-        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
         var peer = new InputPeerChannel(channel.Id, channel.AccessHash!.Value);
         var uploaded = await client.UploadFileAsync(file.FullName, Progress).WaitAsync(cancellationToken).ConfigureAwait(false);
         var extension = file.Extension.TrimStart('.').ToLowerInvariant();
@@ -193,7 +193,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
             throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
         }
 
-        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
         var entries = new List<AddressBookEntry>();
 
         var contacts = await client.Contacts_GetContacts().WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -265,7 +265,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
             return false;
         }
 
-        var client = await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
         var input = new InputChannel(channel.Id, channel.AccessHash!.Value);
         var messages = await client.Channels_GetMessages(input, [new InputMessageID { id = item.MessageId }]).ConfigureAwait(false);
         if (messages.Messages.Length == 0 || messages.Messages[0] is not Message message || message.media is null)
@@ -299,7 +299,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         return true;
     }
 
-    private async Task<Client> EnsureConnectedAsync(CancellationToken cancellationToken)
+    private async Task<Client> EnsureConnectedAsync()
     {
         if (_connected && _client is not null)
         {
@@ -318,9 +318,9 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         catch (Exception exception)
         {
             _logger.LogError(exception, "Connessione MTProto fallita");
-            _client.Dispose();
+            await _client.DisposeAsync().ConfigureAwait(false);
             _client = null;
-            throw;
+            throw new InvalidOperationException("Connessione MTProto fallita.", exception);
         }
     }
 
@@ -358,11 +358,9 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
     {
         if (_client is not null)
         {
-            _client.Dispose();
+            await _client.DisposeAsync().ConfigureAwait(false);
             _client = null;
         }
-
-        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
 

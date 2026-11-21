@@ -10,7 +10,7 @@ builder.Services.AddMediatecaUi(builder.Configuration, builder.Environment);
 using var host = builder.Build();
 App.Services = host.Services;
 
-host.Start();
+await host.StartAsync();
 
 try
 {
@@ -22,5 +22,5 @@ try
 }
 finally
 {
-    host.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+    await host.StopAsync(TimeSpan.FromSeconds(5));
 }
