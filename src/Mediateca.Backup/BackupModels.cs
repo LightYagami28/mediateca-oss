@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Mediateca contributors
+// Licensed under AGPL-3.0-or-later. See LICENSE in the project root.
+
 namespace Mediateca.Backup;
 
 /// <summary>
