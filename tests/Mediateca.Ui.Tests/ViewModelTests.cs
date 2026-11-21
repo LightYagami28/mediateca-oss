@@ -10,6 +10,26 @@ namespace Mediateca.Ui.Tests;
 
 public class ViewModelTests
 {
+    private sealed class AlwaysEnabledLogger<T> : ILogger<T>
+    {
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull => Scope.Instance;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+        }
+
+        private sealed class Scope : IDisposable
+        {
+            internal static readonly Scope Instance = new();
+
+            public void Dispose()
+            {
+            }
+        }
+    }
+
     private static async Task<CatalogViewModel> CreateCatalog(int count = 50, int debounceMs = 0, ILogger<CatalogViewModel>? logger = null)
     {
         var viewModel = new CatalogViewModel(new SampleCatalogSource(count), logger ?? NullLogger<CatalogViewModel>.Instance, debounceMs);
@@ -63,16 +83,14 @@ public class ViewModelTests
     [Fact]
     public async Task Il_caricamento_scrive_il_log_quando_il_livello_e_attivo()
     {
-        using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-        var viewModel = await CreateCatalog(logger: factory.CreateLogger<CatalogViewModel>());
+        var viewModel = await CreateCatalog(logger: new AlwaysEnabledLogger<CatalogViewModel>());
         Assert.Equal(50, viewModel.Rows.Count);
     }
 
     [Fact]
     public async Task La_ricerca_annullata_lascia_invariato_il_catalogo()
     {
-        using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-        var viewModel = await CreateCatalog(debounceMs: 200, logger: factory.CreateLogger<CatalogViewModel>());
+        var viewModel = await CreateCatalog(debounceMs: 200, logger: new AlwaysEnabledLogger<CatalogViewModel>());
 
         viewModel.Search = "a";
         viewModel.Search = string.Empty;
@@ -93,8 +111,7 @@ public class ViewModelTests
             database.Migrate();
             new SqliteMediaStore(database).UpsertChannel(new Channel { Id = 1, Title = "Canale", IsSource = true });
 
-            using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Debug));
-            var viewModel = new ChannelsViewModel(database, factory.CreateLogger<ChannelsViewModel>());
+            var viewModel = new ChannelsViewModel(database, new AlwaysEnabledLogger<ChannelsViewModel>());
 
             await viewModel.LoadAsync(TestContext.Current.CancellationToken);
 
@@ -112,7 +129,7 @@ public class ViewModelTests
                 }
                 catch (IOException)
                 {
-                    Thread.Sleep(50);
+                    await Task.Delay(50, TestContext.Current.CancellationToken);
                 }
             }
         }

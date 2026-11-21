@@ -8,6 +8,26 @@ namespace Mediateca.Tests;
 
 public sealed class TransferTests
 {
+    private sealed class AlwaysEnabledLogger<T> : ILogger<T>
+    {
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull => Scope.Instance;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+        }
+
+        private sealed class Scope : IDisposable
+        {
+            internal static readonly Scope Instance = new();
+
+            public void Dispose()
+            {
+            }
+        }
+    }
+
     [Fact]
     public void TransferStore_Accoda_aggiorna_e_chiude_un_trasferimento()
     {
@@ -58,7 +78,6 @@ public sealed class TransferTests
             File.WriteAllBytes(Path.Combine(sourceRoot, "film.bin"), bytes);
             var itemId = media.Upsert(new MediaItem { ChannelId = 1, MessageId = 3, Name = "film.bin", Size = bytes.Length });
 
-            using var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Information));
             var store = new TransferStore(database);
             var jobId = store.Enqueue(itemId, "download");
             var service = new TransferQueueService(
@@ -66,7 +85,7 @@ public sealed class TransferTests
                 media,
                 new LocalMediaFileSource(sourceRoot),
                 Path.Combine(directory, "downloads"),
-                loggerFactory.CreateLogger<TransferQueueService>());
+                new AlwaysEnabledLogger<TransferQueueService>());
 
             var processed = await service.ProcessPendingAsync();
 
