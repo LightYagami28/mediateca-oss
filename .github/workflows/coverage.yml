@@ -43,7 +43,7 @@ jobs:
           dotnet sonarscanner begin
           /k:"LightYagami28_mediateca-oss"
           /o:"lightyagami28"
-          /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.token="$env:SONAR_TOKEN"
           /d:sonar.host.url="https://sonarcloud.io"
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
@@ -55,4 +55,4 @@ jobs:
       - name: Pubblica analisi
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+        run: dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
