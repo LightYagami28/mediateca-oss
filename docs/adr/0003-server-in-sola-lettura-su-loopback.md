@@ -7,7 +7,6 @@ Stato: accettata (2026-11-14)
 Il server HTTP espone catalogo e streaming; può essere raggiunto da altre
 macchine ma non ha TLS.
 
-
 ## Decisione
 - Bind di default su `127.0.0.1`; il bind fuori dal loopback senza token API è
   riportato a `127.0.0.1`.

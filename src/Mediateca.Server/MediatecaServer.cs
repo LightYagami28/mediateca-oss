@@ -89,6 +89,26 @@ public static class MediatecaServer
             schema = database.CurrentVersion(),
         }));
 
+        MapApi(app, store, options);
+
+        if (options.WebDavEnabled)
+        {
+            app.MapMethods(DavPrefix + "/{**path}", ["OPTIONS", "PROPFIND", "HEAD", "GET"], (HttpContext context, string? path) =>
+                WebDav.Handle(context, path ?? "", store, database, options, fileSource));
+        }
+
+        app.MapMethods("/api/items/{id:long}/stream", ["GET", "HEAD"], async (HttpContext context, long id) =>
+            await MediaApi.Stream(context, id, store, fileSource, options).ConfigureAwait(false));
+
+        app.MapGet("/miniapp", () => Results.Content(Miniapp.Html, "text/html; charset=utf-8"));
+        app.MapGet("/miniapp.css", () => Results.Content(Miniapp.Css, "text/css; charset=utf-8"));
+        app.MapGet("/miniapp.js", () => Results.Content(Miniapp.JavaScript, "text/javascript; charset=utf-8"));
+
+        return app;
+    }
+
+    private static void MapApi(WebApplication app, SqliteMediaStore store, ServerOptions options)
+    {
         app.MapGet("/api/stats", (HttpContext context) =>
         {
             if (!Authorize(context, options))
@@ -122,21 +142,6 @@ public static class MediatecaServer
                 streamable = item.IsStreamable,
             }));
         });
-
-        if (options.WebDavEnabled)
-        {
-            app.MapMethods(DavPrefix + "/{**path}", ["OPTIONS", "PROPFIND", "HEAD", "GET"], (HttpContext context, string? path) =>
-                WebDav.Handle(context, path ?? "", store, database, options, fileSource));
-        }
-
-        app.MapMethods("/api/items/{id:long}/stream", ["GET", "HEAD"], async (HttpContext context, long id) =>
-            await MediaApi.Stream(context, id, store, fileSource, options).ConfigureAwait(false));
-
-        app.MapGet("/miniapp", () => Results.Content(Miniapp.Html, "text/html; charset=utf-8"));
-        app.MapGet("/miniapp.css", () => Results.Content(Miniapp.Css, "text/css; charset=utf-8"));
-        app.MapGet("/miniapp.js", () => Results.Content(Miniapp.JavaScript, "text/javascript; charset=utf-8"));
-
-        return app;
     }
 
     private static void ConfigureAddress(WebApplicationBuilder builder, ServerOptions options)
