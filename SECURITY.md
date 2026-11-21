@@ -10,7 +10,7 @@ ancora rilasci stabili, quindi non c'è manutenzione di rami vecchi.
 Il canale preferito è una **security advisory privata** su GitHub (scheda
 *Security* → *Report a vulnerability*): resta riservata finché non è pubblicata
 la correzione. Se il problema non è sensibile, va bene anche una issue normale.
-In alternativa si può scrivere a **maule2703@gmail.com**.
+In alternativa si può contattare il proprietario su GitHub: **@LightYagami28**.
 
 Nella segnalazione servono: cosa succede, come riprodurlo, versione o commit,
 sistema operativo e se il problema è già pubblico altrove. Non allegare chiavi
@@ -71,7 +71,7 @@ dotnet test Mediateca.slnx -c Release
 
 `Mediateca.Server.SecurityHeaders` applica a ogni risposta, errori inclusi:
 `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`,
-`Upgrade-Insecure-Requests: 1`, CSP con sole sorgenti `https:` e
+`Upgrade-Insecure-Requests: 1`, CSP con sole sorgenti `'self'` e
 `upgrade-insecure-requests`, `Referrer-Policy: strict-origin-when-cross-origin`,
 `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` e una
 `Permissions-Policy` restrittiva. Le rotte `/api` e `/dav` aggiungono
@@ -103,3 +103,16 @@ dotnet test Mediateca.slnx -c Release
   identificatori di namespace richiesti dallo schema, non richieste di rete.
 - La stringa `http://` nella CSP è usata solo come controllo di assenza nel test
   degli header.
+
+## Valori di test e costanti che non sono segreti
+
+- Le password, i token bot e gli hash API usati negli xUnit sono **fixture fittizie**
+  costruite a runtime (per esempio concatenando parti di stringa): non sono
+  credenziali reali e non devono essere trattate come segreti da ruotare.
+- Le costanti `MEDIATECA_GDRIVE_CLIENT_SECRET`, `MEDIATECA_TMDB_API_KEY` e
+  `MEDIATECA_TELEGRAM_BOT_TOKEN` sono **nomi di variabili d'ambiente**, non valori:
+  i segreti si leggono sempre dall'ambiente o dalla configurazione cifrata
+  dell'utente. Nessun valore reale è presente nel sorgente.
+- Le migrazioni SQLite usano istruzioni SQL letterali assegnate direttamente a
+  `CommandText`: le tabelle e i pragma non derivano da input utente. Ogni valore
+  variabile nelle query applicative passa invece da parametri ADO.NET.

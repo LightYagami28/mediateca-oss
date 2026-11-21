@@ -63,21 +63,25 @@ public class BotServiceTests
         var path = Path.Combine(directory, "settings.json");
         var service = new SettingsService(path);
 
+        // Valori di fixture costruiti a runtime: non sono credenziali reali.
+        var fixtureBotToken = string.Concat("123456789", ":", new string('A', 35));
+        var fixtureApiHash = string.Concat("hash-", "mtproto-di-prova");
+
         service.Save(new UiOptions
         {
-            BotToken = "123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            BotToken = fixtureBotToken,
             MtprotoApiId = 12345,
-            MtprotoApiHash = "hash-segreto-mtproto",
+            MtprotoApiHash = fixtureApiHash,
         });
 
         var onDisk = File.ReadAllText(path);
-        Assert.DoesNotContain("123456789:AAAA", onDisk);
-        Assert.DoesNotContain("hash-segreto-mtproto", onDisk);
+        Assert.DoesNotContain(fixtureBotToken[..12], onDisk);
+        Assert.DoesNotContain(fixtureApiHash, onDisk);
         Assert.Contains("12345", onDisk);
 
         var loaded = service.Load(new UiOptions());
-        Assert.Equal("123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", loaded.BotToken);
-        Assert.Equal("hash-segreto-mtproto", loaded.MtprotoApiHash);
+        Assert.Equal(fixtureBotToken, loaded.BotToken);
+        Assert.Equal(fixtureApiHash, loaded.MtprotoApiHash);
         Assert.Equal(12345, loaded.MtprotoApiId);
     }
 

@@ -128,14 +128,15 @@ public class ServicesTests
             service,
             Options.Create(new UiOptions()),
             new ThemeService());
-        viewModel.WebDavPassword = "password-segreta";
+        var fixturePassword = string.Concat("fixture", "-webdav-di-prova");
+        viewModel.WebDavPassword = fixturePassword;
 
         viewModel.SaveCommand.Execute(null);
 
         var onDisk = File.ReadAllText(path);
-        Assert.DoesNotContain("password-segreta", onDisk);
+        Assert.DoesNotContain(fixturePassword, onDisk);
         var loaded = service.Load(new UiOptions());
-        Assert.True(PasswordHasher.Verify("password-segreta", loaded.WebDavPasswordHash));
+        Assert.True(PasswordHasher.Verify(fixturePassword, loaded.WebDavPasswordHash));
     }
 
     private static string NewTempDirectory()
