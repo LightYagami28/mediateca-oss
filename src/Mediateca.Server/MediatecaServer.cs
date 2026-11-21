@@ -1,12 +1,15 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Threading.RateLimiting;
 using System.Xml.Linq;
 using Mediateca.Core.Abstractions;
 using Mediateca.Core.Domain;
 using Mediateca.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -57,6 +60,42 @@ public static class MediatecaServer
     /// <summary>Percorso dell'area WebDAV.</summary>
     public const string DavPrefix = "/dav";
 
+    /// <summary>Cookie HttpOnly usato dalla miniapp per conservare il token API dopo il POST.</summary>
+    internal const string TokenCookie = "mediateca_token";
+
+    private const string ApiRateLimitPolicy = "api";
+
+    private const string LoopbackAddress = "127.0.0.1";
+
+    /// <summary>
+    /// Applica i vincoli minimi per un bind non-loopback: senza token API l'ascolto resta su
+    /// loopback e senza credenziali WebDAV l'area viene disattivata; l'autenticazione WebDAV
+    /// diventa obbligatoria.
+    /// </summary>
+    public static ServerOptions ApplyNonLoopbackGuards(ServerOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (IsLoopback(options.BindAddress))
+        {
+            return options;
+        }
+
+        var hasWebDavCredentials = !string.IsNullOrEmpty(options.WebDavPasswordHash)
+            || !string.IsNullOrEmpty(options.WebDavPassword);
+
+        return options with
+        {
+            BindAddress = string.IsNullOrEmpty(options.ApiToken) ? LoopbackAddress : options.BindAddress,
+            WebDavEnabled = options.WebDavEnabled && hasWebDavCredentials,
+            WebDavRequireAuth = true,
+        };
+    }
+
+    private static bool IsLoopback(string address) =>
+        string.Equals(address, "localhost", StringComparison.OrdinalIgnoreCase)
+        || (IPAddress.TryParse(address, out var parsed) && IPAddress.IsLoopback(parsed));
+
     /// <summary>Costruisce l'applicazione web.</summary>
     public static WebApplication Build(
         ServerOptions options,
@@ -76,10 +115,23 @@ public static class MediatecaServer
 
         ConfigureAddress(builder, options);
 
+        builder.Services.AddRateLimiter(configure =>
+        {
+            configure.AddFixedWindowLimiter(ApiRateLimitPolicy, limiter =>
+            {
+                limiter.PermitLimit = 120;
+                limiter.Window = TimeSpan.FromMinutes(1);
+                limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                limiter.QueueLimit = 0;
+            });
+            configure.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        });
+
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         var app = builder.Build();
 
         app.Use(SecurityHeaders.Apply);
+        app.UseRateLimiter();
 
         var store = new SqliteMediaStore(database);
 
@@ -98,7 +150,8 @@ public static class MediatecaServer
         }
 
         app.MapMethods("/api/items/{id:long}/stream", ["GET", "HEAD"], async (HttpContext context, long id) =>
-            await MediaApi.Stream(context, id, store, fileSource, options).ConfigureAwait(false));
+            await MediaApi.Stream(context, id, store, fileSource, options).ConfigureAwait(false))
+            .RequireRateLimiting(ApiRateLimitPolicy);
 
         app.MapGet("/miniapp", () => Results.Content(Miniapp.Html, "text/html; charset=utf-8"));
         app.MapGet("/miniapp.css", () => Results.Content(Miniapp.Css, "text/css; charset=utf-8"));
@@ -109,6 +162,40 @@ public static class MediatecaServer
 
     private static void MapApi(WebApplication app, SqliteMediaStore store, ServerOptions options)
     {
+        app.MapPost("/api/session", async (HttpContext context) =>
+        {
+            if (string.IsNullOrEmpty(options.ApiToken))
+            {
+                return Results.NoContent();
+            }
+
+            TokenRequest? request;
+            try
+            {
+                request = await context.Request.ReadFromJsonAsync<TokenRequest>(context.RequestAborted).ConfigureAwait(false);
+            }
+            catch (JsonException)
+            {
+                return Results.BadRequest();
+            }
+
+            var supplied = request?.Token ?? string.Empty;
+            if (!TokenMatches(supplied, options.ApiToken))
+            {
+                return Results.Unauthorized();
+            }
+
+            context.Response.Cookies.Append(TokenCookie, options.ApiToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = context.Request.IsHttps,
+                SameSite = SameSiteMode.Strict,
+                Path = "/api",
+                MaxAge = TimeSpan.FromHours(8),
+            });
+            return Results.NoContent();
+        }).RequireRateLimiting(ApiRateLimitPolicy);
+
         app.MapGet("/api/stats", (HttpContext context) =>
         {
             if (!Authorize(context, options))
@@ -118,7 +205,7 @@ public static class MediatecaServer
 
             var (items, bytes, channels) = store.Statistics();
             return Results.Json(new { items, bytes, channels });
-        });
+        }).RequireRateLimiting(ApiRateLimitPolicy);
 
         app.MapGet("/api/items", (HttpContext context, string? q, string? kind, int? limit) =>
         {
@@ -141,7 +228,12 @@ public static class MediatecaServer
                 item.Episode,
                 streamable = item.IsStreamable,
             }));
-        });
+        }).RequireRateLimiting(ApiRateLimitPolicy);
+    }
+
+    private sealed class TokenRequest
+    {
+        public string? Token { get; init; }
     }
 
     private static void ConfigureAddress(WebApplicationBuilder builder, ServerOptions options)
@@ -189,23 +281,25 @@ public static class MediatecaServer
             return true;
         }
 
+        string? supplied = null;
         var header = context.Request.Headers.Authorization.ToString();
-        if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        if (header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            supplied = header[7..].Trim();
+        }
+        else if (context.Request.Cookies.TryGetValue(TokenCookie, out var cookie))
+        {
+            supplied = cookie;
         }
 
-        var supplied = header[7..].Trim();
-        var expected = options.ApiToken;
-        if (supplied.Length != expected.Length)
-        {
-            return false;
-        }
+        return supplied is not null && TokenMatches(supplied, options.ApiToken);
+    }
 
-        return CryptographicOperations.FixedTimeEquals(
+    private static bool TokenMatches(string supplied, string expected) =>
+        supplied.Length == expected.Length
+        && CryptographicOperations.FixedTimeEquals(
             Encoding.UTF8.GetBytes(supplied),
             Encoding.UTF8.GetBytes(expected));
-    }
 }
 
 /// <summary>Area WebDAV in sola lettura sul catalogo, compatibile con rclone e media server.</summary>

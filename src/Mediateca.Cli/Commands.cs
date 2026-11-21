@@ -217,22 +217,32 @@ internal static class Commands
         var database = new MediatecaDatabase(paths.DatabasePath);
         database.Migrate();
 
-        Console.WriteLine($"mediateca server su {Uri.UriSchemeHttps}://{bind}:{port}");
-        Console.WriteLine($"webdav {(settings.WebDavEnabled ? "attivo" : "spento")}, api token {(string.IsNullOrEmpty(token) ? "assente" : "presente")}");
+        var options = MediatecaServer.ApplyNonLoopbackGuards(new ServerOptions
+        {
+            BindAddress = bind,
+            Port = port,
+            WebDavEnabled = settings.WebDavEnabled,
+            WebDavRequireAuth = settings.WebDavRequireAuth,
+            WebDavUser = settings.WebDavUser,
+            WebDavPasswordHash = settings.WebDavPasswordHash,
+            ApiToken = token,
+        });
+
+        if (!string.Equals(options.BindAddress, bind, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine($"bind {bind} senza token API: ascolto limitato a {options.BindAddress}.");
+        }
+
+        if (settings.WebDavEnabled && !options.WebDavEnabled)
+        {
+            Console.Error.WriteLine("bind non-loopback senza credenziali WebDAV: area WebDAV disattivata.");
+        }
+
+        Console.WriteLine($"mediateca server su {Uri.UriSchemeHttps}://{options.BindAddress}:{options.Port}");
+        Console.WriteLine($"webdav {(options.WebDavEnabled ? "attivo" : "spento")}, api token {(string.IsNullOrEmpty(options.ApiToken) ? "assente" : "presente")}");
         Console.WriteLine("Ctrl+C per fermare");
 
-        await MediatecaServer.RunAsync(
-            new ServerOptions
-            {
-                BindAddress = bind,
-                Port = port,
-                WebDavEnabled = settings.WebDavEnabled,
-                WebDavRequireAuth = settings.WebDavRequireAuth,
-                WebDavUser = settings.WebDavUser,
-                WebDavPasswordHash = settings.WebDavPasswordHash,
-                ApiToken = token,
-            },
-            database);
+        await MediatecaServer.RunAsync(options, database);
 
         return 0;
     }

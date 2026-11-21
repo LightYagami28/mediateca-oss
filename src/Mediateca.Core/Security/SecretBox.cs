@@ -84,7 +84,15 @@ public sealed class SecretBox
         {
             return Decrypt(payload);
         }
-        catch (Exception)
+        catch (CryptographicException)
+        {
+            return fallback;
+        }
+        catch (FormatException)
+        {
+            return fallback;
+        }
+        catch (ArgumentException)
         {
             return fallback;
         }
