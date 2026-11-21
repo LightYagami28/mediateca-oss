@@ -40,7 +40,7 @@ public sealed class MusicBrainzScraper(HttpClient httpClient) : IMediaScraper
         return year is int releaseYear ? $"{url}&firstreleasedate={releaseYear}" : url;
     }
 
-    private static IReadOnlyList<MediaCandidate> ParseRecordings(JsonElement recordings, int? year)
+    private static List<MediaCandidate> ParseRecordings(JsonElement recordings, int? year)
     {
         var results = new List<MediaCandidate>();
         foreach (var recording in recordings.EnumerateArray())

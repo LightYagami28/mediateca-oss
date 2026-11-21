@@ -7,7 +7,7 @@ namespace Mediateca.Ui.Services;
 public sealed class SqliteCatalogSource(MediatecaDatabase database) : ICatalogSource
 {
     private readonly SqliteMediaStore _store = new(database);
-    private IReadOnlyDictionary<long, string> _channels = new Dictionary<long, string>();
+    private Dictionary<long, string> _channels = new();
 
     public Task<IReadOnlyList<CatalogRow>> LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -33,7 +33,7 @@ public sealed class SqliteCatalogSource(MediatecaDatabase database) : ICatalogSo
         return Task.FromResult<IReadOnlyList<CatalogRow>>(rows);
     }
 
-    private IReadOnlyDictionary<long, string> LoadChannels() =>
+    private Dictionary<long, string> LoadChannels() =>
         _store.ListChannels().ToDictionary(channel => channel.Id, channel => channel.Title);
 
     private CatalogRow ToRow(MediaItem item) => new()

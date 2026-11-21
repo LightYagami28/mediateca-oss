@@ -37,7 +37,7 @@ public partial class ChannelsViewModel : ObservableObject
             {
                 Logger.LogDebug("Canali caricati: {Count}", rows.Count);
             }
-            Rows = new ObservableCollection<ChannelRow>(rows);
+            Rows = [.. rows];
             OnPropertyChanged(nameof(Rows));
             OnPropertyChanged(nameof(CountText));
         }

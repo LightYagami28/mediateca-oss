@@ -135,7 +135,7 @@ public partial class CatalogViewModel : ObservableObject
 
     private void SetRows(IEnumerable<CatalogRow> rows)
     {
-        Rows = new ObservableCollection<CatalogRow>(rows);
+        Rows = [.. rows];
         OnPropertyChanged(nameof(Rows));
         OnPropertyChanged(nameof(ItemsText));
         OnPropertyChanged(nameof(TotalItemsText));
