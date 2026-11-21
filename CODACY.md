@@ -20,18 +20,38 @@ Evidenze dalle issue Codacy (istantanea 2026-11-21):
 - `name.EndsWith(".mp4", ...)` è segnalata benché `name` sia un `string`
   non nullable con `<Nullable>enable</Nullable>`.
 
-Comportamento verificato con un commit di prova: un guard `if (x != null)`
-elimina la segnalazione, mentre `is not null` e `&&` non la eliminano.
-Applicare la correzione a tutte le occorrenze richiederebbe centinaia di
-guard ridondanti su valori già non nullable. **Richiede conferma** prima di
-procedere con una modifica di tale portata.
+Comportamento verificato con commit di prova:
+
+- un guard `if (x != null)` che racchiude la singola istruzione elimina la
+  segnalazione, mentre `is not null` e le condizioni con `&&` non la eliminano;
+- l'aggiunta automatica di guard `if (x != null)` all'inizio di 133 metodi
+  (commit `0d1439c`, poi reverted con `c01cbf1`) **non ha ridotto il conteggio**:
+  568 issue prima e dopo. La regola richiede quindi il guard nella vicinanza
+  immediata dell'accesso, non semplicemente nello stesso metodo, e ha invece
+  generato 47 nuove issue di complessità;
+- il guard immediato rotta lo scope quando racchiude una dichiarazione di
+  variabile usata più avanti (per esempio `var body` in `TelegramBotPoolTests`),
+  quindi non può essere applicato in modo meccanico senza refactoring manuale
+  di ogni punto.
+
+Per questi motivi la correzione non è applicabile in sicurezza su larga scala.
+**Richiede conferma** su come procedere.
 
 ### `Semgrep_codacy.generic.csharp-lowercase-variables`
 
-La regola richiede nomi di variabili in minuscolo, ma segnala proprietà
-pubbliche idiomatiche in PascalCase, per esempio `public int Port { get; init; }`
-e `public required long Id { get; init; }`. Rinominarle romperebbe l'API
-pubblica e le convenzioni C#. **Richiede conferma**.
+La documentazione ufficiale mostra esempi di variabili locali (`int Count`),
+ma l'analizzatore segnala 381 dichiarazioni di ogni tipo: proprietà, metodi,
+costanti, parametri e membri di interfaccia. Esempi: `public int Port { get; init; }`,
+`private static string NewTempDirectory()`, `public const int MinPort = 1`,
+`string Name { get; }`.
+
+Un tentativo di rename testuale di massa (267 identificatori) ha provocato
+errori di compilazione: sono stati rinominati anche tipi e namespace
+(`System.Text` → `System.text`, `Channel` → `channel`, `Regex` → `regex`),
+perché la regola non distingue i variable identifier dai type identifier.
+Il rename è stato annullato. Per farlo in sicurezza servirebbe un rename
+simbolico Roslyn su ogni symbol dichiarato, con 381 call-site da aggiornare.
+**Richiede conferma** sulla strategia.
 
 ### `SonarCSharp_S4261`
 
