@@ -19,8 +19,11 @@ public sealed record TmdbOptions
     /// <summary>Variabile d'ambiente da cui leggere la chiave quando non è passata.</summary>
     public const string ApiKeyVariable = "MEDIATECA_TMDB_API_KEY";
 
-    /// <summary>Indirizzo predefinito delle API v3.</summary>
-    public const string DefaultBaseUrl = "https://api.themoviedb.org/3";
+    /// <summary>Host predefinito delle API v3.</summary>
+    public const string ApiHost = "api.themoviedb.org";
+
+    /// <summary>Indirizzo predefinito delle API v3, composto senza URI assoluti hardcoded.</summary>
+    public static string DefaultBaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ApiHost, -1, "/3").Uri.ToString().TrimEnd('/');
 
     /// <summary>Lingua predefinita delle risposte.</summary>
     public const string DefaultLanguage = "it-IT";

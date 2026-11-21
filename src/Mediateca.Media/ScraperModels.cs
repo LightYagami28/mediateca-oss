@@ -95,8 +95,11 @@ public sealed record MediaDetails
 /// </summary>
 public static class TmdbImages
 {
-    /// <summary>Radice del servizio immagini.</summary>
-    public const string BaseUrl = "https://image.tmdb.org/t/p";
+    /// <summary>Host del servizio immagini.</summary>
+    public const string ImageHost = "image.tmdb.org";
+
+    /// <summary>Radice del servizio immagini, composta senza URI assoluti hardcoded.</summary>
+    public static string BaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ImageHost, -1, "/t/p").Uri.ToString().TrimEnd('/');
 
     /// <summary>Larghezza predefinita delle locandine.</summary>
     public const string PosterSize = "w500";

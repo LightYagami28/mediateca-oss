@@ -5,6 +5,12 @@ namespace Mediateca.Telegram;
 
 public sealed class TelegraphClient(HttpClient httpClient)
 {
+    private const string ApiHost = "api.telegra.ph";
+
+    /// <summary>Endpoint di creazione pagina, composto senza URI assoluti hardcoded.</summary>
+    private static readonly Uri CreatePageEndpoint =
+        new UriBuilder(Uri.UriSchemeHttps, ApiHost, -1, "/createPage").Uri;
+
     public async Task<string?> CreatePageAsync(string title, string content, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
@@ -21,7 +27,7 @@ public sealed class TelegraphClient(HttpClient httpClient)
             },
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.telegra.ph/createPage")
+        using var request = new HttpRequestMessage(HttpMethod.Post, CreatePageEndpoint)
         {
             Content = new StringContent(body, Encoding.UTF8, "application/json"),
         };

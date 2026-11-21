@@ -1,11 +1,20 @@
 using System.Net;
 using Mediateca.Core.Domain;
 using Mediateca.Media;
+using Mediateca.Telegram;
 
 namespace Mediateca.Tests;
 
 public sealed class ScraperTests
 {
+    [Fact]
+    public void Endpoint_costruiti_da_host_e_scheme_sono_invariati()
+    {
+        Assert.Equal("https://api.telegram.org", TelegramOptions.DefaultBaseUrl);
+        Assert.Equal("https://api.themoviedb.org/3", TmdbOptions.DefaultBaseUrl);
+        Assert.Equal("https://image.tmdb.org/t/p/w500/poster.jpg", TmdbImages.Build("/poster.jpg"));
+    }
+
     [Fact]
     public async Task MusicBrainz_mappa_i_risultati_delle_registrazioni()
     {

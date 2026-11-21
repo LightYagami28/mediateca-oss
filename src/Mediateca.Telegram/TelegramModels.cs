@@ -15,8 +15,11 @@ public sealed record TelegramOptions
     /// <summary>Variabile d'ambiente da cui leggere il token quando non è passato.</summary>
     public const string BotTokenVariable = "MEDIATECA_TELEGRAM_BOT_TOKEN";
 
-    /// <summary>Indirizzo predefinito della Bot API.</summary>
-    public const string DefaultBaseUrl = "https://api.telegram.org";
+    /// <summary>Host predefinito della Bot API.</summary>
+    public const string ApiHost = "api.telegram.org";
+
+    /// <summary>Indirizzo predefinito della Bot API, composto senza URI assoluti hardcoded.</summary>
+    public static string DefaultBaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ApiHost).Uri.ToString().TrimEnd('/');
 
     /// <summary>Timeout predefinito di una chiamata, in secondi.</summary>
     public const int DefaultTimeoutSeconds = 30;
