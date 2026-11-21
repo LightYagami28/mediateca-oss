@@ -1,15 +1,17 @@
 # Parità rispetto all'originale
 
-Confronto per area tra i moduli dell'originale Teledisk 1.7 (analisi statica del pacchetto
+Confronto per area tra i moduli dell'originale Teledisk 1.7 (analisi statica del
+pacchetto
 `Mediateca-1.7-Setup.exe`) e la reimplementazione in questo repository.
 
 ## Da dove vengono i numeri
 
-L'elenco dei moduli è `report/moduli-applicazione.txt` dell'analisi, il conteggio per area è
+L'elenco dei moduli è `report/moduli-applicazione.txt` dell'analisi, il
+conteggio per area è
 `report/moduli-per-area.json`. Sono 148 moduli in totale, così ripartiti:
 
 | Area dell'originale | Moduli |
-|---|---|
+| --- | --- |
 | `plugin/server` | 49 |
 | `backend` | 37 |
 | `plugin/bot` | 25 |
@@ -20,18 +22,20 @@ L'elenco dei moduli è `report/moduli-applicazione.txt` dell'analisi, il contegg
 | `main` | 1 |
 | **Totale** | **148** |
 
-I moduli dei bot e del frontend elencano anche i file `__init__` e gli helper: i numeri sono quelli
+I moduli dei bot e del frontend elencano anche i file `__init__` e gli helper: i
+numeri sono quelli
 dell'analisi, non una stima.
 
 ## Matrice di parità
 
-Stati: **fatto** (presente e utilizzabile), **parziale** (una parte c'è, il resto no), **mancante**.
+Stati: **fatto** (presente e utilizzabile), **parziale** (una parte c'è, il
+resto no), **mancante**.
 Le note dicono sempre dove sta il confine.
 
 ### backend (37 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Database e migrazioni | 6 — `db`, `db_setup`, `db_migrations`, `sqlite_safety`, `save_on_db_files`, `counter_repair` | **parziale** | SQLite con migrazioni versionate in transazione, WAL, `integrity_check`. Manca la migrazione dei database dell'originale e la riparazione dei contatori. |
 | Impostazioni, profili, utilità | 6 — `config`, `settings_backend`, `profile_utils`, `utils`, `gui_actions`, `gui_backend` | **parziale** | Impostazioni JSON tipizzate con scrittura atomica e comando `settings`. Mancano profili multipli e i livelli richiesti dalla GUI. |
 | Licenza | 1 — `license_check` | **nessuna** | Nessun sistema di licenza, nessuna chiave e nessuna attivazione: ogni installazione ha tutte le funzionalità. |
@@ -45,7 +49,7 @@ Le note dicono sempre dove sta il confine.
 ### plugin/server (49 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Server HTTP, API e catalogo | 15 — `server`, `server_tab`, `server_ui_helpers`, `port_guard`, `catalog_api`, `media_api`, `media_db`, `media_scanner`, `media_cover_sync`, `media_index_backup`, `media_name_parser`, `caption_backfill`, `config`, `exceptions`, `__init__` | **parziale** | Server HTTP con `/health`, `/api/stats`, `/api/items`, bind configurabile e token Bearer. L'analisi dei nomi (`MediaNameParser`: tipo, titolo, anno, stagione ed episodio) è applicata da `scan` e dall'import locale. Mancano la scansione lato server e le copertine. |
 | Streaming | 10 — `raw_getfile_streamer`, `telethon_streamer`, `stream_admission`, `stream_bot_pool`, `stream_events`, `stream_identity`, `stream_routes`, `generate_strm`, `strm_generator_thread`, `skip_intro_radar` | **parziale** | Il `GET` serve i byte con supporto Range (206/416) da sorgenti locali e da Telegram via cache. `TelegramBotPool` distribuisce le chiamate tra più bot e sospende quelli limitati (429, `retry_after`), ma lo streaming non lo usa ancora; mancano `.strm` e radar degli intro. |
 | WebDAV, VFS e FUSE | 6 — `webdav_support`, `webdav_tab`, `fuse_support`, `fuse_tab`, `mediateca_vfs_core`, `windows_longpaths` | **parziale** | WebDAV in sola lettura (`OPTIONS`, `PROPFIND`, `HEAD`) compatibile con i client di libreria. Mancano il corpo di `GET`, il montaggio FUSE/WinFsp e i percorsi lunghi. |
@@ -56,7 +60,7 @@ Le note dicono sempre dove sta il confine.
 ### plugin/bot (25 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Nucleo, comandi, aiuti | 15 — `admin_chat`, `core`, `commands`, `config`, `database`, `login`, `help`, `help_scope`, `app_package`, `bot_ui_helpers`, `ui`, `markdown_editor`, `icon_picker`, `system_commands`, `telegram_features` | **parziale** | Presente in `Mediateca.Telegram` un client essenziale della Bot API (identità del bot, invio di un messaggio, lettura aggiornamenti). Mancano comandi, menu, stato e login. |
 | Catalogo e ricerca | 4 — `catalog`, `user_library`, `user_search`, `tmdb` | **fatto** | Comandi `/catalog`, `/search` e `/stats` con long polling e tastiere inline. |
 | Pagamenti e amministrazione utenti | 3 — `payments`, `user_admin`, `stat` | **parziale** | `createInvoiceLink` in Telegram Stars, comando `/stats` e amministrazione utenti (`/users`, `/block`, `/unblock`, `/admin`; amministratori iniziali da `Ui:BotAdminIds`, utenti bloccati ignorati). Manca la conferma dei pagamenti. |
@@ -65,41 +69,49 @@ Le note dicono sempre dove sta il confine.
 ### plugin/upload (18 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Code di caricamento e scaricamento, client Telegram | 18 — `db`, `upload_worker`, `upload_bot_pool`, `telegram_upload/*` (client, coda, formattazione didascalie, video) | **parziale** | Coda di trasferimento persistente (`transfer_jobs`) con stati e progresso, worker di download dalle sorgenti, upload MTProto in `TelegramMediaSource.UploadAsync` (file inviato come documento e registrato nel catalogo; end-to-end NON VERIFICATO senza credenziali). Mancano l'aggancio dell'upload e del pool di bot (`TelegramBotPool`) alla coda e la formattazione delle didascalie. |
 
 ### plugin/telegram (2 moduli) e plugin di radice (3)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Operazioni e utilità Telegram | 2 — `telegram/operations`, `telegram/utils` | **mancante** | — |
 | `plugin/__init__`, `plugin/bot`, `plugin/telegram` | 3 | **mancante** | Sono i moduli che agganciavano tutto all'applicazione PyQt5. |
 
 ### frontend (13 moduli)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Interfaccia PyQt5: file manager, impostazioni, dialoghi, temi, tabelle, import smartphone, rubrica | 13 — `ui`, `filemanager_gui`, `settings_gui`, `dialog_utils`, `modern_theme`, `console_style`, `icon_helpers`, `notes_dialog`, `operation_dialog`, `table_utils`, `smartphone_import_gui`, `telegram_address_book_gui`, `__init__` | **in corso** | Interfaccia in Avalonia 12 su .NET 11 (`src/Mediateca.Ui`): navigazione laterale multi-vista (catalogo, canali, impostazioni, log), catalogo con tabella virtualizzata e ricerca debounced su SQL, pannello di dettaglio, tema chiaro/scuro, scorciatoie da tastiera; server HTTP integrato come `IHostedService`; impostazioni persistenti con scrittura atomica e token cifrato con DPAPI. Progetti futuri: port nativi in Swift per macOS e Linux. |
 
 ### main (1 modulo)
 
 | Area | Moduli dell'originale | Stato | Note |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Avvio: wizard password, creazione database, autostart dei componenti | 1 — `main` | **parziale** | Il ruolo è coperto dai comandi `doctor`, `db` e `serve`, senza avvio automatico dei componenti. |
 
 ## Bilancio
 
-Fatto o utilizzabile: database e migrazioni, catalogo, import locale, server HTTP e WebDAV in sola
-lettura, streaming dei byte con Range, code di trasferimento con worker di download, bot Telegram
+Fatto o utilizzabile: database e migrazioni, catalogo, import locale, server
+HTTP e WebDAV in sola
+lettura, streaming dei byte con Range, code di trasferimento con worker di
+download, bot Telegram
 con long polling e comandi, CLI e test.
 
-Parziale: client MTProto (login e import funzionanti, end-to-end non verificato senza credenziali),
-pagamenti Stars e MiniApp (primo giro), scraper (immagini remote), backup (per canale e
-selettivo), upload verso Telegram (in libreria, non agganciato alla coda), pool di bot (presente, non ancora agganciato).
+Parziale: client MTProto (login e import funzionanti, end-to-end non verificato
+senza credenziali),
+pagamenti Stars e MiniApp (primo giro), scraper (immagini remote), backup (per
+canale e
+selettivo), upload verso Telegram (in libreria, non agganciato alla coda), pool
+di bot (presente, non ancora agganciato).
 
 Mancante: `.strm` e radar degli intro, FUSE (WinFsp su
-Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti di ognuna),
+Windows, fuse3 su Linux — da fare distro per distro con il sistema di pacchetti
+di ognuna),
 interfaccia per l'import dello smartphone.
 
-Esclusioni deliberate: Tidal richiede API a pagamento (fuori perimetro); il sistema di licenza
-originale e le chiavi di attivazione non vengono riprodotti (nessuna chiave, nessuna attivazione).
+Esclusioni deliberate: Tidal richiede API a pagamento (fuori perimetro); il
+sistema di licenza
+originale e le chiavi di attivazione non vengono riprodotti (nessuna chiave,
+nessuna attivazione).

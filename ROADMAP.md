@@ -27,7 +27,8 @@ ordine di priorità.
 ## Prossimi passi
 
 1. **Pool di bot e upload nella coda di trasferimento.** `TelegramBotPool` e
-   `TelegramMediaSource.UploadAsync` esistono in libreria ma streaming e upload non
+   `TelegramMediaSource.UploadAsync` esistono in libreria ma streaming e upload
+   non
    li usano ancora: vanno collegati a `TransferStore` e `TransferQueueService`.
 2. **`.strm` e radar degli intro.**
 3. **Catalogo completo su Telegraph.** Oggi c'è solo il client `TelegraphClient`.

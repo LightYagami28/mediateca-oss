@@ -1,6 +1,8 @@
 # Architettura
 
-Mediateca è strutturata come suite modulare in .NET 11, orientata alla separazione netta tra modello di persistenza, servizi di rete, bot API e interfaccia utente.
+Mediateca è strutturata come suite modulare in .NET 11, orientata alla
+separazione netta tra modello di persistenza, servizi di rete, bot API e
+interfaccia utente.
 
 ```text
                            +----------------------+
@@ -23,7 +25,7 @@ Mediateca è strutturata come suite modulare in .NET 11, orientata alla separazi
 ```
 
 | Assembly | Responsabilità |
-|---|---|
+| --- | --- |
 | `Mediateca.Core` | Tipi di dominio (canali, elementi multimediali), gestione percorsi `%APPDATA%\Mediateca`, storage chiavi cifrato DPAPI/AES-256-GCM. |
 | `Mediateca.Data` | Accesso SQLite, migrazioni automatiche versionate con check di integrità PRAGMA, code di trasferimento persistenti. |
 | `Mediateca.Server` | Web server asincrono Kestrel/HttpListener con supporto Range HTTP 206 per streaming continuo, endpoint WebDAV sola lettura. |

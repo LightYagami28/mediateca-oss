@@ -10,7 +10,8 @@ ancora rilasci stabili, quindi non c'è manutenzione di rami vecchi.
 Il canale preferito è una **security advisory privata** su GitHub (scheda
 *Security* → *Report a vulnerability*): resta riservata finché non è pubblicata
 la correzione. Se il problema non è sensibile, va bene anche una issue normale.
-In alternativa si può contattare il proprietario su GitHub (**@LightYagami28**) oppure scrivere a **developer@lightyagami.dev**.
+In alternativa si può contattare il proprietario su GitHub (**@LightYagami28**)
+oppure scrivere a **developer@lightyagami.dev**.
 
 Nella segnalazione servono: cosa succede, come riprodurlo, versione o commit,
 sistema operativo e se il problema è già pubblico altrove. Non allegare chiavi

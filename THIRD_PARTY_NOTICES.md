@@ -1,11 +1,12 @@
 # Avvisi sulle dipendenze di terze parti
 
 Elenco dei pacchetti NuGet diretti (versioni da `Directory.Packages.props`) con
-la licenza dichiarata nel rispettivo `nuspec`. Le dipendenze transitive seguono le
+la licenza dichiarata nel rispettivo `nuspec`. Le dipendenze transitive seguono
+le
 loro licenze e sono consultabili con `dotnet list package --include-transitive`.
 
 | Pacchetto | Versione | Licenza |
-|---|---|---|
+| --- | --- | --- |
 | Avalonia | 12.1.6 | MIT |
 | Avalonia.Controls.DataGrid | 12.1.2 | MIT |
 | Avalonia.Desktop | 12.1.6 | MIT |

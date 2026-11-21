@@ -1,7 +1,7 @@
 # Glossario
 
 | Termine | Significato |
-|---|---|
+| --- | --- |
 | Catalogo | L'elenco di canali ed elementi media salvato in `database.db` (`SqliteMediaStore`). |
 | Canale | Origine di un gruppo di elementi: una cartella importata o un canale Telegram. |
 | Radice dati | Cartella unica da cui derivano tutti i percorsi (`MediatecaPaths.Root`). |

@@ -16,7 +16,7 @@ teledisk.net** né supportato dagli autori dell'originale.
 ## Stato dell'implementazione
 
 | Ambito | Stato |
-|---|---|
+| --- | --- |
 | Percorsi dati, impostazioni JSON, hash password, cifratura dei segreti | pronto |
 | Database SQLite con migrazioni versionate e controllo di integrità | pronto |
 | Catalogo media e canali, ricerca, statistiche | pronto |
@@ -38,7 +38,7 @@ Architettura: [ARCHITECTURE.md](ARCHITECTURE.md). Priorità: [ROADMAP.md](ROADMA
 ## Architettura
 
 | Progetto | Responsabilità |
-|---|---|
+| --- | --- |
 | `Mediateca.Core` | Dominio, percorsi, impostazioni, hash password, cifratura autenticata |
 | `Mediateca.Data` | SQLite: migrazioni, integrità, catalogo, code, import locale |
 | `Mediateca.Media` | Analisi nomi, NFO, copertine, scraper TMDB/MusicBrainz |

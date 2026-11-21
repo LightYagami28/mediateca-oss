@@ -1,4 +1,4 @@
-## Cosa cambia
+# Cosa cambia
 
 Una riga di riepilogo per ogni modifica rilevante.
 
