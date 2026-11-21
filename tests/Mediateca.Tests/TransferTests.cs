@@ -1,6 +1,7 @@
 using Mediateca.Core.Domain;
 using Mediateca.Data;
 using Mediateca.Server;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Mediateca.Tests;
@@ -57,6 +58,7 @@ public sealed class TransferTests
             File.WriteAllBytes(Path.Combine(sourceRoot, "film.bin"), bytes);
             var itemId = media.Upsert(new MediaItem { ChannelId = 1, MessageId = 3, Name = "film.bin", Size = bytes.Length });
 
+            using var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.Information));
             var store = new TransferStore(database);
             var jobId = store.Enqueue(itemId, "download");
             var service = new TransferQueueService(
@@ -64,7 +66,7 @@ public sealed class TransferTests
                 media,
                 new LocalMediaFileSource(sourceRoot),
                 Path.Combine(directory, "downloads"),
-                NullLogger<TransferQueueService>.Instance);
+                loggerFactory.CreateLogger<TransferQueueService>());
 
             var processed = await service.ProcessPendingAsync();
 
