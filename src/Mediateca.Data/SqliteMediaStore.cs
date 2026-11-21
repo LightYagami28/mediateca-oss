@@ -42,23 +42,26 @@ public sealed class SqliteMediaStore
             """;
         command.Parameters.AddWithValue("$channel", item.ChannelId);
         command.Parameters.AddWithValue("$message", item.MessageId);
-        command.Parameters.AddWithValue("$parent", (object?)item.ParentId ?? DBNull.Value);
+        AddOptional(command, "$parent", item.ParentId);
         command.Parameters.AddWithValue("$name", item.Name);
         command.Parameters.AddWithValue("$kind", item.Kind.ToString().ToLowerInvariant());
         command.Parameters.AddWithValue("$size", item.Size);
-        command.Parameters.AddWithValue("$duration", (object?)item.DurationSeconds ?? DBNull.Value);
-        command.Parameters.AddWithValue("$width", (object?)item.Width ?? DBNull.Value);
-        command.Parameters.AddWithValue("$height", (object?)item.Height ?? DBNull.Value);
-        command.Parameters.AddWithValue("$title", (object?)item.Title ?? DBNull.Value);
-        command.Parameters.AddWithValue("$year", (object?)item.Year ?? DBNull.Value);
-        command.Parameters.AddWithValue("$season", (object?)item.Season ?? DBNull.Value);
-        command.Parameters.AddWithValue("$episode", (object?)item.Episode ?? DBNull.Value);
-        command.Parameters.AddWithValue("$external", (object?)item.ExternalId ?? DBNull.Value);
-        command.Parameters.AddWithValue("$cover", (object?)item.CoverPath ?? DBNull.Value);
+        AddOptional(command, "$duration", item.DurationSeconds);
+        AddOptional(command, "$width", item.Width);
+        AddOptional(command, "$height", item.Height);
+        AddOptional(command, "$title", item.Title);
+        AddOptional(command, "$year", item.Year);
+        AddOptional(command, "$season", item.Season);
+        AddOptional(command, "$episode", item.Episode);
+        AddOptional(command, "$external", item.ExternalId);
+        AddOptional(command, "$cover", item.CoverPath);
         command.Parameters.AddWithValue("$updated", item.UpdatedAt.UtcDateTime.ToString("O"));
 
         return Convert.ToInt64(command.ExecuteScalar());
     }
+
+    private static void AddOptional(SqliteCommand command, string name, object? value) =>
+        command.Parameters.AddWithValue(name, value ?? DBNull.Value);
 
     /// <summary>L'elemento con l'identificativo indicato, oppure <c>null</c>.</summary>
     public MediaItem? Find(long id)

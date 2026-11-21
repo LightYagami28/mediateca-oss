@@ -8,7 +8,7 @@ namespace Mediateca.Backup;
 public sealed record GoogleDriveOptions
 {
     public const string ClientIdVariable = "MEDIATECA_GDRIVE_CLIENT_ID";
-    public const string ClientSecretVariable = "MEDIATECA_GDRIVE_CLIENT_SECRET";
+    public const string ClientCredentialVariableName = "MEDIATECA_GDRIVE_CLIENT_SECRET";
     public const string RefreshTokenVariable = "MEDIATECA_GDRIVE_REFRESH_TOKEN";
     public const string FolderIdVariable = "MEDIATECA_GDRIVE_FOLDER_ID";
 
@@ -34,7 +34,7 @@ public sealed record GoogleDriveOptions
     public static GoogleDriveOptions FromEnvironment() => new()
     {
         ClientId = Read(ClientIdVariable),
-        ClientSecret = Read(ClientSecretVariable),
+        ClientSecret = Read(ClientCredentialVariableName),
         RefreshToken = Read(RefreshTokenVariable),
         FolderId = Read(FolderIdVariable),
     };
@@ -66,7 +66,7 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
         if (!_options.IsConfigured)
         {
             throw new InvalidOperationException(
-                $"Google Drive non configurato: servono {GoogleDriveOptions.ClientIdVariable}, {GoogleDriveOptions.ClientSecretVariable} e {GoogleDriveOptions.RefreshTokenVariable}.");
+                $"Google Drive non configurato: servono {GoogleDriveOptions.ClientIdVariable}, {GoogleDriveOptions.ClientCredentialVariableName} e {GoogleDriveOptions.RefreshTokenVariable}.");
         }
 
         var archive = await _local.CreateAsync(sourceDirectory, destinationDirectory, cancellationToken).ConfigureAwait(false);

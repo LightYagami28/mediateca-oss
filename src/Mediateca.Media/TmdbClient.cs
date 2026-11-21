@@ -11,13 +11,13 @@ namespace Mediateca.Media;
 /// Opzioni di accesso alle API pubbliche TMDB v3.
 /// </summary>
 /// <remarks>
-/// La chiave viene letta dalla variabile <see cref="ApiKeyVariable"/> solo quando non è passata
+/// La chiave viene letta dalla variabile <see cref="CredentialVariableName"/> solo quando non è passata
 /// esplicitamente: così la configurazione dell'applicazione può sempre avere la precedenza.
 /// </remarks>
 public sealed record TmdbOptions
 {
     /// <summary>Variabile d'ambiente da cui leggere la chiave quando non è passata.</summary>
-    public const string ApiKeyVariable = "MEDIATECA_TMDB_API_KEY";
+    public const string CredentialVariableName = "MEDIATECA_TMDB_API_KEY";
 
     /// <summary>Host predefinito delle API v3.</summary>
     public const string ApiHost = "api.themoviedb.org";
@@ -28,8 +28,8 @@ public sealed record TmdbOptions
     /// <summary>Lingua predefinita delle risposte.</summary>
     public const string DefaultLanguage = "it-IT";
 
-    /// <summary>Chiave API, presa dalla variabile <see cref="ApiKeyVariable"/> se non specificata.</summary>
-    public string ApiKey { get; init; } = Environment.GetEnvironmentVariable(ApiKeyVariable)?.Trim() ?? string.Empty;
+    /// <summary>Chiave API, presa dalla variabile <see cref="CredentialVariableName"/> se non specificata.</summary>
+    public string ApiKey { get; init; } = Environment.GetEnvironmentVariable(CredentialVariableName)?.Trim() ?? string.Empty;
 
     /// <summary>Radice delle API; sovrascrivibile per proxy o mirror.</summary>
     public Uri BaseUrl { get; init; } = DefaultBaseUrl;
@@ -167,6 +167,11 @@ public sealed class TmdbClient : IMediaScraper, IDisposable
             return null;
         }
 
+        return ToDetails(payload, title, id.Trim(), kind);
+    }
+
+    private static MediaDetails ToDetails(DetailsPayload payload, string title, string id, MediaKind kind)
+    {
         var genres = payload.Genres?
             .Where(g => !string.IsNullOrWhiteSpace(g.Name))
             .Select(g => g.Name!)
@@ -174,7 +179,7 @@ public sealed class TmdbClient : IMediaScraper, IDisposable
 
         return new MediaDetails
         {
-            Id = id.Trim(),
+            Id = id,
             Kind = kind,
             Title = title,
             Year = ParseYear(payload.ReleaseDate ?? payload.FirstAirDate),

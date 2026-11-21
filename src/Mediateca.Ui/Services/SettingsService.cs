@@ -24,29 +24,7 @@ public sealed class SettingsService
             }
 
             var document = JsonSerializer.Deserialize<SettingsDocument>(File.ReadAllText(_path), JsonOptions);
-            if (document is null)
-            {
-                return fallback;
-            }
-
-            return new UiOptions
-            {
-                Theme = document.Theme ?? fallback.Theme,
-                WindowWidth = document.WindowWidth ?? fallback.WindowWidth,
-                WindowHeight = document.WindowHeight ?? fallback.WindowHeight,
-                SampleCatalogRows = document.SampleCatalogRows ?? fallback.SampleCatalogRows,
-                ServerBindAddress = document.ServerBindAddress ?? fallback.ServerBindAddress,
-                ServerPort = document.ServerPort ?? fallback.ServerPort,
-                ServerApiToken = ProtectedSecrets.Decrypt(document.ServerApiTokenProtected ?? string.Empty),
-                WebDavPasswordHash = document.WebDavPasswordHash ?? fallback.WebDavPasswordHash,
-                WebDavEnabled = document.WebDavEnabled ?? fallback.WebDavEnabled,
-                SearchDebounceMs = document.SearchDebounceMs ?? fallback.SearchDebounceMs,
-                BotToken = ProtectedSecrets.Decrypt(document.BotTokenProtected ?? string.Empty),
-                MtprotoApiId = document.MtprotoApiId ?? fallback.MtprotoApiId,
-                MtprotoApiHash = ProtectedSecrets.Decrypt(document.MtprotoApiHashProtected ?? string.Empty),
-                MtprotoSessionPath = document.MtprotoSessionPath ?? fallback.MtprotoSessionPath,
-                MtprotoCacheDirectory = document.MtprotoCacheDirectory ?? fallback.MtprotoCacheDirectory,
-            };
+            return document is null ? fallback : Merge(document, fallback);
         }
         catch (IOException)
         {
@@ -61,6 +39,29 @@ public sealed class SettingsService
             return fallback;
         }
     }
+
+    private static T Value<T>(T? value, T fallback) where T : struct => value ?? fallback;
+
+    private static T Reference<T>(T? value, T fallback) where T : class => value ?? fallback;
+
+    private static UiOptions Merge(SettingsDocument document, UiOptions fallback) => new()
+    {
+        Theme = Reference(document.Theme, fallback.Theme),
+        WindowWidth = Value(document.WindowWidth, fallback.WindowWidth),
+        WindowHeight = Value(document.WindowHeight, fallback.WindowHeight),
+        SampleCatalogRows = Value(document.SampleCatalogRows, fallback.SampleCatalogRows),
+        ServerBindAddress = Reference(document.ServerBindAddress, fallback.ServerBindAddress),
+        ServerPort = Value(document.ServerPort, fallback.ServerPort),
+        ServerApiToken = ProtectedSecrets.Decrypt(Reference(document.ServerApiTokenProtected, string.Empty)),
+        WebDavPasswordHash = Reference(document.WebDavPasswordHash, fallback.WebDavPasswordHash),
+        WebDavEnabled = Value(document.WebDavEnabled, fallback.WebDavEnabled),
+        SearchDebounceMs = Value(document.SearchDebounceMs, fallback.SearchDebounceMs),
+        BotToken = ProtectedSecrets.Decrypt(Reference(document.BotTokenProtected, string.Empty)),
+        MtprotoApiId = Value(document.MtprotoApiId, fallback.MtprotoApiId),
+        MtprotoApiHash = ProtectedSecrets.Decrypt(Reference(document.MtprotoApiHashProtected, string.Empty)),
+        MtprotoSessionPath = Reference(document.MtprotoSessionPath, fallback.MtprotoSessionPath),
+        MtprotoCacheDirectory = Reference(document.MtprotoCacheDirectory, fallback.MtprotoCacheDirectory),
+    };
 
     public void Save(UiOptions options)
     {

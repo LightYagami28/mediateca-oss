@@ -41,6 +41,11 @@ public sealed class BotCommandDispatcher
             }
         }
 
+        await DispatchAsync(command, argument, chatId, sender, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task DispatchAsync(string command, string argument, long chatId, BotUser? sender, CancellationToken cancellationToken)
+    {
         switch (command)
         {
             case "/start":

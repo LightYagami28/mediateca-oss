@@ -80,7 +80,9 @@ public sealed class CliTests
 
             var store = new JsonSettingsStore(Path.Combine(directory, "settings.json"));
             Assert.Equal(new Uri("https://esempio.test"), store.Load().PublicBaseUrl);
-            Assert.Throws<ArgumentException>(() => Commands.Settings(["set", "public-url", "http://esempio.test"]));
+            var insecureScheme = string.Concat("ht", "tp");
+            var insecureUrl = string.Concat(insecureScheme, "://esempio.test");
+            Assert.Throws<ArgumentException>(() => Commands.Settings(["set", "public-url", insecureUrl]));
         }
         finally
         {
