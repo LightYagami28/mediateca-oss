@@ -147,6 +147,8 @@ public sealed class TelegramTests
 
         public Action<int>? CancelAfterGetUpdates { get; set; }
 
+        public Func<HttpRequestMessage, bool>? FailOn { get; set; }
+
         public string? LastBody { get; private set; }
 
         public void EnqueueUpdates(string body) => _updates.Enqueue(body);
@@ -154,6 +156,11 @@ public sealed class TelegramTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
+            if (FailOn?.Invoke(request) == true)
+            {
+                throw new HttpRequestException("Errore simulato di rete.");
+            }
+
             LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
             var path = request.RequestUri!.AbsolutePath;
             if (path.Contains("getUpdates"))
@@ -175,6 +182,25 @@ public sealed class TelegramTests
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
             });
         }
+    }
+
+    [Fact]
+    public async Task Polling_interrompe_dopo_un_errore_di_rete_e_cancellazione()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var handler = new FakeTelegramHandler();
+        handler.FailOn = request =>
+        {
+            cancellation.Cancel();
+            return request.RequestUri!.AbsolutePath.Contains("getUpdates");
+        };
+        using var http = new HttpClient(handler);
+        var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
+        var polling = new BotPollingService(client, NullLogger.Instance);
+
+        await polling.PollAsync((_, _) => Task.CompletedTask, cancellation.Token);
+
+        Assert.Single(handler.Requests);
     }
 
     [Fact]
