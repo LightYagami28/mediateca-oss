@@ -84,7 +84,7 @@ public sealed class LocalBackupTarget : IBackupTarget
         }
         catch
         {
-            TryDelete(archivePath);
+            _ = TryDelete(archivePath);
             throw;
         }
 
@@ -153,7 +153,7 @@ public sealed class LocalBackupTarget : IBackupTarget
             .Skip(MaxBackups)
             .ToList();
 
-        return stale.Count(TryDelete);
+        return stale.Count(path => TryDelete(path));
     }
 
     private static bool TryDelete(string path)

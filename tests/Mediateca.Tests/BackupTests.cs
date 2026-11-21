@@ -57,7 +57,7 @@ public sealed class BackupTests
             Assert.Equal(2, result.RemovedOldArchives);
             Assert.Equal("grant_type=refresh_token", handler.TokenBody!.Split('&').Single(static part => part.StartsWith("grant_type", StringComparison.Ordinal)));
 
-            var metadata = JsonDocument.Parse(handler.StartBody!).RootElement;
+            var metadata = JsonElement.Parse(handler.StartBody!);
             Assert.Equal(result.FileName, metadata.GetProperty("name").GetString());
             Assert.Equal("cartella", metadata.GetProperty("parents")[0].GetString());
             Assert.Equal(new FileInfo(result.ArchivePath).Length, handler.UploadedBytes);
