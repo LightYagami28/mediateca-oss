@@ -1,8 +1,22 @@
+using System.Globalization;
+
 namespace Mediateca.Core.Abstractions;
 
 /// <summary>Impostazioni tipizzate dell'installazione.</summary>
 public sealed record MediatecaSettings
 {
+    /// <summary>Porta minima accettabile per l'ascolto del server.</summary>
+    public const int MinPort = 1;
+
+    /// <summary>Porta massima accettabile per l'ascolto del server.</summary>
+    public const int MaxPort = 65535;
+
+    /// <summary>Scala minima accettabile dell'interfaccia.</summary>
+    public const double MinUiScale = 0.5;
+
+    /// <summary>Scala massima accettabile dell'interfaccia.</summary>
+    public const double MaxUiScale = 3.0;
+
     /// <summary>Lingua dell'interfaccia, codice ISO a due lettere.</summary>
     public string Language { get; init; } = "it";
 
@@ -59,6 +73,92 @@ public sealed record MediatecaSettings
 
     /// <summary>Estensioni considerate documenti.</summary>
     public IReadOnlyList<string> DocumentExtensions { get; init; } = [".pdf", ".epub", ".mobi", ".txt", ".doc", ".docx", ".odt", ".rtf", ".csv"];
+
+    /// <summary>
+    /// Restituisce l'elenco dei valori non validi; una lista vuota significa che
+    /// le impostazioni possono essere usate. Non modifica lo stato e non lancia.
+    /// </summary>
+    public IReadOnlyList<string> Validate()
+    {
+        List<string> problems = [];
+
+        if (!string.IsNullOrEmpty(Language) && (Language.Length != 2 || !Language.All(char.IsLetter)))
+        {
+            problems.Add($"Language deve essere un codice ISO a due lettere (valore: '{Language}').");
+        }
+
+        if (ServerBindPort is < MinPort or > MaxPort)
+        {
+            problems.Add($"ServerBindPort deve essere tra {MinPort} e {MaxPort} (valore: {ServerBindPort}).");
+        }
+
+        if (ServerPublicPort is int publicPort && publicPort is < MinPort or > MaxPort)
+        {
+            problems.Add($"ServerPublicPort deve essere tra {MinPort} e {MaxPort} (valore: {publicPort}).");
+        }
+
+        if (!string.IsNullOrEmpty(PublicBaseUrl))
+        {
+            if (!Uri.TryCreate(PublicBaseUrl, UriKind.Absolute, out var uri)
+                || uri.Scheme is not ("http" or "https"))
+            {
+                problems.Add($"PublicBaseUrl deve essere un URL assoluto http o https (valore: '{PublicBaseUrl}').");
+            }
+        }
+
+        if (WebDavEnabled && WebDavRequireAuth && string.IsNullOrWhiteSpace(WebDavUser))
+        {
+            problems.Add("WebDavUser non può essere vuoto quando l'autenticazione WebDAV è richiesta.");
+        }
+
+        if (!TimeSpan.TryParseExact(BackupTime, @"hh\:mm", CultureInfo.InvariantCulture, out _))
+        {
+            problems.Add($"BackupTime deve essere nel formato HH:mm (valore: '{BackupTime}').");
+        }
+
+        if (BackupRetention < 1)
+        {
+            problems.Add($"BackupRetention deve essere almeno 1 (valore: {BackupRetention}).");
+        }
+
+        if (double.IsNaN(UiScale) || double.IsInfinity(UiScale) || UiScale is < MinUiScale or > MaxUiScale)
+        {
+            problems.Add($"UiScale deve essere tra {MinUiScale} e {MaxUiScale} (valore: {UiScale}).");
+        }
+
+        if (Theme is not ("system" or "light" or "dark"))
+        {
+            problems.Add($"Theme deve essere system, light o dark (valore: '{Theme}').");
+        }
+
+        if (RootDirectory is { Length: > 0 } root && !Path.IsPathFullyQualified(root))
+        {
+            problems.Add("RootDirectory deve essere un percorso assoluto quando specificato.");
+        }
+
+        ValidateExtensions(VideoExtensions, nameof(VideoExtensions), problems);
+        ValidateExtensions(ImageExtensions, nameof(ImageExtensions), problems);
+        ValidateExtensions(DocumentExtensions, nameof(DocumentExtensions), problems);
+
+        return problems;
+    }
+
+    private static void ValidateExtensions(IReadOnlyList<string>? extensions, string name, List<string> problems)
+    {
+        if (extensions is null)
+        {
+            problems.Add($"{name} non può essere null.");
+            return;
+        }
+        foreach (var extension in extensions)
+        {
+            if (string.IsNullOrEmpty(extension) || extension[0] != '.')
+            {
+                problems.Add($"{name} contiene un'estensione non valida: '{extension}'.");
+                break;
+            }
+        }
+    }
 }
 
 /// <summary>Accesso persistente alle impostazioni.</summary>
