@@ -8,10 +8,13 @@ public sealed class CompositeMediaFileSource(params IMediaFileSource[] sources) 
     {
         foreach (var source in _sources)
         {
-            var media = await source.OpenReadAsync(item, cancellationToken).ConfigureAwait(false);
-            if (media is not null)
+            if (source != null && item != null)
             {
-                return media;
+                var media = await source.OpenReadAsync(item, cancellationToken).ConfigureAwait(false);
+                if (media is not null)
+                {
+                    return media;
+                }
             }
         }
 

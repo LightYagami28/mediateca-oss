@@ -48,7 +48,7 @@ public sealed class BotService : IHostedService
         {
             await _cancellation.CancelAsync().ConfigureAwait(false);
         }
-        if (_loop is not null)
+        if (_loop != null)
         {
             try
             {

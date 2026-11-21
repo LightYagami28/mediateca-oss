@@ -221,7 +221,11 @@ public sealed class SettingsTests
                     return;
                 }
 
-                Directory.Delete(directory, recursive: true);
+                if (directory != null)
+                {
+                    Directory.Delete(directory, recursive: true);
+                }
+
                 return;
             }
             catch (IOException)
