@@ -68,10 +68,9 @@ public sealed class MediatecaDatabase
         {
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
-            switch (version)
+            if (version == 1)
             {
-                case 1:
-                    command.CommandText = """
+                command.CommandText = """
                         CREATE TABLE IF NOT EXISTS channels (
                             id              INTEGER PRIMARY KEY,
                             access_hash     INTEGER,
@@ -138,35 +137,34 @@ public sealed class MediatecaDatabase
                             created_at TEXT NOT NULL
                         );
                         """;
-                    break;
-                case 2:
-                    command.CommandText = """
-                        CREATE TABLE IF NOT EXISTS bot_users (
-                            user_id    INTEGER PRIMARY KEY,
-                            username   TEXT,
-                            role       TEXT NOT NULL DEFAULT 'user',
-                            first_seen TEXT NOT NULL,
-                            last_seen  TEXT NOT NULL
-                        );
-                        """;
-                    break;
-                case 3:
-                    command.CommandText = """
-                        CREATE TABLE IF NOT EXISTS address_book (
-                            peer_id     INTEGER PRIMARY KEY,
-                            access_hash INTEGER,
-                            kind        TEXT NOT NULL DEFAULT 'user',
-                            title       TEXT NOT NULL,
-                            username    TEXT,
-                            phone       TEXT,
-                            updated_at  TEXT NOT NULL
-                        );
+            }
+            else if (version == 2)
+            {
+                command.CommandText = """
+                    CREATE TABLE IF NOT EXISTS bot_users (
+                        user_id    INTEGER PRIMARY KEY,
+                        username   TEXT,
+                        role       TEXT NOT NULL DEFAULT 'user',
+                        first_seen TEXT NOT NULL,
+                        last_seen  TEXT NOT NULL
+                    );
+                    """;
+            }
+            else
+            {
+                command.CommandText = """
+                    CREATE TABLE IF NOT EXISTS address_book (
+                        peer_id     INTEGER PRIMARY KEY,
+                        access_hash INTEGER,
+                        kind        TEXT NOT NULL DEFAULT 'user',
+                        title       TEXT NOT NULL,
+                        username    TEXT,
+                        phone       TEXT,
+                        updated_at  TEXT NOT NULL
+                    );
 
-                        CREATE INDEX IF NOT EXISTS idx_address_book_title ON address_book(title);
-                        """;
-                    break;
-                default:
-                    throw new InvalidOperationException($"Migrazione {version} non definita.");
+                    CREATE INDEX IF NOT EXISTS idx_address_book_title ON address_book(title);
+                    """;
             }
 
             command.ExecuteNonQuery();
