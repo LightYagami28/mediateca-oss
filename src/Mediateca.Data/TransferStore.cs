@@ -135,7 +135,7 @@ public sealed class TransferStore(MediatecaDatabase database)
         BytesTotal = reader.GetInt64(4),
         BytesDone = reader.GetInt64(5),
         Error = reader.IsDBNull(6) ? null : reader.GetString(6),
-        CreatedAt = DateTimeOffset.TryParse(reader.GetString(7), out var created) ? created : DateTimeOffset.UtcNow,
-        UpdatedAt = DateTimeOffset.TryParse(reader.GetString(8), out var updated) ? updated : DateTimeOffset.UtcNow,
+        CreatedAt = SqliteTimestamps.Read(reader, 7, DateTimeOffset.UtcNow),
+        UpdatedAt = SqliteTimestamps.Read(reader, 8, DateTimeOffset.UtcNow),
     };
 }

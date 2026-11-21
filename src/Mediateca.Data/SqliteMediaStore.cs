@@ -201,7 +201,7 @@ public sealed class SqliteMediaStore
         Episode = reader.IsDBNull(13) ? null : reader.GetInt32(13),
         ExternalId = reader.IsDBNull(14) ? null : reader.GetString(14),
         CoverPath = reader.IsDBNull(15) ? null : reader.GetString(15),
-        UpdatedAt = DateTimeOffset.TryParse(reader.GetString(16), out var stamp) ? stamp : DateTimeOffset.UtcNow,
+        UpdatedAt = SqliteTimestamps.Read(reader, 16, DateTimeOffset.UtcNow),
     };
 
     private static Channel ReadChannel(SqliteDataReader reader) => new()
@@ -212,7 +212,7 @@ public sealed class SqliteMediaStore
         Username = reader.IsDBNull(3) ? null : reader.GetString(3),
         Kind = Enum.TryParse<ChannelKind>(reader.GetString(4), ignoreCase: true, out var kind) ? kind : ChannelKind.Channel,
         IsSource = reader.GetInt32(5) != 0,
-        LastScanAt = reader.IsDBNull(6) ? null : DateTimeOffset.TryParse(reader.GetString(6), out var scan) ? scan : null,
+        LastScanAt = SqliteTimestamps.ReadNullable(reader, 6),
         ItemCount = reader.GetInt32(7),
         LastMessageId = reader.GetInt32(8),
     };

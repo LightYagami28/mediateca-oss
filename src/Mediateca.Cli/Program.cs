@@ -46,7 +46,7 @@ public static class Program
             return args[0] switch
             {
                 "doctor" => Doctor(),
-                "db" => args.Length > 1 && args[1] == "info" ? Commands.DatabaseInit() : Commands.DatabaseInit(),
+                "db" => Commands.DatabaseInit(),
                 "settings" => Commands.Settings(args[1..]),
                 "scan" => Commands.Scan(args[1..]),
                 "backup" => Commands.Backup(args[1..]).GetAwaiter().GetResult(),

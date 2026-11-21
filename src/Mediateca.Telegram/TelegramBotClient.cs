@@ -179,15 +179,7 @@ public sealed class TelegramBotClient
             result.Add(new BotUpdate
             {
                 UpdateId = update.UpdateId,
-                Message = update.Message is null ? null : new BotMessage
-                {
-                    MessageId = update.Message.MessageId,
-                    ChatId = update.Message.Chat?.Id ?? 0,
-                    FromId = update.Message.From?.Id,
-                    FromUsername = update.Message.From?.Username,
-                    Text = update.Message.Text,
-                    Date = update.Message.Date > 0 ? DateTimeOffset.FromUnixTimeSeconds(update.Message.Date) : null,
-                },
+                Message = ToBotMessage(update.Message),
             });
         }
 
@@ -290,6 +282,16 @@ public sealed class TelegramBotClient
         [JsonPropertyName("result")] public T? Result { get; set; }
         [JsonPropertyName("parameters")] public ResponseParametersDto? Parameters { get; set; }
     }
+
+    private static BotMessage? ToBotMessage(MessageDto? message) => message is null ? null : new BotMessage
+    {
+        MessageId = message.MessageId,
+        ChatId = message.Chat?.Id ?? 0,
+        FromId = message.From?.Id,
+        FromUsername = message.From?.Username,
+        Text = message.Text,
+        Date = message.Date > 0 ? DateTimeOffset.FromUnixTimeSeconds(message.Date) : null,
+    };
 
     private sealed class ResponseParametersDto
     {

@@ -103,7 +103,7 @@ public partial class CatalogViewModel : ObservableObject
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
-            return;
+            Logger.LogDebug("Ricerca annullata prima della fine.");
         }
         finally
         {
