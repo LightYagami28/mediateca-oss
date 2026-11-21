@@ -22,7 +22,7 @@ public sealed class HttpServerTests
         {
             var database = Migrated(directory);
             var app = MediatecaServer.Build(
-                new ServerOptions { WebDavEnabled = false },
+                new ServerOptions { UseHttps = false, WebDavEnabled = false },
                 database);
 
             try
@@ -60,7 +60,7 @@ public sealed class HttpServerTests
         {
             var database = Migrated(directory);
             var app = MediatecaServer.Build(
-                new ServerOptions { WebDavEnabled = false },
+                new ServerOptions { UseHttps = false, WebDavEnabled = false },
                 database);
 
             try
@@ -104,7 +104,7 @@ public sealed class HttpServerTests
             store.Upsert(new MediaItem { ChannelId = 1, MessageId = 1, Name = "Film.mkv", Kind = MediaKind.Movie, Size = 1200 });
 
             var app = MediatecaServer.Build(
-                new ServerOptions { ApiToken = "token-di-prova", WebDavEnabled = false },
+                new ServerOptions { UseHttps = false, ApiToken = "token-di-prova", WebDavEnabled = false },
                 database);
 
             try
@@ -149,6 +149,7 @@ public sealed class HttpServerTests
             var app = MediatecaServer.Build(
                 new ServerOptions
                 {
+                    UseHttps = false,
                     WebDavEnabled = true,
                     WebDavRequireAuth = true,
                     WebDavUser = "utente",
@@ -199,7 +200,7 @@ public sealed class HttpServerTests
         {
             var database = Migrated(directory);
             var run = MediatecaServer.RunAsync(
-                new ServerOptions { BindAddress = "127.0.0.1", Port = port, WebDavEnabled = false },
+                new ServerOptions { UseHttps = false, BindAddress = "127.0.0.1", Port = port, WebDavEnabled = false },
                 database,
                 cancellation.Token);
 
@@ -269,7 +270,7 @@ public sealed class HttpServerTests
             });
             var source = new LocalMediaFileSource(directory);
             var app = MediatecaServer.Build(
-                new ServerOptions { WebDavEnabled = true },
+                new ServerOptions { UseHttps = false, WebDavEnabled = true },
                 database,
                 fileSource: source);
 
@@ -329,7 +330,7 @@ public sealed class HttpServerTests
             });
             var source = new LocalMediaFileSource(directory);
             var app = MediatecaServer.Build(
-                new ServerOptions { WebDavEnabled = true },
+                new ServerOptions { UseHttps = false, WebDavEnabled = true },
                 database,
                 fileSource: source);
 
@@ -362,7 +363,7 @@ public sealed class HttpServerTests
         {
             var database = Migrated(directory);
             var app = MediatecaServer.Build(
-                new ServerOptions { WebDavEnabled = false },
+                new ServerOptions { UseHttps = false, WebDavEnabled = false },
                 database);
 
             try
@@ -383,6 +384,50 @@ public sealed class HttpServerTests
         }
         finally
         {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>Il server parla HTTPS con un certificato autofirmato generato all'avvio.</summary>
+    [Fact]
+    public async Task Https_ServeConCertificatoAutofirmato()
+    {
+        var directory = NewTempDirectory();
+        var previousUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+        var port = FreeLoopbackPort();
+        Environment.SetEnvironmentVariable("ASPNETCORE_URLS", null);
+
+        try
+        {
+            var database = Migrated(directory);
+            var app = MediatecaServer.Build(
+                new ServerOptions { BindAddress = "127.0.0.1", Port = port, WebDavEnabled = false },
+                database);
+
+            try
+            {
+                await app.StartAsync();
+                Assert.Contains($"https://127.0.0.1:{port}", app.Urls);
+
+                using var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                };
+                using var http = new HttpClient(handler);
+                using var response = await http.GetAsync($"https://127.0.0.1:{port}/health");
+
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Contains("\"status\":\"ok\"", await response.Content.ReadAsStringAsync());
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ASPNETCORE_URLS", previousUrls);
             Cleanup(directory);
         }
     }

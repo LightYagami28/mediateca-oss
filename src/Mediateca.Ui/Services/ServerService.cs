@@ -40,6 +40,7 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
         {
             BindAddress = bindAddress,
             Port = ui.ServerPort,
+            UseHttps = ui.ServerUseHttps,
             ApiToken = ui.ServerApiToken,
             WebDavEnabled = webDavEnabled,
             WebDavPasswordHash = ui.WebDavPasswordHash,
@@ -59,7 +60,8 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
     {
         _app = MediatecaServer.Build(_options, _database, fileSource: _fileSource);
         await _app.StartAsync(cancellationToken).ConfigureAwait(false);
-        Url = _app.Urls.FirstOrDefault() ?? $"http://{_options.BindAddress}:{_options.Port}";
+        var scheme = _options.UseHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
+        Url = _app.Urls.FirstOrDefault() ?? $"{scheme}://{_options.BindAddress}:{_options.Port}";
         _logs.CreateLogger("server").LogInformation("Server HTTP attivo su {Url}", Url);
         StatusChanged?.Invoke(this, EventArgs.Empty);
     }

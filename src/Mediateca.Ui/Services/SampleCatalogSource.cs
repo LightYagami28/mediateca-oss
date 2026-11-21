@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Mediateca.Ui.Models;
 
 namespace Mediateca.Ui.Services;
@@ -40,7 +41,6 @@ public sealed class SampleCatalogSource(int count = 5_000) : ICatalogSource
     private List<CatalogRow> BuildRows(CancellationToken cancellationToken)
     {
         var rows = new List<CatalogRow>(count);
-        var random = new Random(20261114);
 
         for (var i = 0; i < count; i++)
         {
@@ -67,18 +67,36 @@ public sealed class SampleCatalogSource(int count = 5_000) : ICatalogSource
                 Channel = channel,
                 Size = kind switch
                 {
-                    0 => 1_500_000_000L + random.NextInt64(0, 6_000_000_000),
-                    1 => 400_000_000L + random.NextInt64(0, 1_200_000_000),
-                    2 => 30_000_000L + random.NextInt64(0, 90_000_000),
-                    3 => 2_000_000L + random.NextInt64(0, 12_000_000),
-                    _ => 500_000L + random.NextInt64(0, 40_000_000),
+                    0 => 1_500_000_000L + NextInt64(0, 6_000_000_000),
+                    1 => 400_000_000L + NextInt64(0, 1_200_000_000),
+                    2 => 30_000_000L + NextInt64(0, 90_000_000),
+                    3 => 2_000_000L + NextInt64(0, 12_000_000),
+                    _ => 500_000L + NextInt64(0, 40_000_000),
                 },
-                DurationSeconds = kind is 0 or 1 or 2 ? 900 + random.Next(0, 5_400) : null,
+                DurationSeconds = kind is 0 or 1 or 2
+                    ? 900 + RandomNumberGenerator.GetInt32(0, 5_400)
+                    : null,
                 Year = kind is 3 or 4 ? null : 1998 + (i % 28),
                 UpdatedAt = DateTimeOffset.UtcNow.AddHours(-(i % 720)),
             });
         }
 
         return rows;
+    }
+
+    private static long NextInt64(long fromInclusive, long toExclusive)
+    {
+        var range = (ulong)(toExclusive - fromInclusive);
+        var limit = ulong.MaxValue - (ulong.MaxValue % range);
+        Span<byte> bytes = stackalloc byte[sizeof(ulong)];
+        ulong candidate;
+        do
+        {
+            RandomNumberGenerator.Fill(bytes);
+            candidate = BitConverter.ToUInt64(bytes);
+        }
+        while (candidate >= limit);
+
+        return fromInclusive + (long)(candidate % range);
     }
 }

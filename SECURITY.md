@@ -20,11 +20,12 @@ private, token o database reali se non necessario.
 
 Quando si espone il server oltre `127.0.0.1`:
 
-- **Nessun TLS integrato**: il server parla HTTP. In rete locale va bene; su
-  Internet serve un termine TLS 1.3 davanti, altrimenti le credenziali Basic del
-  WebDAV viaggiano in chiaro (A04).
-- **WebDAV con autenticazione Basic**: la password è PBKDF2, ma il confronto
-  avviene sul filo: senza TLS il Basic è leggibile da chi ascolta.
+- **TLS integrato con certificato autofirmato**: il server ascolta in HTTPS per
+  impostazione predefinita e genera un certificato in memoria a ogni avvio. I client
+  devono accettare quel certificato; in caso di esposizione su Internet resta
+  preferibile un termine TLS 1.3 con certificato fidato davanti al servizio (A04).
+- **WebDAV con autenticazione Basic**: la password è PBKDF2 e il Basic viaggia
+  dentro il tunnel TLS; disattivare HTTPS solo su loopback, mai su una rete condivisa.
 - **API JSON con token Bearer facoltativo**: se il server ascolta oltre il
   loopback impostare `MEDIATECA_API_TOKEN` (o `serve --token`); senza token,
   `/api/*` risponde a chiunque raggiunga la porta (A01 Broken Access Control).
@@ -94,10 +95,10 @@ dotnet test Mediateca.slnx -c Release
 
 ## Eccezioni HTTPS documentate
 
-- Gli URL `http://127.0.0.1` negli smoke test, nei test xUnit e in
-  `launchSettings.json` (profilo di sviluppo) puntano a un server locale senza
-  certificato: passarli a `https://` renderebbe i test non eseguibili. In
-  produzione il traffico va terminato in TLS 1.3 e rediretto a HTTPS.
+- I test xUnit che usano URL `http://127.0.0.1` disattivano esplicitamente HTTPS
+  con `UseHttps = false` (oppure `ServerUseHttps = false`) su un bind loopback:
+  è una configurazione dichiarata del server, non un'eccezione di sicurezza.
+  Il test `Https_ServeConCertificatoAutofirmato` verifica invece il percorso TLS.
 - Gli URI `http://schemas.microsoft.com/...` nei file XAML/manifest sono
   identificatori di namespace richiesti dallo schema, non richieste di rete.
 - La stringa `http://` nella CSP è usata solo come controllo di assenza nel test

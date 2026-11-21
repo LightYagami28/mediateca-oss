@@ -16,6 +16,9 @@ public sealed class UiOptions
 
     public int ServerPort { get; set; } = 8083;
 
+    /// <summary>Serve il server locale su HTTPS con certificato autofirmato.</summary>
+    public bool ServerUseHttps { get; set; } = true;
+
     public string ServerApiToken { get; set; } = string.Empty;
 
     public string WebDavPasswordHash { get; set; } = string.Empty;

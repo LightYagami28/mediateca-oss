@@ -25,6 +25,9 @@ public sealed record ServerOptions
     /// <summary>Abilita l'area WebDAV in sola lettura.</summary>
     public bool WebDavEnabled { get; init; } = true;
 
+    /// <summary>Serve il traffico su HTTPS con certificato autofirmato generato all'avvio.</summary>
+    public bool UseHttps { get; init; } = true;
+
     /// <summary>Richiede autenticazione Basic sull'area WebDAV.</summary>
     public bool WebDavRequireAuth { get; init; } = true;
 
@@ -73,11 +76,23 @@ public static class MediatecaServer
 
         // La porta e l'indirizzo delle opzioni devono arrivare a Kestrel: senza questo il server
         // ascolterebbe sulle impostazioni predefinite di ASP.NET e ignorerebbe la configurazione.
-        // Se ASPNETCORE_URLS e' impostata (utile nei test) ha la precedenza.
+        // Se ASPNETCORE_URLS e' impostata (utile nei test) ha la precedenza, schema incluso.
         var configuredUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
-        builder.WebHost.UseUrls(string.IsNullOrWhiteSpace(configuredUrls)
-            ? $"http://{options.BindAddress}:{options.Port}"
-            : configuredUrls);
+        var hasConfiguredUrls = !string.IsNullOrWhiteSpace(configuredUrls);
+        var useHttps = hasConfiguredUrls
+            ? configuredUrls!.StartsWith(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            : options.UseHttps;
+
+        if (useHttps)
+        {
+            builder.WebHost.ConfigureKestrel(kestrel => kestrel.ConfigureHttpsDefaults(https =>
+                https.ServerCertificate = TlsCertificate.Create(options.BindAddress)));
+        }
+
+        var scheme = useHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
+        builder.WebHost.UseUrls(hasConfiguredUrls
+            ? configuredUrls!
+            : $"{scheme}://{options.BindAddress}:{options.Port}");
 
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         var app = builder.Build();
@@ -148,7 +163,7 @@ public static class MediatecaServer
     {
         var app = Build(options, database);
         await app.StartAsync(cancellationToken).ConfigureAwait(false);
-        app.Logger.LogInformation("mediateca in ascolto su http://{Address}:{Port}", options.BindAddress, options.Port);
+        app.Logger.LogInformation("mediateca in ascolto su {Url}", app.Urls.FirstOrDefault());
         await app.WaitForShutdownAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -227,7 +242,7 @@ internal static class WebDav
                 context.Response.StatusCode = 207;
                 context.Response.Headers["DAV"] = "1";
                 context.Response.ContentType = "application/xml; charset=utf-8";
-                await context.Response.WriteAsync(BuildPropFind(path, store, database)).ConfigureAwait(false);
+                await context.Response.WriteAsync(BuildPropFind(path, store), context.RequestAborted).ConfigureAwait(false);
                 return;
 
             case "HEAD":
@@ -271,7 +286,7 @@ internal static class WebDav
             : ((int)HttpStatusCode.NotFound, 0, trimmed);
     }
 
-    private static string BuildPropFind(string path, SqliteMediaStore store, MediatecaDatabase database)
+    private static string BuildPropFind(string path, SqliteMediaStore store)
     {
         XNamespace dav = Namespace;
         var trimmed = path.Trim('/');

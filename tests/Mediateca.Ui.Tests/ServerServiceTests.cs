@@ -14,6 +14,7 @@ public class ServerServiceTests
 {
     private static ServerService CreateService(UiOptions options, MediatecaDatabase database, string mediaRoot)
     {
+        options.ServerUseHttps = false;
         return new ServerService(
             Options.Create(options),
             database,

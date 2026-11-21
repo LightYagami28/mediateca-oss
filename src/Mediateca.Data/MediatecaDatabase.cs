@@ -15,6 +15,12 @@ public sealed class MediatecaDatabase
     /// <summary>Versione dello schema attesa dal codice.</summary>
     public const int SchemaVersion = 3;
 
+    /// <summary>
+    /// SQLite non accetta parametri nelle istruzioni PRAGMA: il valore e' quindi fissato
+    /// in fase di compilazione e deve restare allineato a <see cref="SchemaVersion"/>.
+    /// </summary>
+    private const string SetUserVersionSql = "PRAGMA user_version=3;";
+
     private readonly string _path;
 
     /// <summary>Crea l'accesso al database sul percorso indicato.</summary>
@@ -75,7 +81,7 @@ public sealed class MediatecaDatabase
         using (var bump = connection.CreateCommand())
         {
             bump.Transaction = transaction;
-            bump.CommandText = $"PRAGMA user_version={SchemaVersion};";
+            bump.CommandText = SetUserVersionSql;
             bump.ExecuteNonQuery();
         }
 
