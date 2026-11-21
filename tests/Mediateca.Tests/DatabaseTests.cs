@@ -81,7 +81,7 @@ public sealed class DatabaseTests
     [Fact]
     public void Migrazioni_CopronoTutteLeVersioni()
     {
-        Assert.Equal(MediatecaDatabase.SchemaVersion, Migrations.Statements.Count);
+        Assert.Equal(MediatecaDatabase.SchemaVersion, Migrations.Count);
     }
 
     /// <summary>L'integrità del database appena migrato è valida.</summary>
@@ -115,9 +115,23 @@ public sealed class DatabaseTests
 
             using var connection = database.Open();
 
-            Assert.Equal(1L, Convert.ToInt64(Scalar(connection, "PRAGMA foreign_keys;")));
-            Assert.Equal("wal", Convert.ToString(Scalar(connection, "PRAGMA journal_mode;")));
-            Assert.Equal(5_000L, Convert.ToInt64(Scalar(connection, "PRAGMA busy_timeout;")));
+            using (var foreignKeys = connection.CreateCommand())
+            {
+                foreignKeys.CommandText = "PRAGMA foreign_keys;";
+                Assert.Equal(1L, Convert.ToInt64(foreignKeys.ExecuteScalar()));
+            }
+
+            using (var journalMode = connection.CreateCommand())
+            {
+                journalMode.CommandText = "PRAGMA journal_mode;";
+                Assert.Equal("wal", Convert.ToString(journalMode.ExecuteScalar()));
+            }
+
+            using (var busyTimeout = connection.CreateCommand())
+            {
+                busyTimeout.CommandText = "PRAGMA busy_timeout;";
+                Assert.Equal(5_000L, Convert.ToInt64(busyTimeout.ExecuteScalar()));
+            }
         }
         finally
         {
@@ -155,13 +169,6 @@ public sealed class DatabaseTests
 
     private static MediatecaDatabase NewDatabase(string directory) =>
         new(Path.Combine(directory, "mediateca.db"));
-
-    private static object? Scalar(SqliteConnection connection, string sql)
-    {
-        using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        return command.ExecuteScalar();
-    }
 
     private static string NewTempDirectory()
     {
