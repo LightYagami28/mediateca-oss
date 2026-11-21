@@ -6,6 +6,17 @@ le issue restano aperte e la rimozione richiede una decisione esplicita.
 
 ## Regole con falsi positivi confermati
 
+### `Agentlinter_security_no-pii-exposure`
+
+La regola segnala `<developer@lightyagami.dev>` in `SECURITY.md` (riga 14) come
+"Potential PII". L'indirizzo è il **contatto pubblico di inoltro** designato per
+le segnalazioni di sicurezza, equivalente al profilo GitHub `@LightYagami28`: è
+pubblico per scelta, non è un indirizzo personale e non espone dati privati.
+La regola rileva qualsiasi pattern di indirizzo email senza distinguere un
+contatto pubblico da un dato personale, quindi la segnalazione è un falso
+positivo documentato. Nessuna soppressione è stata aggiunta e l'indirizzo resta
+nella security policy come canale di segnalazione.
+
 ### `Semgrep_codacy.csharp.security.null-dereference`
 
 La regola segnala ogni accesso a membri di una variabile priva di un guard

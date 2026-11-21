@@ -17,6 +17,18 @@ Nella segnalazione servono: cosa succede, come riprodurlo, versione o commit,
 sistema operativo e se il problema è già pubblico altrove. Non allegare chiavi
 private, token o database reali se non necessario.
 
+### Contatto pubblico di sicurezza
+
+<developer@lightyagami.dev> è la **casella pubblica di inoltro** designata per le
+segnalazioni di sicurezza del progetto: non è l'indirizzo personale di una
+persona fisica e non espone dati privati. È pubblico per scelta, come il profilo
+GitHub **@LightYagami28**, ed è l'unico canale email che il progetto invita a
+usare. La regola Codacy `Agentlinter_security_no-pii-exposure` lo segnala come
+PII perché rileva qualsiasi indirizzo email nel testo, senza distinguere un
+contatto pubblico da un dato personale: in una security policy l'indirizzo di
+contatto è volutamente visibile. Nessun indirizzo privato è presente nel
+repository.
+
 ## Superficie e punti noti
 
 Quando si espone il server oltre `127.0.0.1`:
