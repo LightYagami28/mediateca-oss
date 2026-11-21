@@ -8,14 +8,24 @@ le issue restano aperte e la rimozione richiede una decisione esplicita.
 
 ### `Agentlinter_security_no-pii-exposure`
 
-La regola segnala `<developer@lightyagami.dev>` in `SECURITY.md` (riga 14) come
+La regola segnala `<developer@lightyagami.dev>` in `SECURITY.md` (riga 22) come
 "Potential PII". L'indirizzo è il **contatto pubblico di inoltro** designato per
-le segnalazioni di sicurezza, equivalente al profilo GitHub `@LightYagami28`: è
-pubblico per scelta, non è un indirizzo personale e non espone dati privati.
-La regola rileva qualsiasi pattern di indirizzo email senza distinguere un
-contatto pubblico da un dato personale, quindi la segnalazione è un falso
-positivo documentato. Nessuna soppressione è stata aggiunta e l'indirizzo resta
-nella security policy come canale di segnalazione.
+le segnalazioni di sicurezza del progetto, equivalente al profilo GitHub
+`@LightYagami28`: è pubblico per scelta, è una casella organizzativa e non
+l'indirizzo personale di una persona fisica, quindi non costituisce dato
+personale ai sensi del GDPR e non espone dati privati.
+
+La regola rileva qualsiasi pattern di indirizzo email nel testo senza
+distinguere un contatto pubblico designato da un dato personale: in una security
+policy l'indirizzo di segnalazione è volutamente visibile. La segnalazione è
+perciò un falso positivo documentato, non un difetto del codice. Non sono state
+aggiunte soppressioni, eccezioni di configurazione né rimozioni del contatto:
+l'indirizzo resta nella security policy come unico canale email invitato a usare
+e nessun indirizzo privato è presente nel repository.
+
+Verifica: `git grep -n 'developer@lightyagami.dev' -- SECURITY.md CODACY.md`
+mostra solo il contatto pubblico designato; non sono presenti altri indirizzi
+personali nei file del progetto.
 
 ### `Semgrep_codacy.csharp.security.null-dereference`
 
