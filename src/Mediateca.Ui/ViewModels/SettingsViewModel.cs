@@ -44,34 +44,34 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private bool _isLightTheme;
+    public partial bool IsLightTheme { get; set; }
 
     [ObservableProperty]
-    private string _serverBindAddress = "127.0.0.1";
+    public partial string ServerBindAddress { get; set; } = "127.0.0.1";
 
     [ObservableProperty]
-    private string _serverPort = "8083";
+    public partial string ServerPort { get; set; } = "8083";
 
     [ObservableProperty]
-    private string _serverApiToken = string.Empty;
+    public partial string ServerApiToken { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _webDavPassword = string.Empty;
+    public partial string WebDavPassword { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private bool _webDavEnabled = true;
+    public partial bool WebDavEnabled { get; set; } = true;
 
     [ObservableProperty]
-    private string _botToken = string.Empty;
+    public partial string BotToken { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _mtprotoApiId = string.Empty;
+    public partial string MtprotoApiId { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _mtprotoApiHash = string.Empty;
+    public partial string MtprotoApiHash { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _statusText = string.Empty;
+    public partial string StatusText { get; set; } = string.Empty;
 
     [RelayCommand]
     private void Save()

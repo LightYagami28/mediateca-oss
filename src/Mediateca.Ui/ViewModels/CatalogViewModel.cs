@@ -25,7 +25,7 @@ public partial class CatalogViewModel : ObservableObject
     public ObservableCollection<CatalogRow> Rows { get; private set; } = [];
 
     [ObservableProperty]
-    private string _search = string.Empty;
+    public partial string Search { get; set; } = string.Empty;
 
     private CatalogRow? _selectedRow;
 
@@ -51,10 +51,10 @@ public partial class CatalogViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private bool _isBusy;
+    public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
-    private bool _isSearching;
+    public partial bool IsSearching { get; set; }
 
     public bool HasSelection => SelectedRow is not null;
 

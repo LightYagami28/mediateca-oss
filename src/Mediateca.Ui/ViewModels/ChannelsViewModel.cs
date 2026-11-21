@@ -21,7 +21,7 @@ public partial class ChannelsViewModel : ObservableObject
     public ObservableCollection<ChannelRow> Rows { get; private set; } = [];
 
     [ObservableProperty]
-    private bool _isBusy;
+    public partial bool IsBusy { get; set; }
 
     public string CountText => $"{Rows.Count:N0} canali";
 

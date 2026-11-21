@@ -14,7 +14,7 @@ public partial class LogsViewModel : ObservableObject
     public ObservableCollection<LogEntry> Entries { get; }
 
     [ObservableProperty]
-    private string _filter = string.Empty;
+    public partial string Filter { get; set; } = string.Empty;
 
     public string CountText => $"{Entries.Count:N0} righe";
 }

@@ -23,10 +23,10 @@ public partial class NavItem : ObservableObject
     public string View { get; }
 
     [ObservableProperty]
-    private bool _isSelected;
+    public partial bool IsSelected { get; set; }
 
     [ObservableProperty]
-    private ICommand? _selectCommand;
+    public partial ICommand? SelectCommand { get; set; }
 }
 
 public sealed record NavSection(string Title, IReadOnlyList<NavItem> Items);
@@ -81,7 +81,7 @@ public partial class MainWindowViewModel : ObservableObject
     public ObservableObject CurrentView { get; private set; }
 
     [ObservableProperty]
-    private bool _isLightTheme;
+    public partial bool IsLightTheme { get; set; }
 
     public string ServerStatusText => Server.IsRunning ? $"Server attivo · {Server.Url}" : "Server non attivo";
 
