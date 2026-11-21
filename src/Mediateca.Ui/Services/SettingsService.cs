@@ -46,29 +46,26 @@ public sealed class SettingsService
 
     private static UiOptions Merge(SettingsDocument document, UiOptions fallback)
     {
-        if (document != null)
+        if (document != null && fallback != null)
         {
-            if (fallback != null)
+            return new UiOptions
             {
-                return new UiOptions
-                {
-                    Theme = Reference(document.Theme, fallback.Theme),
-                    WindowWidth = Value(document.WindowWidth, fallback.WindowWidth),
-                    WindowHeight = Value(document.WindowHeight, fallback.WindowHeight),
-                    SampleCatalogRows = Value(document.SampleCatalogRows, fallback.SampleCatalogRows),
-                    ServerBindAddress = Reference(document.ServerBindAddress, fallback.ServerBindAddress),
-                    ServerPort = Value(document.ServerPort, fallback.ServerPort),
-                    ServerApiToken = ProtectedSecrets.Decrypt(Reference(document.ServerApiTokenProtected, string.Empty)),
-                    WebDavPasswordHash = Reference(document.WebDavPasswordHash, fallback.WebDavPasswordHash),
-                    WebDavEnabled = Value(document.WebDavEnabled, fallback.WebDavEnabled),
-                    SearchDebounceMs = Value(document.SearchDebounceMs, fallback.SearchDebounceMs),
-                    BotToken = ProtectedSecrets.Decrypt(Reference(document.BotTokenProtected, string.Empty)),
-                    MtprotoApiId = Value(document.MtprotoApiId, fallback.MtprotoApiId),
-                    MtprotoApiHash = ProtectedSecrets.Decrypt(Reference(document.MtprotoApiHashProtected, string.Empty)),
-                    MtprotoSessionPath = Reference(document.MtprotoSessionPath, fallback.MtprotoSessionPath),
-                    MtprotoCacheDirectory = Reference(document.MtprotoCacheDirectory, fallback.MtprotoCacheDirectory),
-                };
-            }
+                Theme = Reference(document.Theme, fallback.Theme),
+                WindowWidth = Value(document.WindowWidth, fallback.WindowWidth),
+                WindowHeight = Value(document.WindowHeight, fallback.WindowHeight),
+                SampleCatalogRows = Value(document.SampleCatalogRows, fallback.SampleCatalogRows),
+                ServerBindAddress = Reference(document.ServerBindAddress, fallback.ServerBindAddress),
+                ServerPort = Value(document.ServerPort, fallback.ServerPort),
+                ServerApiToken = ProtectedSecrets.Decrypt(Reference(document.ServerApiTokenProtected, string.Empty)),
+                WebDavPasswordHash = Reference(document.WebDavPasswordHash, fallback.WebDavPasswordHash),
+                WebDavEnabled = Value(document.WebDavEnabled, fallback.WebDavEnabled),
+                SearchDebounceMs = Value(document.SearchDebounceMs, fallback.SearchDebounceMs),
+                BotToken = ProtectedSecrets.Decrypt(Reference(document.BotTokenProtected, string.Empty)),
+                MtprotoApiId = Value(document.MtprotoApiId, fallback.MtprotoApiId),
+                MtprotoApiHash = ProtectedSecrets.Decrypt(Reference(document.MtprotoApiHashProtected, string.Empty)),
+                MtprotoSessionPath = Reference(document.MtprotoSessionPath, fallback.MtprotoSessionPath),
+                MtprotoCacheDirectory = Reference(document.MtprotoCacheDirectory, fallback.MtprotoCacheDirectory),
+            };
         }
 
         throw new ArgumentNullException(nameof(document));
