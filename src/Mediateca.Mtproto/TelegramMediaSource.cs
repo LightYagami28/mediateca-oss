@@ -180,10 +180,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
         var item = Catalogued(channel.Id, message.ID, file.Name, file.Length, message.Date);
         new SqliteMediaStore(_database).Upsert(item);
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("File {Name} caricato nel canale {Channel}", file.Name, channel.Title);
-        }
+        Log.FileUploaded(_logger, file.Name, channel.Title);
         return item;
 
         void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
@@ -306,10 +303,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         }
 
         File.Move(temporary, destination, overwrite: true);
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("File Telegram {Name} salvato in cache", item.Name);
-        }
+        Log.FileCached(_logger, item.Name);
         return true;
     }
 
@@ -325,10 +319,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         {
             await _client.ConnectAsync().ConfigureAwait(false);
             var user = await _client.LoginUserIfNeeded().ConfigureAwait(false);
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("MTProto connesso come {User}", user?.username ?? user?.first_name ?? "utente");
-            }
+            Log.Connected(_logger, user?.username ?? user?.first_name ?? "utente");
             _connected = true;
             return _client;
         }
