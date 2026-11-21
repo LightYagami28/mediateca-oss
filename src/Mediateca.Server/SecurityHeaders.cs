@@ -4,7 +4,7 @@ namespace Mediateca.Server;
 
 /// <summary>
 /// Header di sicurezza applicati a ogni risposta, incluse le risposte di errore.
-/// La CSP ammette solo sorgenti <c>https:</c> e include
+/// La CSP ammette solo sorgenti <c>'self'</c> e include
 /// <c>upgrade-insecure-requests</c>, come richiesto per OWASP A02 (2025).
 /// </summary>
 /// <remarks>
@@ -13,14 +13,14 @@ namespace Mediateca.Server;
 /// </remarks>
 internal static class SecurityHeaders
 {
-    /// <summary>Policy CSP con sole sorgenti HTTPS e upgrade delle richieste.</summary>
+    /// <summary>Policy CSP con sole sorgenti della stessa origine e upgrade delle richieste.</summary>
     internal const string Csp =
-        "default-src 'self' https:; " +
-        "script-src 'self' https:; " +
-        "style-src 'self' 'unsafe-inline' https:; " +
-        "img-src 'self' data: https:; " +
-        "connect-src 'self' https:; " +
-        "frame-ancestors 'none'; base-uri 'self'; form-action 'self' https:; " +
+        "default-src 'self'; " +
+        "script-src 'self'; " +
+        "style-src 'self'; " +
+        "img-src 'self' data:; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; " +
         "upgrade-insecure-requests";
 
     /// <summary>Applica gli header e passa al middleware successivo.</summary>

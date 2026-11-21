@@ -375,7 +375,13 @@ public sealed class HttpServerTests
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var body = await response.Content.ReadAsStringAsync();
                 Assert.Contains("Mediateca", body);
-                Assert.Contains("api/stats", body);
+
+                using var css = await http.GetAsync($"{baseUrl}/miniapp.css");
+                Assert.Equal(HttpStatusCode.OK, css.StatusCode);
+
+                using var script = await http.GetAsync($"{baseUrl}/miniapp.js");
+                Assert.Equal(HttpStatusCode.OK, script.StatusCode);
+                Assert.Contains("api/stats", await script.Content.ReadAsStringAsync());
             }
             finally
             {

@@ -151,6 +151,8 @@ public static class MediatecaServer
             await MediaApi.Stream(context, id, store, fileSource, options).ConfigureAwait(false));
 
         app.MapGet("/miniapp", () => Results.Content(Miniapp.Html, "text/html; charset=utf-8"));
+        app.MapGet("/miniapp.css", () => Results.Content(Miniapp.Css, "text/css; charset=utf-8"));
+        app.MapGet("/miniapp.js", () => Results.Content(Miniapp.JavaScript, "text/javascript; charset=utf-8"));
 
         return app;
     }
