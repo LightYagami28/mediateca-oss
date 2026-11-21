@@ -29,6 +29,9 @@ public class RenderTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
+        Assert.Equal(MainWindowViewModel.VersionText, window.FindControl<TextBlock>("VersionTextLabel")?.Text);
+        Assert.Equal(MainWindowViewModel.FreeSpaceText, window.FindControl<TextBlock>("FreeSpaceTextLabel")?.Text);
+
         var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 

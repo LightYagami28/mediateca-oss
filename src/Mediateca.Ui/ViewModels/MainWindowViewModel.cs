@@ -79,7 +79,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public string ServerStatusText => Server.IsRunning ? $"Server attivo · {Server.Url}" : "Server non attivo";
 
-    public string FreeSpaceText
+    public static string FreeSpaceText
     {
         get
         {
@@ -95,7 +95,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    public string VersionText => "Mediateca 1.0 · .NET 11";
+    public static string VersionText => "Mediateca 1.0 · .NET 11";
 
     [RelayCommand]
     private void ToggleTheme()

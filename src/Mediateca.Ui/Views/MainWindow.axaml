@@ -105,9 +105,9 @@
             BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="16,0">
         <TextBlock Text="{Binding ServerStatusText}" Classes="caption" VerticalAlignment="Center" />
-        <TextBlock Grid.Column="1" Text="{Binding FreeSpaceText}" Classes="caption" VerticalAlignment="Center" Margin="20,0" />
+        <TextBlock x:Name="FreeSpaceTextLabel" Grid.Column="1" Text="{x:Static vm:MainWindowViewModel.FreeSpaceText}" Classes="caption" VerticalAlignment="Center" Margin="20,0" />
         <TextBlock Grid.Column="2" Text="Nessuna funzione è bloccata: software completo senza licenza." Classes="caption" VerticalAlignment="Center" HorizontalAlignment="Center" />
-        <TextBlock Grid.Column="3" Text="{Binding VersionText}" Classes="caption" VerticalAlignment="Center" />
+        <TextBlock x:Name="VersionTextLabel" Grid.Column="3" Text="{x:Static vm:MainWindowViewModel.VersionText}" Classes="caption" VerticalAlignment="Center" />
       </Grid>
     </Border>
   </Grid>

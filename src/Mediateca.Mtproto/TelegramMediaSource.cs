@@ -172,7 +172,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
             ?? throw new InvalidOperationException($"Canale {channelId.ToString(CultureInfo.InvariantCulture)} sconosciuto o senza access hash: importalo prima.");
 
         var client = await EnsureConnectedAsync().ConfigureAwait(false);
-        var peer = new InputPeerChannel(channel.Id, channel.AccessHash!.Value);
+        var peer = new InputPeerChannel(channel.Id, channel.AccessHash);
         var uploaded = await client.UploadFileAsync(file.FullName, Progress).WaitAsync(cancellationToken).ConfigureAwait(false);
         var extension = file.Extension.TrimStart('.').ToLowerInvariant();
         var message = await client.SendMediaAsync(peer, caption ?? string.Empty, uploaded, ContentTypeFor(extension)).WaitAsync(cancellationToken).ConfigureAwait(false)
@@ -236,8 +236,16 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         return name.Length > 0 ? name : user.MainUsername ?? user.ID.ToString(CultureInfo.InvariantCulture);
     }
 
-    private DomainChannel? FindChannel(long channelId) =>
-        new SqliteMediaStore(_database).ListChannels().FirstOrDefault(candidate => candidate.Id == channelId && candidate.AccessHash is not null);
+    private sealed record ChannelAccess(long Id, long AccessHash, string Title);
+
+    private ChannelAccess? FindChannel(long channelId)
+    {
+        var channel = new SqliteMediaStore(_database).ListChannels()
+            .FirstOrDefault(candidate => candidate.Id == channelId && candidate.AccessHash is not null);
+        return channel?.AccessHash is long accessHash
+            ? new ChannelAccess(channel.Id, accessHash, channel.Title)
+            : null;
+    }
 
     private static MediaItem Catalogued(long channelId, int messageId, string name, long size, DateTime date)
     {
@@ -266,7 +274,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
         }
 
         var client = await EnsureConnectedAsync().ConfigureAwait(false);
-        var input = new InputChannel(channel.Id, channel.AccessHash!.Value);
+        var input = new InputChannel(channel.Id, channel.AccessHash);
         var messages = await client.Channels_GetMessages(input, [new InputMessageID { id = item.MessageId }]).ConfigureAwait(false);
         if (messages.Messages.Length == 0 || messages.Messages[0] is not Message message || message.media is null)
         {

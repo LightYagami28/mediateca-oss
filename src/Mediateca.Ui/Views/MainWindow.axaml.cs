@@ -10,8 +10,6 @@ namespace Mediateca.Ui.Views;
 
 public partial class MainWindow : Window
 {
-    private readonly ThemeService _theme;
-
     public MainWindow()
         : this(Resolve<MainWindowViewModel>(), Resolve<ThemeService>(), Resolve<IOptions<UiOptions>>())
     {
@@ -20,12 +18,15 @@ public partial class MainWindow : Window
     public MainWindow(MainWindowViewModel viewModel, ThemeService theme, IOptions<UiOptions> options)
     {
         InitializeComponent();
-        _theme = theme;
         Width = options.Value.WindowWidth;
         Height = options.Value.WindowHeight;
         DataContext = viewModel;
 
-        Application.Current!.RequestedThemeVariant = theme.Current;
+        if (Application.Current is not null)
+        {
+            Application.Current.RequestedThemeVariant = theme.Current;
+        }
+
         theme.Changed += OnThemeChanged;
 
         Opened += async (_, _) =>
@@ -55,8 +56,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnThemeChanged(object? sender, Avalonia.Styling.ThemeVariant variant) =>
-        Application.Current!.RequestedThemeVariant = variant;
+    private static void OnThemeChanged(object? sender, Avalonia.Styling.ThemeVariant variant)
+    {
+        if (Application.Current is not null)
+        {
+            Application.Current.RequestedThemeVariant = variant;
+        }
+    }
 
     private static T Resolve<T>()
         where T : notnull =>

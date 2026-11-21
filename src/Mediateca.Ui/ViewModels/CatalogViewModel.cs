@@ -27,9 +27,28 @@ public partial class CatalogViewModel : ObservableObject
     [ObservableProperty]
     private string _search = string.Empty;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DetailTitle), nameof(DetailSubtitle), nameof(DetailSize), nameof(DetailKind), nameof(DetailChannel), nameof(DetailYear), nameof(DetailDuration), nameof(HasSelection))]
     private CatalogRow? _selectedRow;
+
+    public CatalogRow? SelectedRow
+    {
+        get => _selectedRow;
+        set
+        {
+            if (!SetProperty(ref _selectedRow, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(DetailTitle));
+            OnPropertyChanged(nameof(DetailSubtitle));
+            OnPropertyChanged(nameof(DetailSize));
+            OnPropertyChanged(nameof(DetailKind));
+            OnPropertyChanged(nameof(DetailChannel));
+            OnPropertyChanged(nameof(DetailYear));
+            OnPropertyChanged(nameof(DetailDuration));
+            OnPropertyChanged(nameof(HasSelection));
+        }
+    }
 
     [ObservableProperty]
     private bool _isBusy;
