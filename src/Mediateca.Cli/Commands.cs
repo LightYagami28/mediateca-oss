@@ -73,7 +73,7 @@ internal static class Commands
         Console.WriteLine($"file          : {path}");
         Console.WriteLine($"lingua        : {settings.Language}");
         Console.WriteLine($"bind          : {settings.ServerBindAddress}:{settings.ServerBindPort}");
-        Console.WriteLine($"url pubblico  : {(string.IsNullOrEmpty(settings.PublicBaseUrl) ? "(nessuno)" : settings.PublicBaseUrl)}");
+        Console.WriteLine($"url pubblico  : {(settings.PublicBaseUrl?.ToString() ?? "(nessuno)")}");
         Console.WriteLine($"webdav        : {(settings.WebDavEnabled ? "attivo" : "spento")} (auth: {settings.WebDavRequireAuth})");
         Console.WriteLine($"backup        : {(settings.BackupEnabled ? $"giornaliero alle {settings.BackupTime}" : "spento")}");
     }
@@ -89,7 +89,7 @@ internal static class Commands
                 "language" => settings with { Language = value },
                 "bind" => settings with { ServerBindAddress = value },
                 "port" => settings with { ServerBindPort = int.Parse(value) },
-                "public-url" => settings with { PublicBaseUrl = value },
+                "public-url" => settings with { PublicBaseUrl = ParseHttpsUrl(value) },
                 "webdav" => settings with { WebDavEnabled = bool.Parse(value) },
                 "backup" => settings with { BackupEnabled = bool.Parse(value) },
                 "backup-time" => settings with { BackupTime = value },
@@ -101,6 +101,11 @@ internal static class Commands
         store.Save(settings);
         Console.WriteLine($"salvate in {store.Path}");
     }
+
+    private static Uri ParseHttpsUrl(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var url) && url.Scheme == Uri.UriSchemeHttps
+            ? url
+            : throw new ArgumentException("public-url deve essere un URL assoluto https.");
 
     private static void SetPassword(MediatecaSettings settings, JsonSettingsStore store, string[] args)
     {

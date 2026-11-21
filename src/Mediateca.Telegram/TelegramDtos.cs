@@ -84,7 +84,7 @@ public static class TelegramDtos
 
         [JsonPropertyName("description")] public string Description { get; set; } = "";
 
-        [JsonPropertyName("url")] public string Url { get; set; } = "";
+        [JsonPropertyName("url")] public Uri? Url { get; set; }
 
         [JsonPropertyName("input_message_content")]
         public InputMessageContent? InputMessageContent { get; set; }

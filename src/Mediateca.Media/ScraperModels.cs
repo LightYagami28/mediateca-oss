@@ -36,10 +36,10 @@ public sealed record MediaCandidate
     public double VoteAverage { get; init; }
 
     /// <summary>URL completo della locandina, quando il provider la espone.</summary>
-    public string? PosterUrl => TmdbImages.Poster(PosterPath);
+    public Uri? PosterUrl => TmdbImages.Poster(PosterPath);
 
     /// <summary>URL completo dello sfondo, quando il provider lo espone.</summary>
-    public string? BackdropUrl => TmdbImages.Backdrop(BackdropPath);
+    public Uri? BackdropUrl => TmdbImages.Backdrop(BackdropPath);
 }
 
 /// <summary>
@@ -84,10 +84,10 @@ public sealed record MediaDetails
     public int? EpisodeCount { get; init; }
 
     /// <summary>URL completo della locandina, quando il provider la espone.</summary>
-    public string? PosterUrl => TmdbImages.Poster(PosterPath);
+    public Uri? PosterUrl => TmdbImages.Poster(PosterPath);
 
     /// <summary>URL completo dello sfondo, quando il provider lo espone.</summary>
-    public string? BackdropUrl => TmdbImages.Backdrop(BackdropPath);
+    public Uri? BackdropUrl => TmdbImages.Backdrop(BackdropPath);
 }
 
 /// <summary>
@@ -99,7 +99,7 @@ public static class TmdbImages
     public const string ImageHost = "image.tmdb.org";
 
     /// <summary>Radice del servizio immagini, composta senza URI assoluti hardcoded.</summary>
-    public static string BaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ImageHost, -1, "/t/p").Uri.ToString().TrimEnd('/');
+    public static Uri BaseUrl { get; } = new UriBuilder(Uri.UriSchemeHttps, ImageHost, -1, "/t/p").Uri;
 
     /// <summary>Larghezza predefinita delle locandine.</summary>
     public const string PosterSize = "w500";
@@ -108,15 +108,15 @@ public static class TmdbImages
     public const string BackdropSize = "w780";
 
     /// <summary>URL completo di una locandina, o <c>null</c> se il percorso è assente.</summary>
-    public static string? Poster(string? path, string size = PosterSize) => Build(path, size);
+    public static Uri? Poster(string? path, string size = PosterSize) => Build(path, size);
 
     /// <summary>URL completo di uno sfondo, o <c>null</c> se il percorso è assente.</summary>
-    public static string? Backdrop(string? path, string size = BackdropSize) => Build(path, size);
+    public static Uri? Backdrop(string? path, string size = BackdropSize) => Build(path, size);
 
     /// <summary>Compone l'URL a partire dal percorso relativo restituito dal provider.</summary>
     /// <param name="path">Percorso relativo del provider, con o senza barra iniziale.</param>
     /// <param name="size">Variante di larghezza richiesta dal servizio immagini.</param>
-    public static string? Build(string? path, string size = PosterSize)
+    public static Uri? Build(string? path, string size = PosterSize)
     {
         if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(size))
         {
@@ -124,6 +124,6 @@ public static class TmdbImages
         }
 
         var normalized = path.StartsWith('/') ? path : "/" + path;
-        return $"{BaseUrl}/{size}{normalized}";
+        return new Uri($"{BaseUrl.AbsoluteUri.TrimEnd('/')}/{size}{normalized}");
     }
 }

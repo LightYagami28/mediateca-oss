@@ -10,9 +10,9 @@ public sealed class ScraperTests
     [Fact]
     public void Endpoint_costruiti_da_host_e_scheme_sono_invariati()
     {
-        Assert.Equal("https://api.telegram.org", TelegramOptions.DefaultBaseUrl);
-        Assert.Equal("https://api.themoviedb.org/3", TmdbOptions.DefaultBaseUrl);
-        Assert.Equal("https://image.tmdb.org/t/p/w500/poster.jpg", TmdbImages.Build("/poster.jpg"));
+        Assert.Equal(new Uri("https://api.telegram.org"), TelegramOptions.DefaultBaseUrl);
+        Assert.Equal(new Uri("https://api.themoviedb.org/3"), TmdbOptions.DefaultBaseUrl);
+        Assert.Equal(new Uri("https://image.tmdb.org/t/p/w500/poster.jpg"), TmdbImages.Build("/poster.jpg"));
     }
 
     [Fact]
@@ -29,8 +29,8 @@ public sealed class ScraperTests
         Assert.Equal(2021, results[0].Year);
         Assert.Equal(MediaKind.Music, results[0].Kind);
         Assert.Equal("abc-123", results[0].Id);
-        Assert.Contains("musicbrainz.org/ws/2/recording/", handler.LastUrl);
-        Assert.Contains("firstreleasedate=2021", handler.LastUrl);
+        Assert.Contains("musicbrainz.org/ws/2/recording/", handler.LastUrl!.ToString());
+        Assert.Contains("firstreleasedate=2021", handler.LastUrl.ToString());
     }
 
     [Fact]
@@ -88,11 +88,11 @@ public sealed class ScraperTests
 
     private sealed class FakeMusicBrainzHandler : HttpMessageHandler
     {
-        public string LastUrl { get; private set; } = "";
+        public Uri? LastUrl { get; private set; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            LastUrl = request.RequestUri!.ToString();
+            LastUrl = request.RequestUri;
             var json = """
                 {"created":"2020-01-01T00:00:00Z","count":1,"offset":0,
                  "recordings":[

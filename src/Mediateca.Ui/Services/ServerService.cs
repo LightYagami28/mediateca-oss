@@ -54,14 +54,14 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
 
     public bool IsRunning => _app is not null;
 
-    public string Url { get; private set; } = string.Empty;
+    public Uri? Url { get; private set; }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         _app = MediatecaServer.Build(_options, _database, fileSource: _fileSource);
         await _app.StartAsync(cancellationToken).ConfigureAwait(false);
         var scheme = _options.UseHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
-        Url = _app.Urls.FirstOrDefault() ?? $"{scheme}://{_options.BindAddress}:{_options.Port}";
+        Url = new Uri(_app.Urls.FirstOrDefault() ?? $"{scheme}://{_options.BindAddress}:{_options.Port}");
         var logger = _logs.CreateLogger("server");
         if (logger.IsEnabled(LogLevel.Information))
         {
@@ -81,7 +81,7 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
         _app = null;
         await app.StopAsync(cancellationToken).ConfigureAwait(false);
         await app.DisposeAsync().ConfigureAwait(false);
-        Url = string.Empty;
+        Url = null;
         StatusChanged?.Invoke(this, EventArgs.Empty);
     }
 

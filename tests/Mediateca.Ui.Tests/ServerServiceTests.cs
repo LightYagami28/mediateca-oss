@@ -36,7 +36,7 @@ public class ServerServiceTests
             await service.StartAsync(TestContext.Current.CancellationToken);
 
             Assert.True(service.IsRunning);
-            Assert.Contains($":{port}", service.Url);
+            Assert.Contains($":{port}", service.Url!.ToString());
 
             using var client = new HttpClient();
             var response = await client.GetAsync($"http://127.0.0.1:{port}/health", TestContext.Current.CancellationToken);
@@ -65,7 +65,7 @@ public class ServerServiceTests
 
             await service.StartAsync(TestContext.Current.CancellationToken);
 
-            Assert.Contains("127.0.0.1", service.Url);
+            Assert.Contains("127.0.0.1", service.Url!.ToString());
             await service.StopAsync(TestContext.Current.CancellationToken);
         }
         finally

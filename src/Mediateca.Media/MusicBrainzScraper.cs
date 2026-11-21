@@ -34,10 +34,10 @@ public sealed class MusicBrainzScraper(HttpClient httpClient) : IMediaScraper
         return ParseRecordings(recordings, year);
     }
 
-    private static string BuildSearchUrl(string query, int? year)
+    private static Uri BuildSearchUrl(string query, int? year)
     {
         var url = $"https://musicbrainz.org/ws/2/recording/?query={Uri.EscapeDataString(query)}&fmt=json&limit=10";
-        return year is int releaseYear ? $"{url}&firstreleasedate={releaseYear}" : url;
+        return new Uri(year is int releaseYear ? $"{url}&firstreleasedate={releaseYear}" : url);
     }
 
     private static List<MediaCandidate> ParseRecordings(JsonElement recordings, int? year)

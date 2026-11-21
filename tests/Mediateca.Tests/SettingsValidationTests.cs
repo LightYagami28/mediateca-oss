@@ -22,7 +22,7 @@ public sealed class SettingsValidationTests
             Language = "ita",
             ServerBindPort = 0,
             ServerPublicPort = 70000,
-            PublicBaseUrl = "ftp://esempio.test",
+            PublicBaseUrl = new Uri("ftp://esempio.test"),
             WebDavEnabled = true,
             WebDavRequireAuth = true,
             WebDavUser = "",

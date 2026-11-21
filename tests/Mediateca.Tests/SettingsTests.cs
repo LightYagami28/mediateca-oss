@@ -45,7 +45,7 @@ public sealed class SettingsTests
                 Language = "en",
                 ServerBindPort = 9999,
                 ServerPublicPort = 443,
-                PublicBaseUrl = "https://esempio.test",
+                PublicBaseUrl = new Uri("https://esempio.test"),
                 WebDavEnabled = true,
                 WebDavAllowLan = true,
                 WebDavRequireAuth = false,

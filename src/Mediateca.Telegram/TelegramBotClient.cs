@@ -130,7 +130,7 @@ public sealed class TelegramBotClient
     }
 
     /// <summary>Risponde a una query di MiniApp con un articolo cliccabile (<c>answerWebAppQuery</c>).</summary>
-    public async Task<bool> AnswerWebAppQueryAsync(string webAppQueryId, string title, string description, string url, CancellationToken cancellationToken = default)
+    public async Task<bool> AnswerWebAppQueryAsync(string webAppQueryId, string title, string description, Uri url, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
         {
@@ -139,6 +139,7 @@ public sealed class TelegramBotClient
 
         ArgumentException.ThrowIfNullOrWhiteSpace(webAppQueryId);
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        EnsureHttps(url);
 
         var body = JsonSerializer.Serialize(new AnswerWebAppQueryDto
         {
@@ -148,7 +149,7 @@ public sealed class TelegramBotClient
                 Title = title,
                 Description = description,
                 Url = url,
-                InputMessageContent = new TelegramDtos.InputMessageContent { MessageText = url },
+                InputMessageContent = new TelegramDtos.InputMessageContent { MessageText = url.ToString() },
             },
         }, JsonOptions);
         return await CallAsync<bool>("answerWebAppQuery", query: null, jsonBody: body, cancellationToken);
@@ -187,14 +188,14 @@ public sealed class TelegramBotClient
     }
 
     /// <summary>Imposta il bottone del menu della chat, tipicamente verso la MiniApp (<c>setChatMenuButton</c>).</summary>
-    public async Task<bool> SetChatMenuButtonAsync(string text, string webAppUrl, CancellationToken cancellationToken = default)
+    public async Task<bool> SetChatMenuButtonAsync(string text, Uri webAppUrl, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
         {
             return false;
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(webAppUrl);
+        EnsureHttps(webAppUrl);
         var body = JsonSerializer.Serialize(new SetChatMenuButtonDto
         {
             MenuButton = new MenuButtonWebAppDto
@@ -265,8 +266,17 @@ public sealed class TelegramBotClient
         }
     }
 
-    private string BuildUrl(string method, string? query) =>
-        $"{_options.BaseUrl.TrimEnd('/')}/bot{_token}/{method}{query}";
+    private Uri BuildUrl(string method, string? query) =>
+        new($"{_options.BaseUrl.AbsoluteUri.TrimEnd('/')}/bot{_token}/{method}{query}");
+
+    private static void EnsureHttps(Uri url)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+        if (!url.IsAbsoluteUri || url.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new ArgumentException("L'URL della MiniApp deve essere assoluto e HTTPS.", nameof(url));
+        }
+    }
 
     private static int ErrorCodeOf(HttpResponseMessage response)
     {
@@ -381,6 +391,6 @@ public sealed class TelegramBotClient
 
     private sealed class WebAppInfoDto
     {
-        [JsonPropertyName("url")] public string Url { get; set; } = "";
+        [JsonPropertyName("url")] public Uri? Url { get; set; }
     }
 }

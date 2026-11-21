@@ -46,7 +46,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var sent = await client.AnswerWebAppQueryAsync("qid-1", "Film", "Descrizione", "https://example.com/film");
+        var sent = await client.AnswerWebAppQueryAsync("qid-1", "Film", "Descrizione", new Uri("https://example.com/film"));
 
         Assert.True(sent);
         var body = JsonDocument.Parse(handler.LastBody!);
@@ -163,7 +163,7 @@ public sealed class TelegramTests
         var url = await client.CreatePageAsync("Catalogo", "Elenco");
 
         Assert.Equal("https://telegra.ph/Catalogo-01-01", url);
-        Assert.Contains("telegra.ph/createPage", handler.LastUrl);
+        Assert.Contains("telegra.ph/createPage", handler.LastUrl!.ToString());
         Assert.Contains("Mediateca", handler.LastBody);
     }
 
@@ -174,7 +174,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var set = await client.SetChatMenuButtonAsync("Apri", "https://example.com/miniapp");
+        var set = await client.SetChatMenuButtonAsync("Apri", new Uri("https://example.com/miniapp"));
 
         Assert.True(set);
         var body = JsonDocument.Parse(handler.LastBody!);
@@ -185,13 +185,13 @@ public sealed class TelegramTests
 
     private sealed class TelegraphFakeHandler : HttpMessageHandler
     {
-        public string LastUrl { get; private set; } = "";
+        public Uri? LastUrl { get; private set; }
 
         public string LastBody { get; private set; } = "";
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            LastUrl = request.RequestUri!.ToString();
+            LastUrl = request.RequestUri;
             LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult() ?? "";
             var json = """{"ok":true,"result":{"path":"Catalogo-01-01","url":"https://telegra.ph/Catalogo-01-01"}}""";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
