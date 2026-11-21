@@ -1,8 +1,8 @@
 # Avvisi sulle dipendenze di terze parti
 
-Elenco dei pacchetti NuGet diretti (versioni di `Directory.Packages.props`) con la licenza dichiarata
-nel loro `nuspec`. Le dipendenze transitive seguono le rispettive licenze, consultabili con
-`dotnet list package --include-transitive`.
+Elenco dei pacchetti NuGet diretti (versioni da `Directory.Packages.props`) con
+la licenza dichiarata nel rispettivo `nuspec`. Le dipendenze transitive seguono le
+loro licenze e sono consultabili con `dotnet list package --include-transitive`.
 
 | Pacchetto | Versione | Licenza |
 |---|---|---|
@@ -23,5 +23,20 @@ nel loro `nuspec`. Le dipendenze transitive seguono le rispettive licenze, consu
 | xunit | 2.9.3 | Apache-2.0 |
 | xunit.runner.visualstudio | 3.1.5 | Apache-2.0 |
 | xunit.v3 | 3.2.2 | Apache-2.0 |
+
+## Catena di fornitura
+
+- Le versioni sono centralizzate in `Directory.Packages.props` con pinning
+  transitivo abilitato: nessuna versione implicitamente fluttuante.
+- Verificare prima di ogni rilascio:
+
+  ```sh
+  dotnet list Mediateca.slnx package --vulnerable --include-transitive
+  ```
+
+- Nessun pacchetto deprecato o con vulnerabilità note è presente nello stato
+  attuale (verifica del 2026-11-21).
+- Le GitHub Action sono pinnate a SHA completo e gli artifact di CI includono
+  SBOM generato da `sbom.yml`.
 
 Il codice di Mediateca è distribuito con AGPL-3.0-or-later ([LICENSE](LICENSE)).

@@ -2,47 +2,66 @@
 
 ## Versioni supportate
 
-Il progetto è in sviluppo: si corregge l'ultima revisione di `main`. Non ci sono ancora rilasci
-stabili, quindi non c'è manutenzione di rami vecchi.
+Il progetto è in sviluppo: si corregge l'ultima revisione di `main`. Non ci sono
+ancora rilasci stabili, quindi non c'è manutenzione di rami vecchi.
 
 ## Segnalare un problema
 
-Il canale preferito è una **security advisory privata** su GitHub (scheda *Security* →
-*Report a vulnerability*): resta riservata finché non è pubblicata la correzione. Se il problema non
-è sensibile, va bene anche una issue normale. In alternativa si può scrivere a
-**maule2703@gmail.com**.
+Il canale preferito è una **security advisory privata** su GitHub (scheda
+*Security* → *Report a vulnerability*): resta riservata finché non è pubblicata
+la correzione. Se il problema non è sensibile, va bene anche una issue normale.
+In alternativa si può scrivere a **maule2703@gmail.com**.
 
-Nella segnalazione servono: cosa succede, come riprodurlo, versione o commit, sistema operativo, e
-se il problema è già pubblico altrove. Non allegare chiavi private né database reali se non
-necessario.
-
-I tempi sono quelli di un progetto amatoriale: una prima risposta entro pochi giorni, la correzione
-quando è pronta. Chi segnala viene citato nel changelog, se lo desidera.
+Nella segnalazione servono: cosa succede, come riprodurlo, versione o commit,
+sistema operativo e se il problema è già pubblico altrove. Non allegare chiavi
+private, token o database reali se non necessario.
 
 ## Superficie e punti noti
 
-Cose da tenere presenti quando si espone il server oltre `127.0.0.1`:
+Quando si espone il server oltre `127.0.0.1`:
 
-- **Nessun TLS integrato.** Il server parla HTTP. In rete locale va bene; su Internet serve un
-  termine TLS davanti, altrimenti le credenziali Basic del WebDAV viaggiano in chiaro.
-- **WebDAV con autenticazione Basic.** La password è memorizzata come hash PBKDF2, ma il confronto
-  avviene in chiaro sul filo: senza TLS, il Basic è leggibile da chi ascolta.
-- **API JSON con token Bearer facoltativo.** Se il server ascolta oltre il loopback conviene
-  impostare `MEDIATECA_API_TOKEN` (o `serve --token`): senza token, `/api/*` risponde a chiunque
-  raggiunga la porta.
-- **WebDAV in sola lettura.** Il server non modifica il catalogo: la superficie di scrittura è nei
-  comandi, non nelle rotte.
-- **Bind di default su `127.0.0.1`.** Aprire su `0.0.0.0` è una scelta esplicita dell'utente.
-- **Segreti fuori dal repository.** Il token API e l'ApiHash di Telegram sono cifrati con la
-  protezione dati dell'utente Windows prima di essere salvati; la chiave API di TMDB si legge da
-  `MEDIATECA_TMDB_API_KEY` o dalle impostazioni.
+- **Nessun TLS integrato**: il server parla HTTP. In rete locale va bene; su
+  Internet serve un termine TLS 1.3 davanti, altrimenti le credenziali Basic del
+  WebDAV viaggiano in chiaro (A04).
+- **WebDAV con autenticazione Basic**: la password è PBKDF2, ma il confronto
+  avviene sul filo: senza TLS il Basic è leggibile da chi ascolta.
+- **API JSON con token Bearer facoltativo**: se il server ascolta oltre il
+  loopback impostare `MEDIATECA_API_TOKEN` (o `serve --token`); senza token,
+  `/api/*` risponde a chiunque raggiunga la porta (A01 Broken Access Control).
+- **Autorizzazione server-side)**: ogni richiesta è autorizzata lato server con
+  deny by default; gli identificatori non danno accesso a risorse di altri utenti
+  (no IDOR).
+- **Header HTTP sicuri**: CSP, HSTS, X-Content-Type-Options, X-Frame-Options e
+  Referrer-Policy devono essere presenti sulle risposte; debug e directory
+  listing disattivati in produzione (A02).
+- **Injection**: le query SQLite sono parametrizzate; l'output viene codificato
+  per il contesto HTML/JS/URL e nessun comando viene concatenato con input utente
+  (A05).
+- **WebDAV in sola lettura**: il server non modifica il catalogo.
+- **Bind predefinito su `127.0.0.1`**: aprire su `0.0.0.0` è una scelta esplicita.
+- **Segreti fuori dal repository**: token API e ApiHash Telegram sono cifrati con
+  la protezione dati dell'utente Windows; la chiave TMDB si legge da
+  `MEDIATECA_TMDB_API_KEY`. Nessuna chiave nei log.
 
-Cose volutamente *non* difese: nessun limite di frequenza sulle richieste del catalogo, nessun
-audit degli accessi. Sono margini accettati per un'applicazione personale; chi la espone pubblicamente
-lo faccia sapendolo. Il server limita invece i tentativi Basic falliti e tiene il bind sul loopback
-senza token.
+## Framework di riferimento
+
+OWASP Top 10 2025 (A01–A10), NIST CSF 2.0, SSDF SP 800-218. Il progetto non usa
+LLM/RAG: OWASP LLM/GenAI 2025 e MITRE ATLAS non si applicano allo stato attuale.
+
+- **A03 Catena di fornitura**: versioni centralizzate, `dotnet list package
+  --vulnerable --include-transitive`, GitHub Action pinnate a SHA completo,
+  SBOM in CI, zero pacchetti deprecati.
+- **A06/A07**: threat model, rate limiting sulle richieste, policy password e
+  protezione brute-force sui tentativi Basic falliti.
+- **A08 Integrità**: pacchetti di distribuzione firmati e con hash verificabile.
+- **A09 Logging**: log audit strutturati senza segreti o PII; alerting sugli
+  errori ripetuti.
+- **A10 Eccezioni**: fail closed, errori generici al client, nessuna stack trace.
 
 ## Verifiche del pacchetto
 
-Il codice è distribuito con licenza AGPL-3.0-or-later, nel file [LICENSE](LICENSE). Non esistono
-chiavi di attivazione né funzioni bloccate: ogni installazione ha tutte le funzionalità.
+```sh
+dotnet list Mediateca.slnx package --vulnerable --include-transitive
+dotnet build Mediateca.slnx -c Release
+dotnet test Mediateca.slnx -c Release
+```
