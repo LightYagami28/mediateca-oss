@@ -7,7 +7,7 @@ namespace Mediateca.Ui.Services;
 public sealed class SqliteCatalogSource(MediatecaDatabase database) : ICatalogSource
 {
     private readonly SqliteMediaStore _store = new(database);
-    private Dictionary<long, string> _channels = new();
+    private Dictionary<long, string> _channels = [];
 
     public Task<IReadOnlyList<CatalogRow>> LoadAsync(CancellationToken cancellationToken = default)
     {
