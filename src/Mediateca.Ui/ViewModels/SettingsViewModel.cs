@@ -47,28 +47,28 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool IsLightTheme { get; set; }
 
     [ObservableProperty]
-    public partial string ServerBindAddress { get; set; } = "127.0.0.1";
+    public partial string ServerBindAddress { get; set; }
 
     [ObservableProperty]
-    public partial string ServerPort { get; set; } = "8083";
+    public partial string ServerPort { get; set; }
 
     [ObservableProperty]
-    public partial string ServerApiToken { get; set; } = string.Empty;
+    public partial string ServerApiToken { get; set; }
 
     [ObservableProperty]
     public partial string WebDavPassword { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial bool WebDavEnabled { get; set; } = true;
+    public partial bool WebDavEnabled { get; set; }
 
     [ObservableProperty]
-    public partial string BotToken { get; set; } = string.Empty;
+    public partial string BotToken { get; set; }
 
     [ObservableProperty]
-    public partial string MtprotoApiId { get; set; } = string.Empty;
+    public partial string MtprotoApiId { get; set; }
 
     [ObservableProperty]
-    public partial string MtprotoApiHash { get; set; } = string.Empty;
+    public partial string MtprotoApiHash { get; set; }
 
     [ObservableProperty]
     public partial string StatusText { get; set; } = string.Empty;
