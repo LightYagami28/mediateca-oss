@@ -55,6 +55,30 @@ public sealed class TelegramTests
     }
 
     [Fact]
+    public async Task Url_miniapp_non_https_viene_rifiutata()
+    {
+        var handler = new FakeTelegramHandler();
+        using var http = new HttpClient(handler);
+        var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
+
+        await Assert.ThrowsAsync<ArgumentException>(() => client.SetChatMenuButtonAsync("Apri", new Uri("http://127.0.0.1:8080/miniapp")));
+    }
+
+    [Fact]
+    public async Task GetUpdates_senza_messaggio_restituisce_message_null()
+    {
+        var handler = new FakeTelegramHandler();
+        handler.EnqueueUpdates("""{"ok":true,"result":[{"update_id":107}]}""");
+        using var http = new HttpClient(handler);
+        var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
+
+        var updates = await client.GetUpdatesAsync();
+
+        Assert.Single(updates);
+        Assert.Null(updates[0].Message);
+    }
+
+    [Fact]
     public async Task Il_dispatcher_risponde_ai_comandi_con_il_catalogo()
     {
         var handler = new FakeTelegramHandler();

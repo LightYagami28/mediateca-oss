@@ -16,6 +16,21 @@ public sealed class ScraperTests
     }
 
     [Fact]
+    public void Url_immagini_sono_uri_assoluti_https()
+    {
+        var candidate = new MediaCandidate { Id = "1", Title = "Titolo", PosterPath = "/poster.jpg", BackdropPath = "/backdrop.jpg" };
+        Assert.Equal(new Uri("https://image.tmdb.org/t/p/w500/poster.jpg"), candidate.PosterUrl);
+        Assert.Equal(new Uri("https://image.tmdb.org/t/p/w780/backdrop.jpg"), candidate.BackdropUrl);
+
+        var details = new MediaDetails { Id = "1", Title = "Titolo", PosterPath = "/poster.jpg", BackdropPath = "/backdrop.jpg" };
+        Assert.Equal(candidate.PosterUrl, details.PosterUrl);
+        Assert.Equal(candidate.BackdropUrl, details.BackdropUrl);
+
+        Assert.Equal(new Uri("https://image.tmdb.org/t/p/w500/poster.jpg"), TmdbImages.Poster("/poster.jpg"));
+        Assert.Equal(new Uri("https://image.tmdb.org/t/p/w780/backdrop.jpg"), TmdbImages.Backdrop("/backdrop.jpg"));
+    }
+
+    [Fact]
     public async Task MusicBrainz_mappa_i_risultati_delle_registrazioni()
     {
         var handler = new FakeMusicBrainzHandler();
@@ -83,6 +98,36 @@ public sealed class ScraperTests
         finally
         {
             Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Tmdb_cerca_film_con_chiave_di_configurazione()
+    {
+        var handler = new FakeTmdbHandler();
+        using var http = new HttpClient(handler);
+        var fakeKey = string.Concat("tmdb", "-chiave-di-prova");
+        var client = new TmdbClient(http, new TmdbOptions { ApiKey = fakeKey });
+
+        var results = await client.SearchMovieAsync("notte", 2021);
+
+        Assert.Single(results);
+        Assert.Equal("FilmNotte", results[0].Title);
+        Assert.Contains("api.themoviedb.org/3/search/movie", handler.LastUrl!.ToString());
+    }
+
+    private sealed class FakeTmdbHandler : HttpMessageHandler
+    {
+        public Uri? LastUrl { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            LastUrl = request.RequestUri;
+            const string json = """{"results":[{"id":1,"title":"FilmNotte","release_date":"2021-05-01"}]}""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+            });
         }
     }
 
