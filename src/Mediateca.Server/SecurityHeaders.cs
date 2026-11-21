@@ -27,17 +27,17 @@ internal static class SecurityHeaders
     internal static async Task Apply(HttpContext context, RequestDelegate next)
     {
         var headers = context.Response.Headers;
-        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
-        headers["Upgrade-Insecure-Requests"] = "1";
-        headers["Content-Security-Policy"] = Csp;
+        headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains; preload";
+        headers.UpgradeInsecureRequests = "1";
+        headers.ContentSecurityPolicy = Csp;
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-        headers["X-Content-Type-Options"] = "nosniff";
-        headers["X-Frame-Options"] = "DENY";
+        headers.XContentTypeOptions = "nosniff";
+        headers.XFrameOptions = "DENY";
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
 
         if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
         {
-            headers["Cache-Control"] = "no-store";
+            headers.CacheControl = "no-store";
         }
 
         await next(context).ConfigureAwait(false);

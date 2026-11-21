@@ -43,7 +43,7 @@ internal static class MediaApi
 
         await using var stream = media.Stream;
         context.Response.ContentType = media.ContentType;
-        context.Response.Headers["Accept-Ranges"] = "bytes";
+        context.Response.Headers.AcceptRanges = "bytes";
 
         var rangeHeader = context.Request.Headers.Range.ToString();
         if (!string.IsNullOrEmpty(rangeHeader))
@@ -51,12 +51,12 @@ internal static class MediaApi
             if (!TryParseRange(rangeHeader, media.Length, out var start, out var end))
             {
                 context.Response.StatusCode = StatusCodes.Status416RangeNotSatisfiable;
-                context.Response.Headers["Content-Range"] = $"bytes */{media.Length}";
+                context.Response.Headers.ContentRange = $"bytes */{media.Length}";
                 return;
             }
 
             context.Response.StatusCode = StatusCodes.Status206PartialContent;
-            context.Response.Headers["Content-Range"] = $"bytes {start}-{end}/{media.Length}";
+            context.Response.Headers.ContentRange = $"bytes {start}-{end}/{media.Length}";
             context.Response.ContentLength = end - start + 1;
             if (context.Request.Method == HttpMethods.Head)
             {
