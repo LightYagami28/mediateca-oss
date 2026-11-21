@@ -106,6 +106,9 @@ public sealed class TransferQueueService
 
         await file.FlushAsync(cancellationToken).ConfigureAwait(false);
         _store.Complete(job.Id);
-        _logger.LogInformation("Trasferimento {JobId} completato: {Destination}", job.Id, destination);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Trasferimento {JobId} completato: {Destination}", job.Id, destination);
+        }
     }
 }

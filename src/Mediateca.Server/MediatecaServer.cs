@@ -163,7 +163,10 @@ public static class MediatecaServer
     {
         var app = Build(options, database);
         await app.StartAsync(cancellationToken).ConfigureAwait(false);
-        app.Logger.LogInformation("mediateca in ascolto su {Url}", app.Urls.FirstOrDefault());
+        if (app.Logger.IsEnabled(LogLevel.Information))
+        {
+            app.Logger.LogInformation("mediateca in ascolto su {Url}", app.Urls.FirstOrDefault());
+        }
         await app.WaitForShutdownAsync(cancellationToken).ConfigureAwait(false);
     }
 

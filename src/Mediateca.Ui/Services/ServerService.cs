@@ -62,7 +62,11 @@ public sealed class ServerService : IHostedService, IAsyncDisposable
         await _app.StartAsync(cancellationToken).ConfigureAwait(false);
         var scheme = _options.UseHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
         Url = _app.Urls.FirstOrDefault() ?? $"{scheme}://{_options.BindAddress}:{_options.Port}";
-        _logs.CreateLogger("server").LogInformation("Server HTTP attivo su {Url}", Url);
+        var logger = _logs.CreateLogger("server");
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Server HTTP attivo su {Url}", Url);
+        }
         StatusChanged?.Invoke(this, EventArgs.Empty);
     }
 

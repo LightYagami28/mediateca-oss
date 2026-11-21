@@ -88,7 +88,10 @@ public partial class CatalogViewModel : ObservableObject
         try
         {
             _all = await _source.LoadAsync(cancellationToken).ConfigureAwait(true);
-            Logger.LogDebug("Catalogo caricato con {Count} elementi", _all.Count);
+            if (Logger.IsEnabled(LogLevel.Debug))
+            {
+                Logger.LogDebug("Catalogo caricato con {Count} elementi", _all.Count);
+            }
             SetRows(_all);
         }
         finally

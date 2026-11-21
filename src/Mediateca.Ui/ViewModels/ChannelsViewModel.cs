@@ -33,7 +33,10 @@ public partial class ChannelsViewModel : ObservableObject
             _database.Migrate();
             var store = new SqliteMediaStore(_database);
             var rows = store.ListChannels().Select(ChannelRow.From).ToList();
-            Logger.LogDebug("Canali caricati: {Count}", rows.Count);
+            if (Logger.IsEnabled(LogLevel.Debug))
+            {
+                Logger.LogDebug("Canali caricati: {Count}", rows.Count);
+            }
             Rows = new ObservableCollection<ChannelRow>(rows);
             OnPropertyChanged(nameof(Rows));
             OnPropertyChanged(nameof(CountText));
