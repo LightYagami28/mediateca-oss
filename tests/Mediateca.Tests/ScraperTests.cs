@@ -65,6 +65,17 @@ public sealed class ScraperTests
     }
 
     [Fact]
+    public async Task MusicBrainz_ignora_le_registrazioni_senza_identificativo()
+    {
+        using var http = new HttpClient(new IncompleteMusicBrainzHandler());
+        var scraper = new MusicBrainzScraper(http);
+
+        var results = await scraper.SearchAsync(MediaKind.Music, "senza-id");
+
+        Assert.Empty(results);
+    }
+
+    [Fact]
     public void NfoParser_legge_i_campi_del_movie()
     {
         var metadata = NfoParser.Parse("""
@@ -140,6 +151,18 @@ public sealed class ScraperTests
         {
             LastUrl = request.RequestUri;
             const string json = """{"results":[{"id":1,"title":"FilmNotte","release_date":"2021-05-01"}]}""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+            });
+        }
+    }
+
+    private sealed class IncompleteMusicBrainzHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            const string json = """{"recordings":[{"id":"","title":""}]}""";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),

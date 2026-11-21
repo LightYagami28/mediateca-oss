@@ -185,6 +185,30 @@ public sealed class TelegramTests
     }
 
     [Fact]
+    public async Task Polling_ritenta_dopo_un_errore_e_si_ferma_durante_l_attesa()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var handler = new FakeTelegramHandler();
+        var failures = 0;
+        handler.FailOn = request => request.RequestUri!.AbsolutePath.Contains("getUpdates") && Interlocked.CompareExchange(ref failures, 1, 0) == 0;
+        handler.CancelAfterGetUpdates = count =>
+        {
+            if (count >= 2)
+            {
+                cancellation.CancelAfter(50);
+            }
+        };
+        using var http = new HttpClient(handler);
+        var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
+        var polling = new BotPollingService(client, NullLogger.Instance);
+
+        await polling.PollAsync((_, _) => Task.CompletedTask, cancellation.Token);
+
+        Assert.Equal(1, failures);
+        Assert.True(cancellation.IsCancellationRequested);
+    }
+
+    [Fact]
     public async Task Polling_interrompe_dopo_un_errore_di_rete_e_cancellazione()
     {
         using var cancellation = new CancellationTokenSource();

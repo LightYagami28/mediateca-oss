@@ -7,6 +7,37 @@ namespace Mediateca.Tests;
 public sealed class CliTests
 {
     [Fact]
+    public async Task Cli_inizializza_il_database()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "mediateca-cli-tests", Guid.NewGuid().ToString("N"));
+        var previousHome = Environment.GetEnvironmentVariable(MediatecaPaths.HomeVariable);
+        try
+        {
+            Directory.CreateDirectory(directory);
+            Environment.SetEnvironmentVariable(MediatecaPaths.HomeVariable, directory);
+
+            Assert.Equal(0, Mediateca.Cli.Program.Main(["db"]));
+            Assert.True(File.Exists(Path.Combine(directory, "database.db")));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(MediatecaPaths.HomeVariable, previousHome);
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            for (var attempt = 0; attempt < 5 && Directory.Exists(directory); attempt++)
+            {
+                try
+                {
+                    Directory.Delete(directory, recursive: true);
+                }
+                catch (IOException)
+                {
+                    await Task.Delay(50);
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void Cli_gestisce_password_e_rifiuta_sottocomandi_sconosciuti()
     {
         var directory = Path.Combine(Path.GetTempPath(), "mediateca-cli-tests", Guid.NewGuid().ToString("N"));
