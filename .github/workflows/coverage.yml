@@ -50,7 +50,7 @@ jobs:
       - name: Compilazione e test con copertura
         run: |
           dotnet build Mediateca.slnx -c Release
-          dotnet test Mediateca.slnx --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=coverage.opencover.xml
+          dotnet test Mediateca.slnx --no-build -c Release --collect:"XPlat Code Coverage" --results-directory coverage-results -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Pubblica analisi
         env:

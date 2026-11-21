@@ -19,6 +19,8 @@ artifacts/
 *.snupkg
 TestResults/
 coverage/
+coverage-results/
+.sonarqube/
 *.coverage
 *.coveragexml
 BenchmarkDotNet.Artifacts/
