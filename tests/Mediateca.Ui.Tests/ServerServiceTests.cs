@@ -89,7 +89,7 @@ public class ServerServiceTests
             var response = await client.GetAsync($"http://127.0.0.1:{port}/health", TestContext.Current.CancellationToken);
 
             Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
-            Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").Single());
+            Assert.Equal("strict-origin-when-cross-origin", response.Headers.GetValues("Referrer-Policy").Single());
             Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").Single());
             Assert.False(response.Headers.Contains("Server"));
 

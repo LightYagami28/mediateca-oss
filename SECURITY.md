@@ -65,3 +65,40 @@ dotnet list Mediateca.slnx package --vulnerable --include-transitive
 dotnet build Mediateca.slnx -c Release
 dotnet test Mediateca.slnx -c Release
 ```
+
+## Header HTTPS obbligatori
+
+`Mediateca.Server.SecurityHeaders` applica a ogni risposta, errori inclusi:
+`Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`,
+`Upgrade-Insecure-Requests: 1`, CSP con sole sorgenti `https:` e
+`upgrade-insecure-requests`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` e una
+`Permissions-Policy` restrittiva. Le rotte `/api` e `/dav` aggiungono
+`Cache-Control: no-store`. HSTS richiede un termine TLS 1.3 davanti al server.
+
+## Applicazione delle checklist JARVIS
+
+- **Checklist siti web**: applicate validazione input lato server, query
+  parametrizzate, output encoding, autorizzazione per record, DTO espliciti,
+  limiti di richiesta, protezione brute-force, webhook e segreti fuori dal
+  repository. Non applicabili: CSRF con cookie (le API usano Bearer token) e
+  frontend browser (la UI è Avalonia desktop).
+- **Checklist database**: applicate query parametrizzate, transazioni, migrazioni
+  versionate, vincoli di integrità, controllo integrità del file, backup con
+  ritenzione, segreti non nei log e default restrittivi. Non applicabili per
+  l'architettura single-user con file SQLite locale: account/ruoli multipli,
+  MFA, repliche, ACL di rete e service account separati.
+- **Checklist codice C#**: applicate le sezioni 1, 2, 3, 4, 6, 7, 9, 10, 11, 12,
+  13, 14, 15, 16, 19 e 20. Non applicabili: sezione 5 (ASP.NET Core: il server è
+  ospitato ma non espone pagine Razor), 8 (processi dinamici) e 18 (P/Invoke).
+
+## Eccezioni HTTPS documentate
+
+- Gli URL `http://127.0.0.1` negli smoke test, nei test xUnit e in
+  `launchSettings.json` (profilo di sviluppo) puntano a un server locale senza
+  certificato: passarli a `https://` renderebbe i test non eseguibili. In
+  produzione il traffico va terminato in TLS 1.3 e rediretto a HTTPS.
+- Gli URI `http://schemas.microsoft.com/...` nei file XAML/manifest sono
+  identificatori di namespace richiesti dallo schema, non richieste di rete.
+- La stringa `http://` nella CSP è usata solo come controllo di assenza nel test
+  degli header.

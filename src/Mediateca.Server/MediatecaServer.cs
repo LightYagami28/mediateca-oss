@@ -82,18 +82,7 @@ public static class MediatecaServer
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         var app = builder.Build();
 
-        app.Use(async (context, next) =>
-        {
-            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-            context.Response.Headers["Referrer-Policy"] = "no-referrer";
-            context.Response.Headers["X-Frame-Options"] = "DENY";
-            if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
-            {
-                context.Response.Headers["Cache-Control"] = "no-store";
-            }
-
-            await next().ConfigureAwait(false);
-        });
+        app.Use(SecurityHeaders.Apply);
 
         var store = new SqliteMediaStore(database);
 

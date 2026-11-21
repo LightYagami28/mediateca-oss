@@ -51,6 +51,46 @@ public sealed class HttpServerTests
         }
     }
 
+    /// <summary>Gli header di sicurezza HTTPS sono presenti anche sulla risposta pubblica.</summary>
+    [Fact]
+    public async Task SecurityHeaders_PresentiSuHealth()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var app = MediatecaServer.Build(
+                new ServerOptions { WebDavEnabled = false },
+                database);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var response = await http.GetAsync($"{baseUrl}/health");
+
+                Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").First());
+                Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").First());
+                Assert.Equal("strict-origin-when-cross-origin", response.Headers.GetValues("Referrer-Policy").First());
+                Assert.Equal("max-age=31536000; includeSubDomains; preload",
+                    response.Headers.GetValues("Strict-Transport-Security").First());
+
+                var csp = response.Headers.GetValues("Content-Security-Policy").First();
+                Assert.Contains("upgrade-insecure-requests", csp);
+                Assert.DoesNotContain("http://", csp);
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
     /// <summary>Il token protegge le API dati ma non <c>/health</c>.</summary>
     [Fact]
     public async Task ApiToken_ProteggeLeApiDati()
