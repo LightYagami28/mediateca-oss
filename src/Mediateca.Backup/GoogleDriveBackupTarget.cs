@@ -46,6 +46,8 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
 {
     private const string ArchiveMimeType = "application/zip";
 
+    private const string BearerScheme = "Bearer";
+
     private readonly HttpClient _http;
     private readonly GoogleDriveOptions _options;
     private readonly LocalBackupTarget _local;
@@ -106,7 +108,7 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
         {
             Content = JsonContent.Create(metadata),
         };
-        start.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        start.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
         start.Headers.Add("X-Upload-Content-Type", ArchiveMimeType);
         start.Headers.Add("X-Upload-Content-Length", archive.SizeBytes.ToString(CultureInfo.InvariantCulture));
 
@@ -121,7 +123,7 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
         using var put = new HttpRequestMessage(HttpMethod.Put, session) { Content = new StreamContent(file) };
         put.Content.Headers.ContentType = new MediaTypeHeaderValue(ArchiveMimeType);
         put.Content.Headers.ContentLength = file.Length;
-        put.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        put.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
 
         using var uploaded = await _http.SendAsync(put, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(uploaded, "upload", cancellationToken).ConfigureAwait(false);
@@ -150,7 +152,7 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
             "&pageSize=1000");
 
         using var list = new HttpRequestMessage(HttpMethod.Get, listUri);
-        list.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        list.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
         using var listed = await _http.SendAsync(list, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(listed, "elenco backup", cancellationToken).ConfigureAwait(false);
         var page = await listed.Content.ReadFromJsonAsync<FileListDto>(cancellationToken).ConfigureAwait(false);
@@ -159,7 +161,7 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
         foreach (var stale in (page?.Files ?? []).Where(file => file.Name.StartsWith(prefix + "-", StringComparison.Ordinal)).Skip(_options.MaxBackups))
         {
             using var delete = new HttpRequestMessage(HttpMethod.Delete, new Uri(_options.ApiBase, "files/" + Uri.EscapeDataString(stale.Id)));
-            delete.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            delete.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
             using var deleted = await _http.SendAsync(delete, cancellationToken).ConfigureAwait(false);
             if (deleted.IsSuccessStatusCode)
             {

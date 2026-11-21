@@ -33,6 +33,12 @@ public sealed record NavSection(string Title, IReadOnlyList<NavItem> Items);
 
 public partial class MainWindowViewModel : ObservableObject
 {
+    private const string ViewCatalog = "catalog";
+    private const string ViewSettings = "settings";
+    private const string SectionLibrary = "Libreria";
+    private const string SectionTransfers = "Trasferimenti";
+    private const string SectionAccess = "Accesso";
+
     private readonly ThemeService _theme;
 
     public MainWindowViewModel(
@@ -120,7 +126,7 @@ public partial class MainWindowViewModel : ObservableObject
         CurrentView = item.View switch
         {
             "channels" => Channels,
-            "settings" => Settings,
+            ViewSettings => Settings,
             "logs" => Logs,
             _ => Catalog,
         };
@@ -142,35 +148,35 @@ public partial class MainWindowViewModel : ObservableObject
 
     private static IReadOnlyList<NavSection> BuildSections() =>
     [
-        new NavSection("Libreria",
+        new NavSection(SectionLibrary,
         [
-            new NavItem("Catalogo", "Libreria", "catalog"),
-            new NavItem("Canali", "Libreria", "channels"),
-            new NavItem("Generi", "Libreria", "catalog"),
-            new NavItem("Etichette", "Libreria", "catalog"),
+            new NavItem("Catalogo", SectionLibrary, ViewCatalog),
+            new NavItem("Canali", SectionLibrary, "channels"),
+            new NavItem("Generi", SectionLibrary, ViewCatalog),
+            new NavItem("Etichette", SectionLibrary, ViewCatalog),
         ]),
-        new NavSection("Trasferimenti",
+        new NavSection(SectionTransfers,
         [
-            new NavItem("Code", "Trasferimenti", "catalog"),
-            new NavItem("Scaricati", "Trasferimenti", "catalog"),
-            new NavItem("Backup", "Trasferimenti", "catalog"),
+            new NavItem("Code", SectionTransfers, ViewCatalog),
+            new NavItem("Scaricati", SectionTransfers, ViewCatalog),
+            new NavItem("Backup", SectionTransfers, ViewCatalog),
         ]),
-        new NavSection("Accesso",
+        new NavSection(SectionAccess,
         [
-            new NavItem("Server HTTP", "Accesso", "settings"),
-            new NavItem("WebDAV", "Accesso", "settings"),
-            new NavItem("FUSE", "Accesso", "catalog"),
-            new NavItem("Condivisione", "Accesso", "catalog"),
+            new NavItem("Server HTTP", SectionAccess, ViewSettings),
+            new NavItem("WebDAV", SectionAccess, ViewSettings),
+            new NavItem("FUSE", SectionAccess, ViewCatalog),
+            new NavItem("Condivisione", SectionAccess, ViewCatalog),
         ]),
         new NavSection("Bot Telegram",
         [
-            new NavItem("Comandi", "Bot", "catalog"),
-            new NavItem("Utenti", "Bot", "catalog"),
-            new NavItem("Pagamenti", "Bot", "catalog"),
+            new NavItem("Comandi", "Bot", ViewCatalog),
+            new NavItem("Utenti", "Bot", ViewCatalog),
+            new NavItem("Pagamenti", "Bot", ViewCatalog),
         ]),
         new NavSection("Sistema",
         [
-            new NavItem("Impostazioni", "Sistema", "settings"),
+            new NavItem("Impostazioni", "Sistema", ViewSettings),
             new NavItem("Log", "Sistema", "logs"),
         ]),
     ];
