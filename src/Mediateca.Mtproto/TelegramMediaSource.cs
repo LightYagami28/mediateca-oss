@@ -275,7 +275,7 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
         var client = await EnsureConnectedAsync().ConfigureAwait(false);
         var input = new InputChannel(channel.Id, channel.AccessHash);
-        var messages = await client.Channels_GetMessages(input, [new InputMessageID { id = item.MessageId }]).ConfigureAwait(false);
+        var messages = await client.Channels_GetMessages(input, new InputMessageID { id = item.MessageId }).ConfigureAwait(false);
         if (messages.Messages.Length == 0 || messages.Messages[0] is not Message message || message.media is null)
         {
             return false;

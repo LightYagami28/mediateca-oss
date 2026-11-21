@@ -12,7 +12,7 @@ public sealed class LogBuffer : ILoggerProvider
 {
     public const int DefaultCapacity = 500;
 
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private readonly Queue<LogEntry> _entries = new();
 
     public LogBuffer(int capacity = DefaultCapacity)

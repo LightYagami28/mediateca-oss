@@ -147,22 +147,13 @@ public sealed class LocalBackupTarget : IBackupTarget
         }
 
         var prefix = string.IsNullOrWhiteSpace(ArchivePrefix) ? DefaultArchivePrefix : ArchivePrefix;
-        var removed = 0;
         var stale = Directory.EnumerateFiles(destination, $"{prefix}-*.zip")
             .OrderByDescending(File.GetLastWriteTimeUtc)
             .ThenByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
             .Skip(MaxBackups)
             .ToList();
 
-        foreach (var file in stale)
-        {
-            if (TryDelete(file))
-            {
-                removed++;
-            }
-        }
-
-        return removed;
+        return stale.Count(TryDelete);
     }
 
     private static bool TryDelete(string path)

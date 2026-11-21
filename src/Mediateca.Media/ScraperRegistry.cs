@@ -53,8 +53,8 @@ public sealed class ScraperRegistry
     /// <summary>Nomi dei provider registrati, nell'ordine di inserimento.</summary>
     public IReadOnlyCollection<string> ProviderNames => _scrapers.Keys;
 
-    /// <summary>Provider registrati.</summary>
-    public IReadOnlyList<IMediaScraper> Scrapers => _scrapers.Values.ToList();
+    /// <summary>Restituisce i provider registrati in una nuova lista, senza esporre la collezione interna.</summary>
+    public IReadOnlyList<IMediaScraper> GetScrapers() => _scrapers.Values.ToList();
 
     /// <summary>Registra un provider; a parità di nome l'ultimo vince.</summary>
     public void Register(IMediaScraper scraper)
