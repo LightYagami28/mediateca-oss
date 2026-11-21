@@ -45,59 +45,45 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
     public async Task<MediaStream?> OpenReadAsync(MediaItem item, CancellationToken cancellationToken = default)
     {
-        if (item != null)
+        if (!IsConfigured || _options.CacheDirectory.Length == 0)
         {
-            if (!IsConfigured || _options.CacheDirectory.Length == 0)
+            return null;
+        }
+
+        var cached = CachePath(item);
+        if (!File.Exists(cached))
+        {
+            var downloaded = await DownloadAsync(item, cached, cancellationToken).ConfigureAwait(false);
+            if (!downloaded)
             {
                 return null;
             }
-
-            var cached = CachePath(item);
-            if (!File.Exists(cached))
-            {
-                var downloaded = await DownloadAsync(item, cached, cancellationToken).ConfigureAwait(false);
-                if (!downloaded)
-                {
-                    return null;
-                }
-            }
-
-            var stream = new FileStream(cached, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 64 * 1024, useAsync: true);
-            return new MediaStream(stream, stream.Length, ContentTypeFor(item.Extension));
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+
+        var stream = new FileStream(cached, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 64 * 1024, useAsync: true);
+        return new MediaStream(stream, stream.Length, ContentTypeFor(item.Extension));
     }
 
     public async Task<ImportSummary> ImportChannelAsync(string username, CancellationToken cancellationToken = default)
     {
-        if (username != null)
+        if (!IsConfigured)
         {
-            if (!IsConfigured)
-            {
-                throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
-            }
-
-            var client = await EnsureConnectedAsync().ConfigureAwait(false);
-            var resolved = await client.Contacts_ResolveUsername(username).ConfigureAwait(false);
-            if (resolved.UserOrChat is not TL.Channel channel)
-            {
-                throw new InvalidOperationException($"L'utente {username} non è un canale.");
-            }
-
-            var store = new SqliteMediaStore(_database);
-            store.UpsertChannel(ToDomainChannel(channel, username));
-
-            var (imported, bytes) = await ImportHistoryAsync(
-                client, (InputPeer)channel, store, channel.ID, cancellationToken).ConfigureAwait(false);
-            return new ImportSummary(imported, bytes);
+            throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
         }
-        else
+
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
+        var resolved = await client.Contacts_ResolveUsername(username).ConfigureAwait(false);
+        if (resolved.UserOrChat is not TL.Channel channel)
         {
-            throw new ArgumentNullException();
+            throw new InvalidOperationException($"L'utente {username} non è un canale.");
         }
+
+        var store = new SqliteMediaStore(_database);
+        store.UpsertChannel(ToDomainChannel(channel, username));
+
+        var (imported, bytes) = await ImportHistoryAsync(
+            client, (InputPeer)channel, store, channel.ID, cancellationToken).ConfigureAwait(false);
+        return new ImportSummary(imported, bytes);
     }
 
     private static DomainChannel ToDomainChannel(TL.Channel channel, string username) => new()
@@ -147,71 +133,57 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
     private static (int Imported, long Bytes) CatalogMessage(SqliteMediaStore store, long channelId, MessageBase message)
     {
-        if (store != null)
+        if (message is not Message mediaMessage || mediaMessage.media is null)
         {
-            if (message is not Message mediaMessage || mediaMessage.media is null)
-            {
-                return (0, 0);
-            }
-
-            var name = MediaName(mediaMessage);
-            if (name is null)
-            {
-                return (0, 0);
-            }
-
-            var size = mediaMessage.media switch
-            {
-                MessageMediaDocument { document: Document document } => document.size,
-                _ => 0,
-            };
-
-            store.Upsert(Catalogued(channelId, mediaMessage.ID, name, size, mediaMessage.Date));
-            return (1, size);
+            return (0, 0);
         }
-        else
+
+        var name = MediaName(mediaMessage);
+        if (name is null)
         {
-            throw new ArgumentNullException();
+            return (0, 0);
         }
+
+        var size = mediaMessage.media switch
+        {
+            MessageMediaDocument { document: Document document } => document.size,
+            _ => 0,
+        };
+
+        store.Upsert(Catalogued(channelId, mediaMessage.ID, name, size, mediaMessage.Date));
+        return (1, size);
     }
 
     public async Task<MediaItem> UploadAsync(long channelId, string filePath, string? caption = null, CancellationToken cancellationToken = default)
     {
-        if (filePath != null)
+        if (!IsConfigured)
         {
-            if (!IsConfigured)
-            {
-                throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
-            }
-
-            ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-            var file = new FileInfo(filePath);
-            if (!file.Exists)
-            {
-                throw new FileNotFoundException("File da caricare inesistente.", file.FullName);
-            }
-
-            var channel = FindChannel(channelId)
-                ?? throw new InvalidOperationException($"Canale {channelId.ToString(CultureInfo.InvariantCulture)} sconosciuto o senza access hash: importalo prima.");
-
-            var client = await EnsureConnectedAsync().ConfigureAwait(false);
-            var peer = new InputPeerChannel(channel.Id, channel.AccessHash);
-            var uploaded = await client.UploadFileAsync(file.FullName, Progress).WaitAsync(cancellationToken).ConfigureAwait(false);
-            var extension = file.Extension.TrimStart('.').ToLowerInvariant();
-            var message = await client.SendMediaAsync(peer, caption ?? string.Empty, uploaded, ContentTypeFor(extension)).WaitAsync(cancellationToken).ConfigureAwait(false)
-                ?? throw new InvalidOperationException("Telegram non ha confermato il messaggio caricato.");
-
-            var item = Catalogued(channel.Id, message.ID, file.Name, file.Length, message.Date);
-            new SqliteMediaStore(_database).Upsert(item);
-            Log.FileUploaded(_logger, file.Name, channel.Title);
-            return item;
-
-            void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("MTProto non configurato: servono ApiId e ApiHash.");
         }
-        else
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        var file = new FileInfo(filePath);
+        if (!file.Exists)
         {
-            throw new ArgumentNullException();
+            throw new FileNotFoundException("File da caricare inesistente.", file.FullName);
         }
+
+        var channel = FindChannel(channelId)
+            ?? throw new InvalidOperationException($"Canale {channelId.ToString(CultureInfo.InvariantCulture)} sconosciuto o senza access hash: importalo prima.");
+
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
+        var peer = new InputPeerChannel(channel.Id, channel.AccessHash);
+        var uploaded = await client.UploadFileAsync(file.FullName, Progress).WaitAsync(cancellationToken).ConfigureAwait(false);
+        var extension = file.Extension.TrimStart('.').ToLowerInvariant();
+        var message = await client.SendMediaAsync(peer, caption ?? string.Empty, uploaded, ContentTypeFor(extension)).WaitAsync(cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("Telegram non ha confermato il messaggio caricato.");
+
+        var item = Catalogued(channel.Id, message.ID, file.Name, file.Length, message.Date);
+        new SqliteMediaStore(_database).Upsert(item);
+        Log.FileUploaded(_logger, file.Name, channel.Title);
+        return item;
+
+        void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
     }
 
     public async Task<int> ImportAddressBookAsync(CancellationToken cancellationToken = default)
@@ -260,15 +232,8 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
     private static string DisplayName(User user)
     {
-        if (user != null)
-        {
-            var name = string.Join(' ', new[] { user.first_name, user.last_name }.Where(static part => !string.IsNullOrWhiteSpace(part)));
-            return name.Length > 0 ? name : user.MainUsername ?? user.ID.ToString(CultureInfo.InvariantCulture);
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var name = string.Join(' ', new[] { user.first_name, user.last_name }.Where(static part => !string.IsNullOrWhiteSpace(part)));
+        return name.Length > 0 ? name : user.MainUsername ?? user.ID.ToString(CultureInfo.InvariantCulture);
     }
 
     private sealed record ChannelAccess(long Id, long AccessHash, string Title);
@@ -284,76 +249,62 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
     private static MediaItem Catalogued(long channelId, int messageId, string name, long size, DateTime date)
     {
-        if (name != null)
+        var parsed = MediaNameParser.Parse(name);
+        return new MediaItem
         {
-            var parsed = MediaNameParser.Parse(name);
-            return new MediaItem
-            {
-                ChannelId = channelId,
-                MessageId = messageId,
-                Name = name,
-                Kind = parsed.Kind,
-                Title = parsed.Title,
-                Year = parsed.Year,
-                Season = parsed.Season,
-                Episode = parsed.Episode,
-                Size = size,
-                UpdatedAt = new DateTimeOffset(DateTime.SpecifyKind(date, DateTimeKind.Utc)),
-            };
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+            ChannelId = channelId,
+            MessageId = messageId,
+            Name = name,
+            Kind = parsed.Kind,
+            Title = parsed.Title,
+            Year = parsed.Year,
+            Season = parsed.Season,
+            Episode = parsed.Episode,
+            Size = size,
+            UpdatedAt = new DateTimeOffset(DateTime.SpecifyKind(date, DateTimeKind.Utc)),
+        };
     }
 
     private async Task<bool> DownloadAsync(MediaItem item, string destination, CancellationToken cancellationToken)
     {
-        if (item != null)
+        var channel = FindChannel(item.ChannelId);
+        if (channel is null)
         {
-            var channel = FindChannel(item.ChannelId);
-            if (channel is null)
-            {
-                return false;
-            }
-
-            var client = await EnsureConnectedAsync().ConfigureAwait(false);
-            var input = new InputChannel(channel.Id, channel.AccessHash);
-            var messages = await client.Channels_GetMessages(input, new InputMessageID { id = item.MessageId }).ConfigureAwait(false);
-            if (messages.Messages.Length == 0 || messages.Messages[0] is not Message message || message.media is null)
-            {
-                return false;
-            }
-
-            var temporary = destination + ".part";
-            await using (var output = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None, 64 * 1024, useAsync: true))
-            {
-                Task download;
-                switch (message.media)
-                {
-                    case MessageMediaDocument { document: Document document }:
-                        download = client.DownloadFileAsync(document, output, thumbSize: null, Progress);
-                        break;
-                    case MessageMediaPhoto { photo: Photo photo }:
-                        download = client.DownloadFileAsync(photo, output, photo.LargestPhotoSize, Progress);
-                        break;
-                    default:
-                        throw new InvalidOperationException("Il messaggio non contiene media scaricabili.");
-                }
-
-                await download.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-                void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
-            }
-
-            File.Move(temporary, destination, overwrite: true);
-            Log.FileCached(_logger, item.Name);
-            return true;
+            return false;
         }
-        else
+
+        var client = await EnsureConnectedAsync().ConfigureAwait(false);
+        var input = new InputChannel(channel.Id, channel.AccessHash);
+        var messages = await client.Channels_GetMessages(input, new InputMessageID { id = item.MessageId }).ConfigureAwait(false);
+        if (messages.Messages.Length == 0 || messages.Messages[0] is not Message message || message.media is null)
         {
-            throw new ArgumentNullException();
+            return false;
         }
+
+        var temporary = destination + ".part";
+        await using (var output = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None, 64 * 1024, useAsync: true))
+        {
+            Task download;
+            switch (message.media)
+            {
+                case MessageMediaDocument { document: Document document }:
+                    download = client.DownloadFileAsync(document, output, thumbSize: null, Progress);
+                    break;
+                case MessageMediaPhoto { photo: Photo photo }:
+                    download = client.DownloadFileAsync(photo, output, photo.LargestPhotoSize, Progress);
+                    break;
+                default:
+                    throw new InvalidOperationException("Il messaggio non contiene media scaricabili.");
+            }
+
+            await download.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            void Progress(long sent, long total) => cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        File.Move(temporary, destination, overwrite: true);
+        Log.FileCached(_logger, item.Name);
+        return true;
     }
 
     private async Task<Client> EnsureConnectedAsync()
@@ -383,16 +334,9 @@ public sealed class TelegramMediaSource : IMediaFileSource, IAsyncDisposable
 
     private string CachePath(MediaItem item)
     {
-        if (item != null)
-        {
-            var key = item.ChannelId.ToString(CultureInfo.InvariantCulture) + "-" + item.MessageId.ToString(CultureInfo.InvariantCulture) + "-" + item.Name;
-            var safe = string.Join('_', key.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-            return Path.GetFullPath(Path.Combine(_options.CacheDirectory, safe));
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var key = item.ChannelId.ToString(CultureInfo.InvariantCulture) + "-" + item.MessageId.ToString(CultureInfo.InvariantCulture) + "-" + item.Name;
+        var safe = string.Join('_', key.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        return Path.GetFullPath(Path.Combine(_options.CacheDirectory, safe));
     }
 
     private static string? MediaName(Message message) => message.media switch

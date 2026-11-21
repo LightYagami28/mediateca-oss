@@ -26,34 +26,20 @@ internal static class SecurityHeaders
     /// <summary>Applica gli header e passa al middleware successivo.</summary>
     internal static async Task Apply(HttpContext context, RequestDelegate next)
     {
-        if (context != null)
-        {
-            if (next != null)
-            {
-                var headers = context.Response.Headers;
-                headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains; preload";
-                headers.UpgradeInsecureRequests = "1";
-                headers.ContentSecurityPolicy = Csp;
-                headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-                headers.XContentTypeOptions = "nosniff";
-                headers.XFrameOptions = "DENY";
-                headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+        var headers = context.Response.Headers;
+        headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains; preload";
+        headers.UpgradeInsecureRequests = "1";
+        headers.ContentSecurityPolicy = Csp;
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        headers.XContentTypeOptions = "nosniff";
+        headers.XFrameOptions = "DENY";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
 
-                if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
-                {
-                    headers.CacheControl = "no-store";
-                }
-
-                await next(context).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
-        }
-        else
+        if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/dav"))
         {
-            throw new ArgumentNullException();
+            headers.CacheControl = "no-store";
         }
+
+        await next(context).ConfigureAwait(false);
     }
 }

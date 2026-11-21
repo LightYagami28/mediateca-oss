@@ -59,16 +59,9 @@ public sealed class ScraperRegistry
     /// <summary>Registra un provider; a parità di nome l'ultimo vince.</summary>
     public void Register(IMediaScraper scraper)
     {
-        if (scraper != null)
-        {
-            ArgumentNullException.ThrowIfNull(scraper);
-            ArgumentException.ThrowIfNullOrWhiteSpace(scraper.Name);
-            _scrapers[scraper.Name] = scraper;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        ArgumentNullException.ThrowIfNull(scraper);
+        ArgumentException.ThrowIfNullOrWhiteSpace(scraper.Name);
+        _scrapers[scraper.Name] = scraper;
     }
 
     /// <summary>Rimuove un provider per nome, indicando se esisteva.</summary>

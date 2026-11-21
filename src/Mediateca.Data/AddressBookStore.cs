@@ -15,45 +15,38 @@ public sealed class AddressBookStore
 
     public int Upsert(IEnumerable<AddressBookEntry> entries)
     {
-        if (entries != null)
+        ArgumentNullException.ThrowIfNull(entries);
+        using var connection = _database.Open();
+        using var transaction = connection.BeginTransaction();
+        var count = 0;
+        foreach (var entry in entries)
         {
-            ArgumentNullException.ThrowIfNull(entries);
-            using var connection = _database.Open();
-            using var transaction = connection.BeginTransaction();
-            var count = 0;
-            foreach (var entry in entries)
-            {
-                using var command = connection.CreateCommand();
-                command.Transaction = transaction;
-                command.CommandText = """
-                    INSERT INTO address_book (peer_id, access_hash, kind, title, username, phone, updated_at)
-                    VALUES ($id, $hash, $kind, $title, $username, $phone, $updated)
-                    ON CONFLICT(peer_id) DO UPDATE SET
-                        access_hash = COALESCE(excluded.access_hash, address_book.access_hash),
-                        kind        = excluded.kind,
-                        title       = excluded.title,
-                        username    = excluded.username,
-                        phone       = COALESCE(excluded.phone, address_book.phone),
-                        updated_at  = excluded.updated_at;
-                    """;
-                command.Parameters.AddWithValue("$id", entry.PeerId);
-                command.Parameters.AddWithValue("$hash", (object?)entry.AccessHash ?? DBNull.Value);
-                command.Parameters.AddWithValue("$kind", entry.Kind.ToString().ToLowerInvariant());
-                command.Parameters.AddWithValue("$title", entry.Title);
-                command.Parameters.AddWithValue("$username", (object?)entry.Username ?? DBNull.Value);
-                command.Parameters.AddWithValue("$phone", (object?)entry.Phone ?? DBNull.Value);
-                command.Parameters.AddWithValue("$updated", entry.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
-                command.ExecuteNonQuery();
-                count++;
-            }
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = """
+                INSERT INTO address_book (peer_id, access_hash, kind, title, username, phone, updated_at)
+                VALUES ($id, $hash, $kind, $title, $username, $phone, $updated)
+                ON CONFLICT(peer_id) DO UPDATE SET
+                    access_hash = COALESCE(excluded.access_hash, address_book.access_hash),
+                    kind        = excluded.kind,
+                    title       = excluded.title,
+                    username    = excluded.username,
+                    phone       = COALESCE(excluded.phone, address_book.phone),
+                    updated_at  = excluded.updated_at;
+                """;
+            command.Parameters.AddWithValue("$id", entry.PeerId);
+            command.Parameters.AddWithValue("$hash", (object?)entry.AccessHash ?? DBNull.Value);
+            command.Parameters.AddWithValue("$kind", entry.Kind.ToString().ToLowerInvariant());
+            command.Parameters.AddWithValue("$title", entry.Title);
+            command.Parameters.AddWithValue("$username", (object?)entry.Username ?? DBNull.Value);
+            command.Parameters.AddWithValue("$phone", (object?)entry.Phone ?? DBNull.Value);
+            command.Parameters.AddWithValue("$updated", entry.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+            command.ExecuteNonQuery();
+            count++;
+        }
 
-            transaction.Commit();
-            return count;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        transaction.Commit();
+        return count;
     }
 
     public IReadOnlyList<AddressBookEntry> Search(string text, AddressBookKind? kind = null, int limit = 100)

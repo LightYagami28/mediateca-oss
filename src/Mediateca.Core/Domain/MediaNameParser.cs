@@ -10,110 +10,75 @@ public static partial class MediaNameParser
 {
     public static ParsedMediaName Parse(string fileName)
     {
-        if (fileName != null)
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+
+        var name = Path.GetFileName(fileName.Replace('\\', '/'));
+        var kind = KindFromExtension(name);
+        if (kind is not (MediaKind.Movie or MediaKind.Music or MediaKind.Book))
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
-
-            var name = Path.GetFileName(fileName.Replace('\\', '/'));
-            var kind = KindFromExtension(name);
-            if (kind is not (MediaKind.Movie or MediaKind.Music or MediaKind.Book))
-            {
-                return new ParsedMediaName(kind, null, null, null, null);
-            }
-
-            var text = Separators().Replace(LeadingGroup().Replace(Path.GetFileNameWithoutExtension(name), ""), " ");
-
-            var (season, episode, parsedKind, cut) = ReadSeries(text, kind);
-            kind = parsedKind;
-            cut = TrimAtQualityTag(text, cut);
-            var (year, titleCut) = ReadYear(text, cut);
-
-            var title = Spaces().Replace(text[..titleCut], " ").Trim(' ', '-', '(', '[', '.');
-            return new ParsedMediaName(kind, title.Length == 0 ? null : title, year, season, episode);
+            return new ParsedMediaName(kind, null, null, null, null);
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+
+        var text = Separators().Replace(LeadingGroup().Replace(Path.GetFileNameWithoutExtension(name), ""), " ");
+
+        var (season, episode, parsedKind, cut) = ReadSeries(text, kind);
+        kind = parsedKind;
+        cut = TrimAtQualityTag(text, cut);
+        var (year, titleCut) = ReadYear(text, cut);
+
+        var title = Spaces().Replace(text[..titleCut], " ").Trim(' ', '-', '(', '[', '.');
+        return new ParsedMediaName(kind, title.Length == 0 ? null : title, year, season, episode);
     }
 
     private static (int? Season, int? Episode, MediaKind Kind, int Cut) ReadSeries(string text, MediaKind kind)
     {
-        if (text != null)
+        var series = SeasonEpisode().Match(text);
+        if (kind != MediaKind.Movie || !series.Success)
         {
-            var series = SeasonEpisode().Match(text);
-            if (kind != MediaKind.Movie || !series.Success)
-            {
-                return (null, null, kind, text.Length);
-            }
+            return (null, null, kind, text.Length);
+        }
 
-            var season = Number(series.Groups["s1"].Success ? series.Groups["s1"] : series.Groups["s2"]);
-            var episode = Number(series.Groups["e1"].Success ? series.Groups["e1"] : series.Groups["e2"]);
-            return (season, episode, MediaKind.Episode, series.Index);
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var season = Number(series.Groups["s1"].Success ? series.Groups["s1"] : series.Groups["s2"]);
+        var episode = Number(series.Groups["e1"].Success ? series.Groups["e1"] : series.Groups["e2"]);
+        return (season, episode, MediaKind.Episode, series.Index);
     }
 
     private static int TrimAtQualityTag(string text, int cut)
     {
-        if (text != null)
-        {
-            var tag = QualityTag().Match(text);
-            return tag.Success && tag.Index > 0 ? Math.Min(cut, tag.Index) : cut;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var tag = QualityTag().Match(text);
+        return tag.Success && tag.Index > 0 ? Math.Min(cut, tag.Index) : cut;
     }
 
     private static (int? Year, int Cut) ReadYear(string text, int cut)
     {
-        if (text != null)
-        {
-            var latestYear = DateTime.UtcNow.Year + 1;
-            var yearMatch = YearPattern().Matches(text)
-                .LastOrDefault(match => match.Index > 0 && match.Index < cut && Number(match.Groups["year"]) <= latestYear);
-            return yearMatch is null ? (null, cut) : (Number(yearMatch.Groups["year"]), yearMatch.Index);
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var latestYear = DateTime.UtcNow.Year + 1;
+        var yearMatch = YearPattern().Matches(text)
+            .LastOrDefault(match => match.Index > 0 && match.Index < cut && Number(match.Groups["year"]) <= latestYear);
+        return yearMatch is null ? (null, cut) : (Number(yearMatch.Groups["year"]), yearMatch.Index);
     }
 
     public static MediaKind KindFromExtension(string name)
     {
-        if (name != null)
+        if (MediaExtensions.IsVideo(name))
         {
-            if (MediaExtensions.IsVideo(name))
-            {
-                return MediaKind.Movie;
-            }
-            if (MediaExtensions.IsAudio(name))
-            {
-                return MediaKind.Music;
-            }
-            if (MediaExtensions.IsImage(name))
-            {
-                return MediaKind.Image;
-            }
+            return MediaKind.Movie;
+        }
+        if (MediaExtensions.IsAudio(name))
+        {
+            return MediaKind.Music;
+        }
+        if (MediaExtensions.IsImage(name))
+        {
+            return MediaKind.Image;
+        }
 
-            return Path.GetExtension(name).ToLowerInvariant() switch
-            {
-                ".zip" or ".rar" or ".7z" => MediaKind.Archive,
-                ".epub" or ".mobi" or ".azw3" => MediaKind.Book,
-                ".pdf" or ".docx" => MediaKind.Document,
-                _ => MediaKind.Unknown,
-            };
-        }
-        else
+        return Path.GetExtension(name).ToLowerInvariant() switch
         {
-            throw new ArgumentNullException();
-        }
+            ".zip" or ".rar" or ".7z" => MediaKind.Archive,
+            ".epub" or ".mobi" or ".azw3" => MediaKind.Book,
+            ".pdf" or ".docx" => MediaKind.Document,
+            _ => MediaKind.Unknown,
+        };
     }
 
     private static int Number(Capture group) => int.Parse(group.Value, NumberStyles.None, CultureInfo.InvariantCulture);

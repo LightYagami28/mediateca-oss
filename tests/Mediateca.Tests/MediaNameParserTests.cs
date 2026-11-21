@@ -12,27 +12,13 @@ public sealed class MediaNameParserTests
     [InlineData("Arrival.mkv", "Arrival", null)]
     public void Riconosce_titolo_e_anno_dei_film(string name, string title, int? year)
     {
-        if (name != null)
-        {
-            if (title != null)
-            {
-                var parsed = MediaNameParser.Parse(name);
+        var parsed = MediaNameParser.Parse(name);
 
-                Assert.Equal(MediaKind.Movie, parsed.Kind);
-                Assert.Equal(title, parsed.Title);
-                Assert.Equal(year, parsed.Year);
-                Assert.Null(parsed.Season);
-                Assert.Null(parsed.Episode);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        Assert.Equal(MediaKind.Movie, parsed.Kind);
+        Assert.Equal(title, parsed.Title);
+        Assert.Equal(year, parsed.Year);
+        Assert.Null(parsed.Season);
+        Assert.Null(parsed.Episode);
     }
 
     [Theory]

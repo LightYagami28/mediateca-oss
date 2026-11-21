@@ -99,154 +99,91 @@ public sealed record MediatecaSettings
 
     private void ValidateLanguage(List<string> problems)
     {
-        if (problems != null)
+        if (!string.IsNullOrEmpty(Language) && (Language.Length != 2 || !Language.All(char.IsLetter)))
         {
-            if (!string.IsNullOrEmpty(Language) && (Language.Length != 2 || !Language.All(char.IsLetter)))
-            {
-                problems.Add($"Language deve essere un codice ISO a due lettere (valore: '{Language}').");
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            problems.Add($"Language deve essere un codice ISO a due lettere (valore: '{Language}').");
         }
     }
 
     private void ValidatePorts(List<string> problems)
     {
-        if (problems != null)
+        if (ServerBindPort is < MinPort or > MaxPort)
         {
-            if (ServerBindPort is < MinPort or > MaxPort)
-            {
-                problems.Add($"ServerBindPort deve essere tra {MinPort} e {MaxPort} (valore: {ServerBindPort}).");
-            }
-
-            if (ServerPublicPort is int publicPort && publicPort is < MinPort or > MaxPort)
-            {
-                problems.Add($"ServerPublicPort deve essere tra {MinPort} e {MaxPort} (valore: {publicPort}).");
-            }
+            problems.Add($"ServerBindPort deve essere tra {MinPort} e {MaxPort} (valore: {ServerBindPort}).");
         }
-        else
+
+        if (ServerPublicPort is int publicPort && publicPort is < MinPort or > MaxPort)
         {
-            throw new ArgumentNullException();
+            problems.Add($"ServerPublicPort deve essere tra {MinPort} e {MaxPort} (valore: {publicPort}).");
         }
     }
 
     private void ValidatePublicUrl(List<string> problems)
     {
-        if (problems != null)
+        // HTTPS è obbligatorio per gli URL pubblici: l'unica eccezione è il loopback
+        // dei test del server locale, che non espone dati su una rete.
+        if (PublicBaseUrl is { } url && (!url.IsAbsoluteUri || url.Scheme != Uri.UriSchemeHttps))
         {
-            // HTTPS è obbligatorio per gli URL pubblici: l'unica eccezione è il loopback
-            // dei test del server locale, che non espone dati su una rete.
-            if (PublicBaseUrl is { } url && (!url.IsAbsoluteUri || url.Scheme != Uri.UriSchemeHttps))
-            {
-                problems.Add($"PublicBaseUrl deve essere un URL assoluto https (valore: '{url}').");
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            problems.Add($"PublicBaseUrl deve essere un URL assoluto https (valore: '{url}').");
         }
     }
 
     private void ValidateWebDav(List<string> problems)
     {
-        if (problems != null)
+        if (WebDavEnabled && WebDavRequireAuth && string.IsNullOrWhiteSpace(WebDavUser))
         {
-            if (WebDavEnabled && WebDavRequireAuth && string.IsNullOrWhiteSpace(WebDavUser))
-            {
-                problems.Add("WebDavUser non può essere vuoto quando l'autenticazione WebDAV è richiesta.");
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            problems.Add("WebDavUser non può essere vuoto quando l'autenticazione WebDAV è richiesta.");
         }
     }
 
     private void ValidateBackup(List<string> problems)
     {
-        if (problems != null)
+        if (!TimeSpan.TryParseExact(BackupTime, @"hh\:mm", CultureInfo.InvariantCulture, out _))
         {
-            if (!TimeSpan.TryParseExact(BackupTime, @"hh\:mm", CultureInfo.InvariantCulture, out _))
-            {
-                problems.Add($"BackupTime deve essere nel formato HH:mm (valore: '{BackupTime}').");
-            }
-
-            if (BackupRetention < 1)
-            {
-                problems.Add($"BackupRetention deve essere almeno 1 (valore: {BackupRetention}).");
-            }
+            problems.Add($"BackupTime deve essere nel formato HH:mm (valore: '{BackupTime}').");
         }
-        else
+
+        if (BackupRetention < 1)
         {
-            throw new ArgumentNullException();
+            problems.Add($"BackupRetention deve essere almeno 1 (valore: {BackupRetention}).");
         }
     }
 
     private void ValidateInterface(List<string> problems)
     {
-        if (problems != null)
+        if (double.IsNaN(UiScale) || double.IsInfinity(UiScale) || UiScale is < MinUiScale or > MaxUiScale)
         {
-            if (double.IsNaN(UiScale) || double.IsInfinity(UiScale) || UiScale is < MinUiScale or > MaxUiScale)
-            {
-                problems.Add($"UiScale deve essere tra {MinUiScale} e {MaxUiScale} (valore: {UiScale}).");
-            }
-
-            if (Theme is not ("system" or "light" or "dark"))
-            {
-                problems.Add($"Theme deve essere system, light o dark (valore: '{Theme}').");
-            }
+            problems.Add($"UiScale deve essere tra {MinUiScale} e {MaxUiScale} (valore: {UiScale}).");
         }
-        else
+
+        if (Theme is not ("system" or "light" or "dark"))
         {
-            throw new ArgumentNullException();
+            problems.Add($"Theme deve essere system, light o dark (valore: '{Theme}').");
         }
     }
 
     private void ValidateRootDirectory(List<string> problems)
     {
-        if (problems != null)
+        if (RootDirectory is { Length: > 0 } root && !Path.IsPathFullyQualified(root))
         {
-            if (RootDirectory is { Length: > 0 } root && !Path.IsPathFullyQualified(root))
-            {
-                problems.Add("RootDirectory deve essere un percorso assoluto quando specificato.");
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            problems.Add("RootDirectory deve essere un percorso assoluto quando specificato.");
         }
     }
 
     private static void ValidateExtensions(IReadOnlyList<string>? extensions, string name, List<string> problems)
     {
-        if (problems != null)
+        if (extensions is null)
         {
-            if (name != null)
-            {
-                if (extensions is null)
-                {
-                    problems.Add($"{name} non può essere null.");
-                    return;
-                }
-                foreach (var extension in extensions)
-                {
-                    if (string.IsNullOrEmpty(extension) || extension[0] != '.')
-                    {
-                        problems.Add($"{name} contiene un'estensione non valida: '{extension}'.");
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            problems.Add($"{name} non può essere null.");
+            return;
         }
-        else
+        foreach (var extension in extensions)
         {
-            throw new ArgumentNullException();
+            if (string.IsNullOrEmpty(extension) || extension[0] != '.')
+            {
+                problems.Add($"{name} contiene un'estensione non valida: '{extension}'.");
+                break;
+            }
         }
     }
 }

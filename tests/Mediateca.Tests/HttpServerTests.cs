@@ -446,64 +446,43 @@ public sealed class HttpServerTests
     /// <summary>Avvia l'app su una porta loopback dinamica e restituisce la base URL reale.</summary>
     private static async Task<string> StartAsync(WebApplication app)
     {
-        if (app != null)
+        var previousUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+        Environment.SetEnvironmentVariable("ASPNETCORE_URLS", "http://127.0.0.1:0");
+        try
         {
-            var previousUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
-            Environment.SetEnvironmentVariable("ASPNETCORE_URLS", "http://127.0.0.1:0");
-            try
-            {
-                await app.StartAsync();
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable("ASPNETCORE_URLS", previousUrls);
-            }
-
-            var deadline = DateTime.UtcNow.AddSeconds(10);
-            while (DateTime.UtcNow < deadline)
-            {
-                var url = app.Urls.FirstOrDefault(static candidate => !candidate.EndsWith(":0", StringComparison.Ordinal));
-                if (url is not null)
-                {
-                    return url.TrimEnd('/');
-                }
-
-                await Task.Delay(20);
-            }
-
-            return app.Urls.First().TrimEnd('/');
+            await app.StartAsync();
         }
-        else
+        finally
         {
-            throw new ArgumentNullException();
+            Environment.SetEnvironmentVariable("ASPNETCORE_URLS", previousUrls);
         }
+
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (DateTime.UtcNow < deadline)
+        {
+            var url = app.Urls.FirstOrDefault(static candidate => !candidate.EndsWith(":0", StringComparison.Ordinal));
+            if (url is not null)
+            {
+                return url.TrimEnd('/');
+            }
+
+            await Task.Delay(20);
+        }
+
+        return app.Urls.First().TrimEnd('/');
     }
 
     private static async Task StopAsync(WebApplication app)
     {
-        if (app != null)
-        {
-            await app.StopAsync();
-            await app.DisposeAsync();
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        await app.StopAsync();
+        await app.DisposeAsync();
     }
 
     private static MediatecaDatabase Migrated(string directory)
     {
-        if (directory != null)
-        {
-            var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
-            database.Migrate();
-            return database;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
+        database.Migrate();
+        return database;
     }
 
     private static int FreeLoopbackPort()
@@ -529,34 +508,27 @@ public sealed class HttpServerTests
 
     private static void Cleanup(string directory)
     {
-        if (directory != null)
+        SqliteConnection.ClearAllPools();
+        for (var attempt = 0; attempt < 5; attempt++)
         {
-            SqliteConnection.ClearAllPools();
-            for (var attempt = 0; attempt < 5; attempt++)
+            try
             {
-                try
+                if (!Directory.Exists(directory))
                 {
-                    if (!Directory.Exists(directory))
-                    {
-                        return;
-                    }
-
-                    Directory.Delete(directory, recursive: true);
                     return;
                 }
-                catch (IOException)
-                {
-                    Thread.Sleep(50);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    Thread.Sleep(50);
-                }
+
+                Directory.Delete(directory, recursive: true);
+                return;
             }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            catch (IOException)
+            {
+                Thread.Sleep(50);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Thread.Sleep(50);
+            }
         }
     }
 }

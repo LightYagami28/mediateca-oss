@@ -16,79 +16,65 @@ public sealed class LocalImportService(MediatecaDatabase database)
 
     public Task<ImportReport> ImportFolderAsync(string folder, CancellationToken cancellationToken = default)
     {
-        if (folder != null)
+        ArgumentException.ThrowIfNullOrWhiteSpace(folder);
+        var root = Path.GetFullPath(folder);
+
+        _store.UpsertChannel(new Channel
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(folder);
-            var root = Path.GetFullPath(folder);
+            Id = LocalChannelId,
+            Title = LocalChannelTitle,
+            Kind = ChannelKind.Chat,
+            IsSource = false,
+        });
 
-            _store.UpsertChannel(new Channel
+        var added = 0;
+        var skipped = 0;
+        var alreadyPresent = 0;
+        long bytes = 0;
+
+        foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var info = new FileInfo(file);
+            if (info.Length == 0)
             {
-                Id = LocalChannelId,
-                Title = LocalChannelTitle,
-                Kind = ChannelKind.Chat,
-                IsSource = false,
-            });
-
-            var added = 0;
-            var skipped = 0;
-            var alreadyPresent = 0;
-            long bytes = 0;
-
-            foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var info = new FileInfo(file);
-                if (info.Length == 0)
-                {
-                    skipped++;
-                    continue;
-                }
-
-                var relative = Path.GetRelativePath(root, file).Replace(Path.DirectorySeparatorChar, '/');
-                var messageId = StableId(relative);
-                if (_store.Exists(LocalChannelId, messageId))
-                {
-                    alreadyPresent++;
-                    continue;
-                }
-
-                var parsed = MediaNameParser.Parse(relative);
-                _store.Upsert(new MediaItem
-                {
-                    ChannelId = LocalChannelId,
-                    MessageId = messageId,
-                    Name = relative,
-                    Kind = parsed.Kind,
-                    Title = parsed.Title,
-                    Year = parsed.Year,
-                    Season = parsed.Season,
-                    Episode = parsed.Episode,
-                    Size = info.Length,
-                    UpdatedAt = new DateTimeOffset(info.LastWriteTimeUtc),
-                });
-                added++;
-                bytes += info.Length;
+                skipped++;
+                continue;
             }
 
-            return Task.FromResult(new ImportReport(added, skipped, bytes, alreadyPresent));
+            var relative = Path.GetRelativePath(root, file).Replace(Path.DirectorySeparatorChar, '/');
+            var messageId = StableId(relative);
+            if (_store.Exists(LocalChannelId, messageId))
+            {
+                alreadyPresent++;
+                continue;
+            }
+
+            var parsed = MediaNameParser.Parse(relative);
+            _store.Upsert(new MediaItem
+            {
+                ChannelId = LocalChannelId,
+                MessageId = messageId,
+                Name = relative,
+                Kind = parsed.Kind,
+                Title = parsed.Title,
+                Year = parsed.Year,
+                Season = parsed.Season,
+                Episode = parsed.Episode,
+                Size = info.Length,
+                UpdatedAt = new DateTimeOffset(info.LastWriteTimeUtc),
+            });
+            added++;
+            bytes += info.Length;
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+
+        return Task.FromResult(new ImportReport(added, skipped, bytes, alreadyPresent));
     }
 
     private static int StableId(string relativePath)
     {
-        if (relativePath != null)
-        {
-            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(relativePath));
-            return BitConverter.ToInt32(hash, 0) & 0x7FFFFFFF;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(relativePath));
+        return BitConverter.ToInt32(hash, 0) & 0x7FFFFFFF;
     }
 }

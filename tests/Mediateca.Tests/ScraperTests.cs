@@ -149,19 +149,12 @@ public sealed class ScraperTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (request != null)
+            LastUrl = request.RequestUri;
+            const string json = """{"results":[{"id":1,"title":"FilmNotte","release_date":"2021-05-01"}]}""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                LastUrl = request.RequestUri;
-                const string json = """{"results":[{"id":1,"title":"FilmNotte","release_date":"2021-05-01"}]}""";
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
-                });
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+            });
         }
     }
 

@@ -93,24 +93,17 @@ public sealed class JsonSettingsStore : ISettingsStore
     /// <inheritdoc />
     public void Save(MediatecaSettings settings)
     {
-        if (settings != null)
+        ArgumentNullException.ThrowIfNull(settings);
+        var directory = System.IO.Path.GetDirectoryName(_path);
+        if (!string.IsNullOrEmpty(directory))
         {
-            ArgumentNullException.ThrowIfNull(settings);
-            var directory = System.IO.Path.GetDirectoryName(_path);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+            Directory.CreateDirectory(directory);
+        }
 
-            var json = JsonSerializer.Serialize(settings, Options);
-            var temporary = _path + ".tmp";
-            File.WriteAllText(temporary, json);
-            File.Move(temporary, _path, overwrite: true);
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var json = JsonSerializer.Serialize(settings, Options);
+        var temporary = _path + ".tmp";
+        File.WriteAllText(temporary, json);
+        File.Move(temporary, _path, overwrite: true);
     }
 
     /// <summary>
@@ -120,22 +113,15 @@ public sealed class JsonSettingsStore : ISettingsStore
     /// <exception cref="InvalidOperationException">Le impostazioni contengono valori non validi.</exception>
     public void SaveValidated(MediatecaSettings settings)
     {
-        if (settings != null)
+        ArgumentNullException.ThrowIfNull(settings);
+        var problems = settings.Validate();
+        if (problems.Count > 0)
         {
-            ArgumentNullException.ThrowIfNull(settings);
-            var problems = settings.Validate();
-            if (problems.Count > 0)
-            {
-                var message = $"Impostazioni non valide, nulla è stato scritto: {string.Join("; ", problems)}";
-                Trace.WriteLine($"JsonSettingsStore.SaveValidated: {message}");
-                throw new InvalidOperationException(message);
-            }
-            Save(settings);
+            var message = $"Impostazioni non valide, nulla è stato scritto: {string.Join("; ", problems)}";
+            Trace.WriteLine($"JsonSettingsStore.SaveValidated: {message}");
+            throw new InvalidOperationException(message);
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        Save(settings);
     }
 
     private MediatecaSettings DefaultSettings() =>

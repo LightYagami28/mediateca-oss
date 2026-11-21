@@ -73,18 +73,11 @@ public sealed class BotUserStore
 
     private static BotUser? Find(SqliteConnection connection, long userId)
     {
-        if (connection != null)
-        {
-            using var command = connection.CreateCommand();
-            command.CommandText = "SELECT user_id, username, role, first_seen, last_seen FROM bot_users WHERE user_id = $id;";
-            command.Parameters.AddWithValue("$id", userId);
-            using var reader = command.ExecuteReader();
-            return reader.Read() ? Read(reader) : null;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT user_id, username, role, first_seen, last_seen FROM bot_users WHERE user_id = $id;";
+        command.Parameters.AddWithValue("$id", userId);
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? Read(reader) : null;
     }
 
     private static BotUser Read(SqliteDataReader reader) => new()

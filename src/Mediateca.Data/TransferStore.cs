@@ -27,25 +27,18 @@ public sealed class TransferStore(MediatecaDatabase database)
 {
     public long Enqueue(long itemId, string direction)
     {
-        if (direction != null)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(direction);
-            using var connection = database.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                INSERT INTO transfer_jobs (item_id, direction, state, bytes_total, bytes_done, error, created_at, updated_at)
-                VALUES ($item, $direction, 'queued', 0, 0, NULL, $now, $now)
-                RETURNING id;
-                """;
-            command.Parameters.AddWithValue("$item", itemId);
-            command.Parameters.AddWithValue("$direction", direction);
-            command.Parameters.AddWithValue("$now", DateTimeOffset.UtcNow.ToString("O"));
-            return Convert.ToInt64(command.ExecuteScalar());
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(direction);
+        using var connection = database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO transfer_jobs (item_id, direction, state, bytes_total, bytes_done, error, created_at, updated_at)
+            VALUES ($item, $direction, 'queued', 0, 0, NULL, $now, $now)
+            RETURNING id;
+            """;
+        command.Parameters.AddWithValue("$item", itemId);
+        command.Parameters.AddWithValue("$direction", direction);
+        command.Parameters.AddWithValue("$now", DateTimeOffset.UtcNow.ToString("O"));
+        return Convert.ToInt64(command.ExecuteScalar());
     }
 
     public TransferJob? Find(long id)
@@ -123,21 +116,14 @@ public sealed class TransferStore(MediatecaDatabase database)
 
     public void Fail(long id, string error)
     {
-        if (error != null)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(error);
-            using var connection = database.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE transfer_jobs SET state = 'failed', error = $error, updated_at = $now WHERE id = $id;";
-            command.Parameters.AddWithValue("$error", error);
-            command.Parameters.AddWithValue("$now", DateTimeOffset.UtcNow.ToString("O"));
-            command.Parameters.AddWithValue("$id", id);
-            command.ExecuteNonQuery();
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        using var connection = database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE transfer_jobs SET state = 'failed', error = $error, updated_at = $now WHERE id = $id;";
+        command.Parameters.AddWithValue("$error", error);
+        command.Parameters.AddWithValue("$now", DateTimeOffset.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("$id", id);
+        command.ExecuteNonQuery();
     }
 
     private static TransferJob Read(SqliteDataReader reader) => new()

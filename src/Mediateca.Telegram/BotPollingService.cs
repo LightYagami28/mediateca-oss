@@ -18,43 +18,36 @@ public sealed class BotPollingService
 
     public async Task PollAsync(Func<BotUpdate, CancellationToken, Task> handler, CancellationToken cancellationToken)
     {
-        if (handler != null)
-        {
-            ArgumentNullException.ThrowIfNull(handler);
+        ArgumentNullException.ThrowIfNull(handler);
 
-            var offset = 0;
-            while (!cancellationToken.IsCancellationRequested)
+        var offset = 0;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            IReadOnlyList<BotUpdate> updates;
+            try
             {
-                IReadOnlyList<BotUpdate> updates;
-                try
-                {
-                    updates = await _client.GetUpdatesAsync(offset, cancellationToken: cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception exception)
-                {
-                    _logger.LogWarning(exception, "getUpdates fallito: nuovo tentativo tra poco");
-                    if (!await DelayAsync(ErrorDelay, cancellationToken).ConfigureAwait(false))
-                    {
-                        break;
-                    }
-
-                    continue;
-                }
-
-                offset = await HandleUpdatesAsync(updates, offset, handler, cancellationToken).ConfigureAwait(false);
-                if (updates.Count == 0 && !await DelayAsync(PollInterval, cancellationToken).ConfigureAwait(false))
-                {
-                    break;
-                }
+                updates = await _client.GetUpdatesAsync(offset, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "getUpdates fallito: nuovo tentativo tra poco");
+                if (!await DelayAsync(ErrorDelay, cancellationToken).ConfigureAwait(false))
+                {
+                    break;
+                }
+
+                continue;
+            }
+
+            offset = await HandleUpdatesAsync(updates, offset, handler, cancellationToken).ConfigureAwait(false);
+            if (updates.Count == 0 && !await DelayAsync(PollInterval, cancellationToken).ConfigureAwait(false))
+            {
+                break;
+            }
         }
     }
 

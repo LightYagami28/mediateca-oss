@@ -150,16 +150,9 @@ public sealed class SettingsValidationTests
 
     private static void Cleanup(string directory)
     {
-        if (directory != null)
+        if (Directory.Exists(directory))
         {
-            if (Directory.Exists(directory))
-            {
-                Directory.Delete(directory, recursive: true);
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            Directory.Delete(directory, recursive: true);
         }
     }
 }

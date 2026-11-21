@@ -43,217 +43,140 @@ public sealed class LocalBackupTarget : IBackupTarget
     /// <exception cref="DirectoryNotFoundException">Se la cartella sorgente non esiste.</exception>
     public Task<BackupResult> CreateAsync(string sourceDirectory, string destinationDirectory, CancellationToken cancellationToken = default)
     {
-        if (sourceDirectory != null)
-        {
-            if (destinationDirectory != null)
-            {
-                ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
-                ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
 
-                var source = Path.GetFullPath(sourceDirectory);
-                var destination = Path.GetFullPath(destinationDirectory);
-                if (!Directory.Exists(source))
-                {
-                    throw new DirectoryNotFoundException($"Cartella sorgente inesistente: {source}");
-                }
-
-                Directory.CreateDirectory(destination);
-                return Task.Run(() => CreateArchive(source, destination, cancellationToken), cancellationToken);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
-        }
-        else
+        var source = Path.GetFullPath(sourceDirectory);
+        var destination = Path.GetFullPath(destinationDirectory);
+        if (!Directory.Exists(source))
         {
-            throw new ArgumentNullException();
+            throw new DirectoryNotFoundException($"Cartella sorgente inesistente: {source}");
         }
+
+        Directory.CreateDirectory(destination);
+        return Task.Run(() => CreateArchive(source, destination, cancellationToken), cancellationToken);
     }
 
     private BackupResult CreateArchive(string source, string destination, CancellationToken cancellationToken)
     {
-        if (destination != null)
+        var stopwatch = Stopwatch.StartNew();
+        var archivePath = NextArchivePath(destination);
+        var backupFolder = Path.Combine(source, BackupsFolderName);
+        var sameRoot = PathsEqual(source, destination);
+
+        // I file sono elencati prima di creare l'archivio, così il nuovo zip non entra nella copia.
+        var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
+            .Where(file => !ShouldSkip(file, backupFolder, destination, sameRoot, archivePath))
+            .ToList();
+
+        try
         {
-            if (source != null)
+            using (var stream = new FileStream(archivePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
             {
-                var stopwatch = Stopwatch.StartNew();
-                var archivePath = NextArchivePath(destination);
-                var backupFolder = Path.Combine(source, BackupsFolderName);
-                var sameRoot = PathsEqual(source, destination);
-
-                // I file sono elencati prima di creare l'archivio, così il nuovo zip non entra nella copia.
-                var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
-                    .Where(file => !ShouldSkip(file, backupFolder, destination, sameRoot, archivePath))
-                    .ToList();
-
-                try
+                foreach (var file in files)
                 {
-                    using (var stream = new FileStream(archivePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                    using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
-                    {
-                        foreach (var file in files)
-                        {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            var entryName = Path.GetRelativePath(source, file).Replace('\\', '/');
-                            archive.CreateEntryFromFile(file, entryName, CompressionLevel.Optimal);
-                        }
-                    }
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var entryName = Path.GetRelativePath(source, file).Replace('\\', '/');
+                    archive.CreateEntryFromFile(file, entryName, CompressionLevel.Optimal);
                 }
-                catch
-                {
-                    _ = TryDelete(archivePath);
-                    throw;
-                }
-
-                long size;
-                string digest;
-                using (var stream = File.OpenRead(archivePath))
-                {
-                    size = stream.Length;
-                    digest = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-                }
-
-                var removed = ApplyRetention(destination);
-                stopwatch.Stop();
-
-                return new BackupResult
-                {
-                    ArchivePath = archivePath,
-                    SizeBytes = size,
-                    Sha256 = digest,
-                    Duration = stopwatch.Elapsed,
-                    RemovedOldArchives = removed,
-                };
-            }
-            else
-            {
-                throw new ArgumentNullException();
             }
         }
-        else
+        catch
         {
-            throw new ArgumentNullException();
+            _ = TryDelete(archivePath);
+            throw;
         }
+
+        long size;
+        string digest;
+        using (var stream = File.OpenRead(archivePath))
+        {
+            size = stream.Length;
+            digest = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+        }
+
+        var removed = ApplyRetention(destination);
+        stopwatch.Stop();
+
+        return new BackupResult
+        {
+            ArchivePath = archivePath,
+            SizeBytes = size,
+            Sha256 = digest,
+            Duration = stopwatch.Elapsed,
+            RemovedOldArchives = removed,
+        };
     }
 
     private static bool ShouldSkip(string file, string backupFolder, string destination, bool sameRoot, string archivePath)
     {
-        if (file != null)
+        if (IsUnder(file, backupFolder))
         {
-            if (archivePath != null)
-            {
-                if (IsUnder(file, backupFolder))
-                {
-                    return true;
-                }
-
-                if (!sameRoot && IsUnder(file, destination))
-                {
-                    return true;
-                }
-
-                return string.Equals(file, archivePath, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            return true;
         }
-        else
+
+        if (!sameRoot && IsUnder(file, destination))
         {
-            throw new ArgumentNullException();
+            return true;
         }
+
+        return string.Equals(file, archivePath, StringComparison.OrdinalIgnoreCase);
     }
 
     private string NextArchivePath(string destination)
     {
-        if (destination != null)
-        {
-            var prefix = string.IsNullOrWhiteSpace(ArchivePrefix) ? DefaultArchivePrefix : ArchivePrefix;
-            var stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            var candidate = Path.Combine(destination, $"{prefix}-{stamp}.zip");
+        var prefix = string.IsNullOrWhiteSpace(ArchivePrefix) ? DefaultArchivePrefix : ArchivePrefix;
+        var stamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        var candidate = Path.Combine(destination, $"{prefix}-{stamp}.zip");
 
-            var counter = 1;
-            while (File.Exists(candidate))
-            {
-                candidate = Path.Combine(destination, $"{prefix}-{stamp}-{counter++}.zip");
-            }
-
-            return candidate;
-        }
-        else
+        var counter = 1;
+        while (File.Exists(candidate))
         {
-            throw new ArgumentNullException();
+            candidate = Path.Combine(destination, $"{prefix}-{stamp}-{counter++}.zip");
         }
+
+        return candidate;
     }
 
     private int ApplyRetention(string destination)
     {
-        if (destination != null)
+        if (MaxBackups < 1)
         {
-            if (MaxBackups < 1)
-            {
-                return 0;
-            }
-
-            var prefix = string.IsNullOrWhiteSpace(ArchivePrefix) ? DefaultArchivePrefix : ArchivePrefix;
-            var stale = Directory.EnumerateFiles(destination, $"{prefix}-*.zip")
-                .OrderByDescending(File.GetLastWriteTimeUtc)
-                .ThenByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
-                .Skip(MaxBackups)
-                .ToList();
-
-            return stale.Count(path => TryDelete(path));
+            return 0;
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+
+        var prefix = string.IsNullOrWhiteSpace(ArchivePrefix) ? DefaultArchivePrefix : ArchivePrefix;
+        var stale = Directory.EnumerateFiles(destination, $"{prefix}-*.zip")
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .ThenByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+            .Skip(MaxBackups)
+            .ToList();
+
+        return stale.Count(path => TryDelete(path));
     }
 
     private static bool TryDelete(string path)
     {
-        if (path != null)
+        try
         {
-            try
-            {
-                File.Delete(path);
-                return true;
-            }
-            catch (IOException)
-            {
-                return false;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return false;
-            }
+            File.Delete(path);
+            return true;
         }
-        else
+        catch (IOException)
         {
-            throw new ArgumentNullException();
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
         }
     }
 
     private static bool IsUnder(string file, string directory)
     {
-        if (directory != null)
-        {
-            if (file != null)
-            {
-                var relative = Path.GetRelativePath(directory, file);
-                return !relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var relative = Path.GetRelativePath(directory, file);
+        return !relative.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relative);
     }
 
     private static bool PathsEqual(string left, string right) =>

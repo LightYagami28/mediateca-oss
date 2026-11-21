@@ -116,16 +116,9 @@ public sealed class MediatecaDatabase
 
     private static int ReadUserVersion(SqliteConnection connection)
     {
-        if (connection != null)
-        {
-            using var command = connection.CreateCommand();
-            command.CommandText = "PRAGMA user_version;";
-            return Convert.ToInt32(command.ExecuteScalar());
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA user_version;";
+        return Convert.ToInt32(command.ExecuteScalar());
     }
 }
 

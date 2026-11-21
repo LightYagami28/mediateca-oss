@@ -10,106 +10,71 @@ internal static class MediaApi
 
     public static async Task Stream(HttpContext context, long id, SqliteMediaStore store, IMediaFileSource? source, ServerOptions options)
     {
-        if (context != null)
+        if (!MediatecaServer.Authorize(context, options))
         {
-            if (store != null)
-            {
-                if (!MediatecaServer.Authorize(context, options))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return;
-                }
-
-                var item = store.Find(id);
-                if (item is null)
-                {
-                    context.Response.StatusCode = StatusCodes.Status404NotFound;
-                    return;
-                }
-
-                if (source is null)
-                {
-                    context.Response.StatusCode = StatusCodes.Status501NotImplemented;
-                    return;
-                }
-
-                await StreamItem(context, item, source).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
         }
-        else
+
+        var item = store.Find(id);
+        if (item is null)
         {
-            throw new ArgumentNullException();
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
         }
+
+        if (source is null)
+        {
+            context.Response.StatusCode = StatusCodes.Status501NotImplemented;
+            return;
+        }
+
+        await StreamItem(context, item, source).ConfigureAwait(false);
     }
 
     public static async Task StreamItem(HttpContext context, MediaItem item, IMediaFileSource source)
     {
-        if (source != null)
+        var media = await source.OpenReadAsync(item, context.RequestAborted).ConfigureAwait(false);
+        if (media is null)
         {
-            if (item != null)
-            {
-                if (context != null)
-                {
-                    var media = await source.OpenReadAsync(item, context.RequestAborted).ConfigureAwait(false);
-                    if (media is null)
-                    {
-                        context.Response.StatusCode = StatusCodes.Status404NotFound;
-                        return;
-                    }
-
-                    await using var stream = media.Stream;
-                    context.Response.ContentType = media.ContentType;
-                    context.Response.Headers.AcceptRanges = "bytes";
-
-                    var rangeHeader = context.Request.Headers.Range.ToString();
-                    if (!string.IsNullOrEmpty(rangeHeader))
-                    {
-                        if (!TryParseRange(rangeHeader, media.Length, out var start, out var end))
-                        {
-                            context.Response.StatusCode = StatusCodes.Status416RangeNotSatisfiable;
-                            context.Response.Headers.ContentRange = $"bytes */{media.Length}";
-                            return;
-                        }
-
-                        context.Response.StatusCode = StatusCodes.Status206PartialContent;
-                        context.Response.Headers.ContentRange = $"bytes {start}-{end}/{media.Length}";
-                        context.Response.ContentLength = end - start + 1;
-                        if (context.Request.Method == HttpMethods.Head)
-                        {
-                            return;
-                        }
-
-                        stream.Seek(start, SeekOrigin.Begin);
-                        await CopyRangeAsync(stream, context.Response.Body, end - start + 1, context.RequestAborted).ConfigureAwait(false);
-                        return;
-                    }
-
-                    context.Response.ContentLength = media.Length;
-                    if (context.Request.Method == HttpMethods.Head)
-                    {
-                        return;
-                    }
-
-                    await stream.CopyToAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
-                }
-                else
-                {
-                    throw new ArgumentNullException();
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
         }
-        else
+
+        await using var stream = media.Stream;
+        context.Response.ContentType = media.ContentType;
+        context.Response.Headers.AcceptRanges = "bytes";
+
+        var rangeHeader = context.Request.Headers.Range.ToString();
+        if (!string.IsNullOrEmpty(rangeHeader))
         {
-            throw new ArgumentNullException();
+            if (!TryParseRange(rangeHeader, media.Length, out var start, out var end))
+            {
+                context.Response.StatusCode = StatusCodes.Status416RangeNotSatisfiable;
+                context.Response.Headers.ContentRange = $"bytes */{media.Length}";
+                return;
+            }
+
+            context.Response.StatusCode = StatusCodes.Status206PartialContent;
+            context.Response.Headers.ContentRange = $"bytes {start}-{end}/{media.Length}";
+            context.Response.ContentLength = end - start + 1;
+            if (context.Request.Method == HttpMethods.Head)
+            {
+                return;
+            }
+
+            stream.Seek(start, SeekOrigin.Begin);
+            await CopyRangeAsync(stream, context.Response.Body, end - start + 1, context.RequestAborted).ConfigureAwait(false);
+            return;
         }
+
+        context.Response.ContentLength = media.Length;
+        if (context.Request.Method == HttpMethods.Head)
+        {
+            return;
+        }
+
+        await stream.CopyToAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
     }
 
     private static bool TryParseRange(string header, long length, out long start, out long end)
@@ -167,32 +132,18 @@ internal static class MediaApi
 
     private static async Task CopyRangeAsync(Stream source, Stream destination, long bytes, CancellationToken cancellationToken)
     {
-        if (source != null)
+        var buffer = new byte[CopyBufferBytes];
+        while (bytes > 0)
         {
-            if (destination != null)
+            var toRead = (int)Math.Min(buffer.Length, bytes);
+            var read = await source.ReadAsync(buffer.AsMemory(0, toRead), cancellationToken).ConfigureAwait(false);
+            if (read == 0)
             {
-                var buffer = new byte[CopyBufferBytes];
-                while (bytes > 0)
-                {
-                    var toRead = (int)Math.Min(buffer.Length, bytes);
-                    var read = await source.ReadAsync(buffer.AsMemory(0, toRead), cancellationToken).ConfigureAwait(false);
-                    if (read == 0)
-                    {
-                        break;
-                    }
+                break;
+            }
 
-                    await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
-                    bytes -= read;
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+            bytes -= read;
         }
     }
 }

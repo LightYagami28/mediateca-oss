@@ -146,32 +146,25 @@ public static class MediatecaServer
 
     private static void ConfigureAddress(WebApplicationBuilder builder, ServerOptions options)
     {
-        if (options != null)
-        {
-            // La porta e l'indirizzo delle opzioni devono arrivare a Kestrel: senza questo il server
-            // ascolterebbe sulle impostazioni predefinite di ASP.NET e ignorerebbe la configurazione.
-            // Se ASPNETCORE_URLS e' impostata (utile nei test) ha la precedenza, schema incluso.
-            var configuredUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
-            var hasConfiguredUrls = !string.IsNullOrWhiteSpace(configuredUrls);
-            var useHttps = hasConfiguredUrls
-                ? configuredUrls!.StartsWith(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
-                : options.UseHttps;
+        // La porta e l'indirizzo delle opzioni devono arrivare a Kestrel: senza questo il server
+        // ascolterebbe sulle impostazioni predefinite di ASP.NET e ignorerebbe la configurazione.
+        // Se ASPNETCORE_URLS e' impostata (utile nei test) ha la precedenza, schema incluso.
+        var configuredUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+        var hasConfiguredUrls = !string.IsNullOrWhiteSpace(configuredUrls);
+        var useHttps = hasConfiguredUrls
+            ? configuredUrls!.StartsWith(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            : options.UseHttps;
 
-            if (useHttps)
-            {
-                builder.WebHost.ConfigureKestrel(kestrel => kestrel.ConfigureHttpsDefaults(https =>
-                    https.ServerCertificate = TlsCertificate.Create(options.BindAddress)));
-            }
-
-            var scheme = useHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
-            builder.WebHost.UseUrls(hasConfiguredUrls
-                ? configuredUrls!
-                : $"{scheme}://{options.BindAddress}:{options.Port}");
-        }
-        else
+        if (useHttps)
         {
-            throw new ArgumentNullException();
+            builder.WebHost.ConfigureKestrel(kestrel => kestrel.ConfigureHttpsDefaults(https =>
+                https.ServerCertificate = TlsCertificate.Create(options.BindAddress)));
         }
+
+        var scheme = useHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
+        builder.WebHost.UseUrls(hasConfiguredUrls
+            ? configuredUrls!
+            : $"{scheme}://{options.BindAddress}:{options.Port}");
     }
 
     /// <summary>Avvia il server e attende la chiusura.</summary>
@@ -191,41 +184,27 @@ public static class MediatecaServer
 
     internal static bool Authorize(HttpContext context, ServerOptions options)
     {
-        if (options != null)
+        if (string.IsNullOrEmpty(options.ApiToken))
         {
-            if (context != null)
-            {
-                if (string.IsNullOrEmpty(options.ApiToken))
-                {
-                    return true;
-                }
-
-                var header = context.Request.Headers.Authorization.ToString();
-                if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                var supplied = header[7..].Trim();
-                var expected = options.ApiToken;
-                if (supplied.Length != expected.Length)
-                {
-                    return false;
-                }
-
-                return CryptographicOperations.FixedTimeEquals(
-                    Encoding.UTF8.GetBytes(supplied),
-                    Encoding.UTF8.GetBytes(expected));
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            return true;
         }
-        else
+
+        var header = context.Request.Headers.Authorization.ToString();
+        if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentNullException();
+            return false;
         }
+
+        var supplied = header[7..].Trim();
+        var expected = options.ApiToken;
+        if (supplied.Length != expected.Length)
+        {
+            return false;
+        }
+
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(supplied),
+            Encoding.UTF8.GetBytes(expected));
     }
 }
 

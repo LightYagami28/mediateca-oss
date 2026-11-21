@@ -39,36 +39,29 @@ public sealed class TelegramBotPool
 
     public async Task<T> ExecuteAsync<T>(Func<TelegramBotClient, CancellationToken, Task<T>> action, CancellationToken cancellationToken = default)
     {
-        if (action != null)
+        ArgumentNullException.ThrowIfNull(action);
+
+        TelegramApiException? lastLimit = null;
+        for (var attempt = 0; attempt < _clients.Length; attempt++)
         {
-            ArgumentNullException.ThrowIfNull(action);
-
-            TelegramApiException? lastLimit = null;
-            for (var attempt = 0; attempt < _clients.Length; attempt++)
+            var index = Acquire();
+            if (index < 0)
             {
-                var index = Acquire();
-                if (index < 0)
-                {
-                    break;
-                }
-
-                try
-                {
-                    return await action(_clients[index], cancellationToken).ConfigureAwait(false);
-                }
-                catch (TelegramApiException error) when (error.ErrorCode == TooManyRequests)
-                {
-                    lastLimit = error;
-                    Suspend(index, TimeSpan.FromSeconds(Math.Max(1, error.RetryAfterSeconds ?? 1)));
-                }
+                break;
             }
 
-            throw new InvalidOperationException("Tutti i bot del pool sono fermi per il limite di frequenza di Telegram.", lastLimit);
+            try
+            {
+                return await action(_clients[index], cancellationToken).ConfigureAwait(false);
+            }
+            catch (TelegramApiException error) when (error.ErrorCode == TooManyRequests)
+            {
+                lastLimit = error;
+                Suspend(index, TimeSpan.FromSeconds(Math.Max(1, error.RetryAfterSeconds ?? 1)));
+            }
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+
+        throw new InvalidOperationException("Tutti i bot del pool sono fermi per il limite di frequenza di Telegram.", lastLimit);
     }
 
     private int Acquire()

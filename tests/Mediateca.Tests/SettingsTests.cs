@@ -211,38 +211,31 @@ public sealed class SettingsTests
 
     private static void Cleanup(string directory)
     {
-        if (directory != null)
+        SqliteConnection.ClearAllPools();
+        for (var attempt = 0; attempt < 5; attempt++)
         {
-            SqliteConnection.ClearAllPools();
-            for (var attempt = 0; attempt < 5; attempt++)
+            try
             {
-                try
+                if (!Directory.Exists(directory))
                 {
-                    if (!Directory.Exists(directory))
-                    {
-                        return;
-                    }
-
-                    if (directory != null)
-                    {
-                        Directory.Delete(directory, recursive: true);
-                    }
-
                     return;
                 }
-                catch (IOException)
+
+                if (directory != null)
                 {
-                    Thread.Sleep(50);
+                    Directory.Delete(directory, recursive: true);
                 }
-                catch (UnauthorizedAccessException)
-                {
-                    Thread.Sleep(50);
-                }
+
+                return;
             }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            catch (IOException)
+            {
+                Thread.Sleep(50);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Thread.Sleep(50);
+            }
         }
     }
 }

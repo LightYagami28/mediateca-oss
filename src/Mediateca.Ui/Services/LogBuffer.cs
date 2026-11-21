@@ -56,27 +56,13 @@ public sealed class LogBuffer : ILoggerProvider
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            if (formatter != null)
+            if (exception is not null)
             {
-                if (state != null)
-                {
-                    if (exception is not null)
-                    {
-                        buffer.Add(DateTimeOffset.Now, logLevel.ToString(), formatter(state, exception) + " | " + exception.Message);
-                        return;
-                    }
+                buffer.Add(DateTimeOffset.Now, logLevel.ToString(), formatter(state, exception) + " | " + exception.Message);
+                return;
+            }
 
-                    buffer.Add(DateTimeOffset.Now, logLevel.ToString(), formatter(state, exception));
-                }
-                else
-                {
-                    throw new ArgumentNullException();
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            buffer.Add(DateTimeOffset.Now, logLevel.ToString(), formatter(state, exception));
         }
     }
 }

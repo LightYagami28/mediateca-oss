@@ -93,22 +93,15 @@ public sealed class TelegramBotPoolTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (request != null)
+            var bot = request.RequestUri!.AbsolutePath.Split('/')[1]["bot".Length..].Split(':')[0];
+            Bots.Add(bot);
+            var body = Limited.Contains(bot)
+                ? """{"ok":false,"error_code":429,"description":"Too Many Requests: retry after 30","parameters":{"retry_after":30}}"""
+                : """{"ok":true,"result":{"message_id":1,"chat":{"id":1},"date":1700000000,"text":"x"}}""";
+            return Task.FromResult(new HttpResponseMessage(Limited.Contains(bot) ? HttpStatusCode.TooManyRequests : HttpStatusCode.OK)
             {
-                var bot = request.RequestUri!.AbsolutePath.Split('/')[1]["bot".Length..].Split(':')[0];
-                Bots.Add(bot);
-                var body = Limited.Contains(bot)
-                    ? """{"ok":false,"error_code":429,"description":"Too Many Requests: retry after 30","parameters":{"retry_after":30}}"""
-                    : """{"ok":true,"result":{"message_id":1,"chat":{"id":1},"date":1700000000,"text":"x"}}""";
-                return Task.FromResult(new HttpResponseMessage(Limited.Contains(bot) ? HttpStatusCode.TooManyRequests : HttpStatusCode.OK)
-                {
-                    Content = new StringContent(body, Encoding.UTF8, "application/json"),
-                });
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+                Content = new StringContent(body, Encoding.UTF8, "application/json"),
+            });
         }
     }
 }

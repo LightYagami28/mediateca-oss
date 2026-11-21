@@ -63,32 +63,18 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
 
     public async Task<BackupResult> CreateAsync(string sourceDirectory, string destinationDirectory, CancellationToken cancellationToken = default)
     {
-        if (sourceDirectory != null)
+        if (!_options.IsConfigured)
         {
-            if (destinationDirectory != null)
-            {
-                if (!_options.IsConfigured)
-                {
-                    throw new InvalidOperationException(
-                        $"Google Drive non configurato: servono {GoogleDriveOptions.ClientIdVariable}, {GoogleDriveOptions.ClientCredentialVariableName} e {GoogleDriveOptions.RefreshTokenVariable}.");
-                }
-
-                var archive = await _local.CreateAsync(sourceDirectory, destinationDirectory, cancellationToken).ConfigureAwait(false);
-                var accessToken = await RequestAccessTokenAsync(cancellationToken).ConfigureAwait(false);
-                var remoteId = await UploadAsync(archive, accessToken, cancellationToken).ConfigureAwait(false);
-                var removed = await ApplyRetentionAsync(accessToken, cancellationToken).ConfigureAwait(false);
-
-                return archive with { RemoteId = remoteId, RemovedOldArchives = archive.RemovedOldArchives + removed };
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+            throw new InvalidOperationException(
+                $"Google Drive non configurato: servono {GoogleDriveOptions.ClientIdVariable}, {GoogleDriveOptions.ClientCredentialVariableName} e {GoogleDriveOptions.RefreshTokenVariable}.");
         }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+
+        var archive = await _local.CreateAsync(sourceDirectory, destinationDirectory, cancellationToken).ConfigureAwait(false);
+        var accessToken = await RequestAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+        var remoteId = await UploadAsync(archive, accessToken, cancellationToken).ConfigureAwait(false);
+        var removed = await ApplyRetentionAsync(accessToken, cancellationToken).ConfigureAwait(false);
+
+        return archive with { RemoteId = remoteId, RemovedOldArchives = archive.RemovedOldArchives + removed };
     }
 
     private async Task<string> RequestAccessTokenAsync(CancellationToken cancellationToken)
@@ -111,45 +97,38 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
 
     private async Task<string> UploadAsync(BackupResult archive, string accessToken, CancellationToken cancellationToken)
     {
-        if (archive != null)
+        var metadata = new FileMetadataDto
         {
-            var metadata = new FileMetadataDto
-            {
-                Name = archive.FileName,
-                MimeType = ArchiveMimeType,
-                Parents = string.IsNullOrWhiteSpace(_options.FolderId) ? null : [_options.FolderId],
-            };
+            Name = archive.FileName,
+            MimeType = ArchiveMimeType,
+            Parents = string.IsNullOrWhiteSpace(_options.FolderId) ? null : [_options.FolderId],
+        };
 
-            using var start = new HttpRequestMessage(HttpMethod.Post, new Uri(_options.UploadBase, "files?uploadType=resumable"))
-            {
-                Content = JsonContent.Create(metadata),
-            };
-            start.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
-            start.Headers.Add("X-Upload-Content-Type", ArchiveMimeType);
-            start.Headers.Add("X-Upload-Content-Length", archive.SizeBytes.ToString(CultureInfo.InvariantCulture));
-
-            Uri session;
-            using (var response = await _http.SendAsync(start, cancellationToken).ConfigureAwait(false))
-            {
-                await EnsureSuccessAsync(response, "avvio upload", cancellationToken).ConfigureAwait(false);
-                session = response.Headers.Location ?? throw new GoogleDriveException("avvio upload", (int)response.StatusCode, "header Location assente");
-            }
-
-            await using var file = new FileStream(archive.ArchivePath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, useAsync: true);
-            using var put = new HttpRequestMessage(HttpMethod.Put, session) { Content = new StreamContent(file) };
-            put.Content.Headers.ContentType = new MediaTypeHeaderValue(ArchiveMimeType);
-            put.Content.Headers.ContentLength = file.Length;
-            put.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
-
-            using var uploaded = await _http.SendAsync(put, cancellationToken).ConfigureAwait(false);
-            await EnsureSuccessAsync(uploaded, "upload", cancellationToken).ConfigureAwait(false);
-            var created = await uploaded.Content.ReadFromJsonAsync<DriveFileDto>(cancellationToken).ConfigureAwait(false);
-            return created?.Id ?? throw new GoogleDriveException("upload", (int)uploaded.StatusCode, "risposta senza id del file");
-        }
-        else
+        using var start = new HttpRequestMessage(HttpMethod.Post, new Uri(_options.UploadBase, "files?uploadType=resumable"))
         {
-            throw new ArgumentNullException();
+            Content = JsonContent.Create(metadata),
+        };
+        start.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
+        start.Headers.Add("X-Upload-Content-Type", ArchiveMimeType);
+        start.Headers.Add("X-Upload-Content-Length", archive.SizeBytes.ToString(CultureInfo.InvariantCulture));
+
+        Uri session;
+        using (var response = await _http.SendAsync(start, cancellationToken).ConfigureAwait(false))
+        {
+            await EnsureSuccessAsync(response, "avvio upload", cancellationToken).ConfigureAwait(false);
+            session = response.Headers.Location ?? throw new GoogleDriveException("avvio upload", (int)response.StatusCode, "header Location assente");
         }
+
+        await using var file = new FileStream(archive.ArchivePath, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, useAsync: true);
+        using var put = new HttpRequestMessage(HttpMethod.Put, session) { Content = new StreamContent(file) };
+        put.Content.Headers.ContentType = new MediaTypeHeaderValue(ArchiveMimeType);
+        put.Content.Headers.ContentLength = file.Length;
+        put.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, accessToken);
+
+        using var uploaded = await _http.SendAsync(put, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessAsync(uploaded, "upload", cancellationToken).ConfigureAwait(false);
+        var created = await uploaded.Content.ReadFromJsonAsync<DriveFileDto>(cancellationToken).ConfigureAwait(false);
+        return created?.Id ?? throw new GoogleDriveException("upload", (int)uploaded.StatusCode, "risposta senza id del file");
     }
 
     private async Task<int> ApplyRetentionAsync(string accessToken, CancellationToken cancellationToken)
@@ -197,27 +176,13 @@ public sealed class GoogleDriveBackupTarget : IBackupTarget
 
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, string operation, CancellationToken cancellationToken)
     {
-        if (response != null)
+        if (response.IsSuccessStatusCode)
         {
-            if (operation != null)
-            {
-                if (response.IsSuccessStatusCode)
-                {
-                    return;
-                }
+            return;
+        }
 
-                var detail = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                throw new GoogleDriveException(operation, (int)response.StatusCode, detail.Length > 300 ? detail[..300] : detail);
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var detail = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        throw new GoogleDriveException(operation, (int)response.StatusCode, detail.Length > 300 ? detail[..300] : detail);
     }
 
     private sealed record TokenDto([property: JsonPropertyName("access_token")] string? AccessToken);

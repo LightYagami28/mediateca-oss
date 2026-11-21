@@ -27,60 +27,53 @@ public static class NfoParser
 {
     public static NfoMetadata? Parse(string xml)
     {
-        if (xml != null)
+        ArgumentException.ThrowIfNullOrWhiteSpace(xml);
+
+        XDocument document;
+        try
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(xml);
-
-            XDocument document;
-            try
-            {
-                document = XDocument.Parse(xml, LoadOptions.None);
-            }
-            catch (XmlException)
-            {
-                return null;
-            }
-
-            var root = document.Descendants().FirstOrDefault(element =>
-                element.Name.LocalName is "movie" or "tvshow" or "episode");
-            if (root is null)
-            {
-                return null;
-            }
-
-            string? Value(string name) => root.Descendants().FirstOrDefault(element => element.Name.LocalName == name)?.Value.Trim();
-
-            var genres = root.Descendants()
-                .Where(element => element.Name.LocalName == "genre")
-                .Select(element => element.Value.Trim())
-                .Where(genre => genre.Length > 0)
-                .ToList();
-
-            int? year = int.TryParse(Value("year"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedYear)
-                ? parsedYear
-                : null;
-            double? rating = double.TryParse(Value("rating"), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedRating)
-                ? parsedRating
-                : null;
-            int? runtime = int.TryParse(Value("runtime"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedRuntime)
-                ? parsedRuntime
-                : null;
-
-            return new NfoMetadata
-            {
-                Title = Value("title"),
-                OriginalTitle = Value("originaltitle"),
-                Plot = Value("plot"),
-                Tagline = Value("tagline"),
-                Year = year,
-                Genres = genres,
-                Rating = rating,
-                RuntimeMinutes = runtime,
-            };
+            document = XDocument.Parse(xml, LoadOptions.None);
         }
-        else
+        catch (XmlException)
         {
-            throw new ArgumentNullException();
+            return null;
         }
+
+        var root = document.Descendants().FirstOrDefault(element =>
+            element.Name.LocalName is "movie" or "tvshow" or "episode");
+        if (root is null)
+        {
+            return null;
+        }
+
+        string? Value(string name) => root.Descendants().FirstOrDefault(element => element.Name.LocalName == name)?.Value.Trim();
+
+        var genres = root.Descendants()
+            .Where(element => element.Name.LocalName == "genre")
+            .Select(element => element.Value.Trim())
+            .Where(genre => genre.Length > 0)
+            .ToList();
+
+        int? year = int.TryParse(Value("year"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedYear)
+            ? parsedYear
+            : null;
+        double? rating = double.TryParse(Value("rating"), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedRating)
+            ? parsedRating
+            : null;
+        int? runtime = int.TryParse(Value("runtime"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedRuntime)
+            ? parsedRuntime
+            : null;
+
+        return new NfoMetadata
+        {
+            Title = Value("title"),
+            OriginalTitle = Value("originaltitle"),
+            Plot = Value("plot"),
+            Tagline = Value("tagline"),
+            Year = year,
+            Genres = genres,
+            Rating = rating,
+            RuntimeMinutes = runtime,
+        };
     }
 }

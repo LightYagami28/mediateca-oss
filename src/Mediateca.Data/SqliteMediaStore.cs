@@ -17,54 +17,47 @@ public sealed class SqliteMediaStore
     /// <summary>Inserisce o aggiorna un elemento in base alla coppia canale/messaggio.</summary>
     public long Upsert(MediaItem item)
     {
-        if (item != null)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-            using var connection = _database.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                INSERT INTO media_items (channel_id, message_id, parent_id, name, kind, size, duration_s, width, height, title, year, season, episode, external_id, cover_path, updated_at)
-                VALUES ($channel, $message, $parent, $name, $kind, $size, $duration, $width, $height, $title, $year, $season, $episode, $external, $cover, $updated)
-                ON CONFLICT (channel_id, message_id) DO UPDATE SET
-                    parent_id  = excluded.parent_id,
-                    name       = excluded.name,
-                    kind       = excluded.kind,
-                    size       = excluded.size,
-                    duration_s = excluded.duration_s,
-                    width      = excluded.width,
-                    height     = excluded.height,
-                    title      = excluded.title,
-                    year       = excluded.year,
-                    season     = excluded.season,
-                    episode    = excluded.episode,
-                    external_id= excluded.external_id,
-                    cover_path = excluded.cover_path,
-                    updated_at = excluded.updated_at
-                RETURNING id;
-                """;
-            command.Parameters.AddWithValue("$channel", item.ChannelId);
-            command.Parameters.AddWithValue("$message", item.MessageId);
-            AddOptional(command, "$parent", item.ParentId);
-            command.Parameters.AddWithValue("$name", item.Name);
-            command.Parameters.AddWithValue("$kind", item.Kind.ToString().ToLowerInvariant());
-            command.Parameters.AddWithValue("$size", item.Size);
-            AddOptional(command, "$duration", item.DurationSeconds);
-            AddOptional(command, "$width", item.Width);
-            AddOptional(command, "$height", item.Height);
-            AddOptional(command, "$title", item.Title);
-            AddOptional(command, "$year", item.Year);
-            AddOptional(command, "$season", item.Season);
-            AddOptional(command, "$episode", item.Episode);
-            AddOptional(command, "$external", item.ExternalId);
-            AddOptional(command, "$cover", item.CoverPath);
-            command.Parameters.AddWithValue("$updated", item.UpdatedAt.UtcDateTime.ToString("O"));
+        ArgumentNullException.ThrowIfNull(item);
+        using var connection = _database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO media_items (channel_id, message_id, parent_id, name, kind, size, duration_s, width, height, title, year, season, episode, external_id, cover_path, updated_at)
+            VALUES ($channel, $message, $parent, $name, $kind, $size, $duration, $width, $height, $title, $year, $season, $episode, $external, $cover, $updated)
+            ON CONFLICT (channel_id, message_id) DO UPDATE SET
+                parent_id  = excluded.parent_id,
+                name       = excluded.name,
+                kind       = excluded.kind,
+                size       = excluded.size,
+                duration_s = excluded.duration_s,
+                width      = excluded.width,
+                height     = excluded.height,
+                title      = excluded.title,
+                year       = excluded.year,
+                season     = excluded.season,
+                episode    = excluded.episode,
+                external_id= excluded.external_id,
+                cover_path = excluded.cover_path,
+                updated_at = excluded.updated_at
+            RETURNING id;
+            """;
+        command.Parameters.AddWithValue("$channel", item.ChannelId);
+        command.Parameters.AddWithValue("$message", item.MessageId);
+        AddOptional(command, "$parent", item.ParentId);
+        command.Parameters.AddWithValue("$name", item.Name);
+        command.Parameters.AddWithValue("$kind", item.Kind.ToString().ToLowerInvariant());
+        command.Parameters.AddWithValue("$size", item.Size);
+        AddOptional(command, "$duration", item.DurationSeconds);
+        AddOptional(command, "$width", item.Width);
+        AddOptional(command, "$height", item.Height);
+        AddOptional(command, "$title", item.Title);
+        AddOptional(command, "$year", item.Year);
+        AddOptional(command, "$season", item.Season);
+        AddOptional(command, "$episode", item.Episode);
+        AddOptional(command, "$external", item.ExternalId);
+        AddOptional(command, "$cover", item.CoverPath);
+        command.Parameters.AddWithValue("$updated", item.UpdatedAt.UtcDateTime.ToString("O"));
 
-            return Convert.ToInt64(command.ExecuteScalar());
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        return Convert.ToInt64(command.ExecuteScalar());
     }
 
     private static void AddOptional(SqliteCommand command, string name, object? value) =>
@@ -103,38 +96,31 @@ public sealed class SqliteMediaStore
     /// <summary>Inserisce o aggiorna un canale.</summary>
     public void UpsertChannel(Channel channel)
     {
-        if (channel != null)
-        {
-            ArgumentNullException.ThrowIfNull(channel);
-            using var connection = _database.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                INSERT INTO channels (id, access_hash, title, username, kind, is_source, last_scan_at, item_count, last_message_id)
-                VALUES ($id, $access, $title, $username, $kind, $source, $scan, $count, $lastMessage)
-                ON CONFLICT (id) DO UPDATE SET
-                    title           = excluded.title,
-                    username        = excluded.username,
-                    kind            = excluded.kind,
-                    is_source       = excluded.is_source,
-                    last_scan_at    = excluded.last_scan_at,
-                    item_count      = excluded.item_count,
-                    last_message_id = excluded.last_message_id;
-                """;
-            command.Parameters.AddWithValue("$id", channel.Id);
-            command.Parameters.AddWithValue("$access", (object?)channel.AccessHash ?? DBNull.Value);
-            command.Parameters.AddWithValue("$title", channel.Title);
-            command.Parameters.AddWithValue("$username", (object?)channel.Username ?? DBNull.Value);
-            command.Parameters.AddWithValue("$kind", channel.Kind.ToString().ToLowerInvariant());
-            command.Parameters.AddWithValue("$source", channel.IsSource ? 1 : 0);
-            command.Parameters.AddWithValue("$scan", (object?)channel.LastScanAt?.UtcDateTime.ToString("O") ?? DBNull.Value);
-            command.Parameters.AddWithValue("$count", channel.ItemCount);
-            command.Parameters.AddWithValue("$lastMessage", channel.LastMessageId);
-            command.ExecuteNonQuery();
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        ArgumentNullException.ThrowIfNull(channel);
+        using var connection = _database.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO channels (id, access_hash, title, username, kind, is_source, last_scan_at, item_count, last_message_id)
+            VALUES ($id, $access, $title, $username, $kind, $source, $scan, $count, $lastMessage)
+            ON CONFLICT (id) DO UPDATE SET
+                title           = excluded.title,
+                username        = excluded.username,
+                kind            = excluded.kind,
+                is_source       = excluded.is_source,
+                last_scan_at    = excluded.last_scan_at,
+                item_count      = excluded.item_count,
+                last_message_id = excluded.last_message_id;
+            """;
+        command.Parameters.AddWithValue("$id", channel.Id);
+        command.Parameters.AddWithValue("$access", (object?)channel.AccessHash ?? DBNull.Value);
+        command.Parameters.AddWithValue("$title", channel.Title);
+        command.Parameters.AddWithValue("$username", (object?)channel.Username ?? DBNull.Value);
+        command.Parameters.AddWithValue("$kind", channel.Kind.ToString().ToLowerInvariant());
+        command.Parameters.AddWithValue("$source", channel.IsSource ? 1 : 0);
+        command.Parameters.AddWithValue("$scan", (object?)channel.LastScanAt?.UtcDateTime.ToString("O") ?? DBNull.Value);
+        command.Parameters.AddWithValue("$count", channel.ItemCount);
+        command.Parameters.AddWithValue("$lastMessage", channel.LastMessageId);
+        command.ExecuteNonQuery();
     }
 
     /// <summary>Cerca elementi per parte del nome o del titolo.</summary>

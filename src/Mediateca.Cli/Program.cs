@@ -33,40 +33,33 @@ public static class Program
     /// <summary>Process entry point.</summary>
     public static int Main(string[] args)
     {
-        if (args != null)
+        Console.OutputEncoding = Encoding.UTF8;
+
+        if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
         {
-            Console.OutputEncoding = Encoding.UTF8;
-
-            if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
-            {
-                Console.WriteLine(Usage);
-                return 0;
-            }
-
-            try
-            {
-                return args[0] switch
-                {
-                    "doctor" => Doctor(),
-                    "db" => Commands.DatabaseInit(),
-                    "settings" => Commands.Settings(args[1..]),
-                    "scan" => Commands.Scan(args[1..]),
-                    "backup" => Commands.Backup(args[1..]).GetAwaiter().GetResult(),
-                    "serve" => Commands.Serve(args[1..]).GetAwaiter().GetResult(),
-                    _ => Fail($"Unknown command '{args[0]}'."),
-                };
-            }
-            catch (UsageException exc)
-            {
-                Console.Error.WriteLine($"error: {exc.Message}");
-                Console.Error.WriteLine();
-                Console.Error.WriteLine(Usage);
-                return 1;
-            }
+            Console.WriteLine(Usage);
+            return 0;
         }
-        else
+
+        try
         {
-            throw new ArgumentNullException();
+            return args[0] switch
+            {
+                "doctor" => Doctor(),
+                "db" => Commands.DatabaseInit(),
+                "settings" => Commands.Settings(args[1..]),
+                "scan" => Commands.Scan(args[1..]),
+                "backup" => Commands.Backup(args[1..]).GetAwaiter().GetResult(),
+                "serve" => Commands.Serve(args[1..]).GetAwaiter().GetResult(),
+                _ => Fail($"Unknown command '{args[0]}'."),
+            };
+        }
+        catch (UsageException exc)
+        {
+            Console.Error.WriteLine($"error: {exc.Message}");
+            Console.Error.WriteLine();
+            Console.Error.WriteLine(Usage);
+            return 1;
         }
     }
 

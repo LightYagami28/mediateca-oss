@@ -148,33 +148,26 @@ public class ServicesTests
 
     private static void Cleanup(string directory)
     {
-        if (directory != null)
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        for (var attempt = 0; attempt < 5; attempt++)
         {
-            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-            for (var attempt = 0; attempt < 5; attempt++)
+            try
             {
-                try
+                if (Directory.Exists(directory))
                 {
-                    if (Directory.Exists(directory))
-                    {
-                        Directory.Delete(directory, recursive: true);
-                    }
+                    Directory.Delete(directory, recursive: true);
+                }
 
-                    return;
-                }
-                catch (IOException)
-                {
-                    Thread.Sleep(50);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    Thread.Sleep(50);
-                }
+                return;
             }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            catch (IOException)
+            {
+                Thread.Sleep(50);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Thread.Sleep(50);
+            }
         }
     }
 }

@@ -11,47 +11,33 @@ public sealed class MusicBrainzScraper(HttpClient httpClient) : IMediaScraper
 
     public async Task<IReadOnlyList<MediaCandidate>> SearchAsync(MediaKind kind, string query, int? year = null, CancellationToken cancellationToken = default)
     {
-        if (query != null)
+        ArgumentException.ThrowIfNullOrWhiteSpace(query);
+
+        var url = BuildSearchUrl(query, year);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.TryAddWithoutValidation("User-Agent", "Mediateca/1.0 (community client)");
+
+        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(query);
-
-            var url = BuildSearchUrl(query, year);
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.TryAddWithoutValidation("User-Agent", "Mediateca/1.0 (community client)");
-
-            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                return [];
-            }
-
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (!document.RootElement.TryGetProperty("recordings", out var recordings) || recordings.ValueKind != JsonValueKind.Array)
-            {
-                return [];
-            }
-
-            return ParseRecordings(recordings, year);
+            return [];
         }
-        else
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (!document.RootElement.TryGetProperty("recordings", out var recordings) || recordings.ValueKind != JsonValueKind.Array)
         {
-            throw new ArgumentNullException();
+            return [];
         }
+
+        return ParseRecordings(recordings, year);
     }
 
     private static Uri BuildSearchUrl(string query, int? year)
     {
-        if (query != null)
-        {
-            var url = $"https://musicbrainz.org/ws/2/recording/?query={Uri.EscapeDataString(query)}&fmt=json&limit=10";
-            return new Uri(year is int releaseYear ? $"{url}&firstreleasedate={releaseYear}" : url);
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var url = $"https://musicbrainz.org/ws/2/recording/?query={Uri.EscapeDataString(query)}&fmt=json&limit=10";
+        return new Uri(year is int releaseYear ? $"{url}&firstreleasedate={releaseYear}" : url);
     }
 
     private static List<MediaCandidate> ParseRecordings(JsonElement recordings, int? year)

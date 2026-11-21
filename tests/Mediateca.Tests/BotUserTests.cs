@@ -103,16 +103,9 @@ public sealed class BotUserTests
 
     private static MediatecaDatabase NewDatabase(string directory)
     {
-        if (directory != null)
-        {
-            var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
-            database.Migrate();
-            return database;
-        }
-        else
-        {
-            throw new ArgumentNullException();
-        }
+        var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
+        database.Migrate();
+        return database;
     }
 
     private static string NewTempDirectory()
@@ -124,33 +117,26 @@ public sealed class BotUserTests
 
     private static void Cleanup(string directory)
     {
-        if (directory != null)
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        for (var attempt = 0; attempt < 5; attempt++)
         {
-            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-            for (var attempt = 0; attempt < 5; attempt++)
+            try
             {
-                try
+                if (Directory.Exists(directory))
                 {
-                    if (Directory.Exists(directory))
-                    {
-                        Directory.Delete(directory, recursive: true);
-                    }
+                    Directory.Delete(directory, recursive: true);
+                }
 
-                    return;
-                }
-                catch (IOException)
-                {
-                    Thread.Sleep(50);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    Thread.Sleep(50);
-                }
+                return;
             }
-        }
-        else
-        {
-            throw new ArgumentNullException();
+            catch (IOException)
+            {
+                Thread.Sleep(50);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Thread.Sleep(50);
+            }
         }
     }
 
@@ -184,18 +170,11 @@ public sealed class BotUserTests
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            if (request != null)
+            Bodies.Add(request.Content is null ? "" : await request.Content.ReadAsStringAsync(cancellationToken));
+            return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Bodies.Add(request.Content is null ? "" : await request.Content.ReadAsStringAsync(cancellationToken));
-                return new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("""{"ok":true,"result":{"message_id":1,"chat":{"id":1},"date":1700000000,"text":"x"}}""", Encoding.UTF8, "application/json"),
-                };
-            }
-            else
-            {
-                throw new ArgumentNullException();
-            }
+                Content = new StringContent("""{"ok":true,"result":{"message_id":1,"chat":{"id":1},"date":1700000000,"text":"x"}}""", Encoding.UTF8, "application/json"),
+            };
         }
     }
 }
