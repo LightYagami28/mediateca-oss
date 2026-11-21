@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: write
   id-token: write
   attestations: write
@@ -28,6 +29,7 @@ jobs:
           path: .
           format: spdx-json
           artifact-name: mediateca.spdx.json
+          output-file: mediateca.spdx.json
           upload-release-assets: true
 
       - name: Firma l'SBOM con Sigstore (keyless)
