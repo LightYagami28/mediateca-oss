@@ -24,6 +24,8 @@ public sealed class HttpServerTests
 
     private const int SerieSize = 200;
 
+    private static readonly string[] invalidTokens = ["corto", "token-di-prova-X"];
+
     /// <summary><c>/health</c> risponde 200 con il JSON di stato e la versione dello schema.</summary>
     [Fact]
     public async Task Health_RispondeOkConJson()
@@ -475,7 +477,7 @@ public sealed class HttpServerTests
     public async Task ApiSession_RifiutaTokenErrato() =>
         await WithServerAsync(TokenOptions(), async (baseUrl, http) =>
         {
-            foreach (var supplied in new[] { "corto", "token-di-prova-X" })
+            foreach (var supplied in invalidTokens)
             {
                 using var response = await PostSessionAsync(http, baseUrl, supplied);
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
