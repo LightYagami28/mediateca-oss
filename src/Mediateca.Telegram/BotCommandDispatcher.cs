@@ -73,6 +73,10 @@ public sealed class BotCommandDispatcher
                 break;
 
             default:
+                await _client.SendMessageAsync(
+                    chatId,
+                    "Comando non riconosciuto.",
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
                 break;
         }
     }

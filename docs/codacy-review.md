@@ -1,4 +1,8 @@
-**Revisione delle issue Codacy**
+---
+title: Revisione delle issue Codacy
+---
+
+**Revisione delle issue Codacy.**
 
 Istantanea 2026-11-22: 2056 issue, 54 pattern, tutte belowThreshold.
 Error 577, High 7, Warning 315, Info 1157.
@@ -8,7 +12,7 @@ Classificazione: 1304 falsi positivi o blocchi di configurazione,
 
 Nessuna issue e' stata ignorata, soppressa o esclusa dalla configurazione.
 
-**Falsi positivi dimostrati**
+**Falsi positivi dimostrati.**
 
 `Semgrep_codacy.csharp.security.null-dereference` - 575 issue
 
@@ -83,7 +87,7 @@ Regole `Agentlinter_*` soggettive - 16 issue
 `structure_modular-files` (1) esprimono giudizi stilistici su
 `SECURITY.md`, non difetti di codice.
 
-**Blocchi di configurazione**
+**Blocchi di configurazione.**
 
 `SonarCSharp_S1451` - 102 issue
 
@@ -99,7 +103,7 @@ richiede documenti senza alcun titolo. Ogni file Markdown con un titolo
 viene segnalato. Rimuovere tutti i titoli o modificare la configurazione
 non e' ammesso.
 
-**Issue reali corrette**
+**Issue reali corrette.**
 
 - `SonarCSharp_S131` (2): clausola `default` aggiunta agli switch di
   `BotCommandDispatcher.DispatchAsync` e `WebDav.Handle`.
@@ -112,13 +116,13 @@ non e' ammesso.
 - `markdownlint_MD022` (13) e `MD032` (1): righe vuote aggiunte
   intorno a titoli e liste in FAQ, TROUBLESHOOTING e ADR 0003.
 
-**Classificazione dei pattern**
+**Classificazione dei pattern.**
 
 Legenda: FP = falso positivo dimostrato, CF = blocco di configurazione,
 R = reale, F = reale corretto.
 
 | Pattern | N | Classe |
-|---|---:|---|
+| --- | ---: | --- |
 | `Semgrep_codacy.csharp.security.null-dereference` | 575 | FP |
 | `Semgrep_codacy.generic.csharp-lowercase-variables` | 387 | FP |
 | `SonarCSharp_S109` | 237 | R |
