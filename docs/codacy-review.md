@@ -8,7 +8,7 @@ Istantanea 2026-11-22: 2056 issue, 54 pattern, tutte belowThreshold.
 Error 577, High 7, Warning 315, Info 1157.
 
 Classificazione: 1304 falsi positivi o blocchi di configurazione,
-5 issue reali corrette, 747 issue reali restanti.
+4 issue reali corrette, 748 issue reali restanti.
 
 Nessuna issue e' stata ignorata, soppressa o esclusa dalla configurazione.
 
@@ -105,15 +105,19 @@ non e' ammesso.
 
 **Issue reali corrette.**
 
-- `SonarCSharp_S131` (2): clausola `default` aggiunta agli switch di
-  `BotCommandDispatcher.DispatchAsync` e `WebDav.Handle`.
+- `SonarCSharp_S131` (1): clausola `default` con risposta 405 aggiunta
+  allo switch di `WebDav.Handle`. L'altra segnalazione
+  (`BotCommandDispatcher.DispatchAsync`) resta aperta: un `default` vuoto
+  viene segnalato da `SonarCSharp_S3532`, un `default` con azione richiede
+  nuove righe non coperte (gate Sonar 80%) e ogni test aggiuntivo introduce
+  a sua volta nuove segnalazioni. Blocco reale documentato.
 - `SonarCSharp_S6507` (1): lock su variabile locale sostituito con
   campo `readonly`.
 - `SonarCSharp_S6966` (1): `File.WriteAllText` sostituito con
   `await File.WriteAllTextAsync`.
 - `SonarCSharp_S3994` (1): parametro `string baseUrl` convertito in
   `Uri baseUri`, con 3 call-site aggiornate.
-- `markdownlint_MD022` (13) e `MD032` (1): righe vuote aggiunte
+- `markdownlint_MD022` (17) e `MD032` (1): righe vuote aggiunte
   intorno a titoli e liste in FAQ, TROUBLESHOOTING e ADR 0003.
 
 **Classificazione dei pattern.**
@@ -157,7 +161,7 @@ R = reale, F = reale corretto.
 | `Lizard_file-nloc-medium` | 2 | R |
 | Semgrep_codacy.csharp.best-practice.misleading-exception-class-name | 2 | R |
 | `SonarCSharp_S1301` | 2 | R |
-| `SonarCSharp_S131` | 2 | F |
+| `SonarCSharp_S131` | 2 | R (1 corretto) |
 | `SonarCSharp_S2743` | 2 | R |
 | `SonarCSharp_S3059` | 2 | R |
 | `SonarCSharp_S3264` | 2 | R |

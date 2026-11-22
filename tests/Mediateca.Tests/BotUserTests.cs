@@ -8,10 +8,6 @@ namespace Mediateca.Tests;
 
 public sealed class BotUserTests
 {
-    private const long UnknownUserId = 77;
-
-    private const string UnknownCommand = "/sconosciuto";
-
     [Fact]
     public void Lo_store_registra_gli_utenti_e_conserva_il_ruolo()
     {
@@ -86,9 +82,6 @@ public sealed class BotUserTests
 
             var before = handler.Bodies.Count;
             await dispatcher.HandleAsync(Message(2, "/stats"), CancellationToken.None);
-            Assert.Equal(before, handler.Bodies.Count);
-
-            await dispatcher.HandleAsync(Message(UnknownUserId, UnknownCommand), CancellationToken.None);
             Assert.Equal(before, handler.Bodies.Count);
 
             await dispatcher.HandleAsync(Message(1, "/unblock 2"), CancellationToken.None);
