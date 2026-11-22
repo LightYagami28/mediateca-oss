@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -96,6 +97,27 @@ public static class MediatecaServer
     private static bool IsLoopback(string address) =>
         string.Equals(address, "localhost", StringComparison.OrdinalIgnoreCase)
         || (IPAddress.TryParse(address, out var parsed) && IPAddress.IsLoopback(parsed));
+
+    /// <summary>Segnala su <paramref name="writer"/> i vincoli applicati a un bind non-loopback.</summary>
+    public static async Task WriteGuardWarningsAsync(
+        TextWriter writer,
+        string requestedBind,
+        ServerOptions guarded,
+        bool webDavRequested)
+    {
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(guarded);
+
+        if (!string.Equals(guarded.BindAddress, requestedBind, StringComparison.Ordinal))
+        {
+            await writer.WriteLineAsync($"bind {requestedBind} senza token API: ascolto limitato a {guarded.BindAddress}.").ConfigureAwait(false);
+        }
+
+        if (webDavRequested && !guarded.WebDavEnabled)
+        {
+            await writer.WriteLineAsync("bind non-loopback senza credenziali WebDAV: area WebDAV disattivata.").ConfigureAwait(false);
+        }
+    }
 
     /// <summary>Costruisce l'applicazione web.</summary>
     public static WebApplication Build(

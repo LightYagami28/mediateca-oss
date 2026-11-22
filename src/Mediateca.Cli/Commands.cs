@@ -228,15 +228,7 @@ internal static class Commands
             ApiToken = token,
         });
 
-        if (!string.Equals(options.BindAddress, bind, StringComparison.Ordinal))
-        {
-            await Console.Error.WriteLineAsync($"bind {bind} senza token API: ascolto limitato a {options.BindAddress}.").ConfigureAwait(false);
-        }
-
-        if (settings.WebDavEnabled && !options.WebDavEnabled)
-        {
-            await Console.Error.WriteLineAsync("bind non-loopback senza credenziali WebDAV: area WebDAV disattivata.").ConfigureAwait(false);
-        }
+        await MediatecaServer.WriteGuardWarningsAsync(Console.Error, bind, options, settings.WebDavEnabled).ConfigureAwait(false);
 
         Console.WriteLine($"mediateca server su {Uri.UriSchemeHttps}://{options.BindAddress}:{options.Port}");
         Console.WriteLine($"webdav {(options.WebDavEnabled ? "attivo" : "spento")}, api token {(string.IsNullOrEmpty(options.ApiToken) ? "assente" : "presente")}");

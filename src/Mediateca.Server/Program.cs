@@ -20,15 +20,7 @@ var options = MediatecaServer.ApplyNonLoopbackGuards(new ServerOptions
     WebDavEnabled = true,
 });
 
-if (!string.Equals(options.BindAddress, bind, StringComparison.Ordinal))
-{
-    await Console.Error.WriteLineAsync($"bind {bind} senza token API: ascolto limitato a {options.BindAddress}.").ConfigureAwait(false);
-}
-
-if (!options.WebDavEnabled)
-{
-    await Console.Error.WriteLineAsync("bind non-loopback senza credenziali WebDAV: area WebDAV disattivata.").ConfigureAwait(false);
-}
+await MediatecaServer.WriteGuardWarningsAsync(Console.Error, bind, options, webDavRequested: true).ConfigureAwait(false);
 
 Console.WriteLine($"mediateca server - schema {applied}, bind {options.BindAddress}:{options.Port}");
 
