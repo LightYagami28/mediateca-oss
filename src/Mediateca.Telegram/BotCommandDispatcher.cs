@@ -71,6 +71,9 @@ public sealed class BotCommandDispatcher
             case "/admin":
                 await HandleAdminAsync(chatId, sender, command, argument, cancellationToken).ConfigureAwait(false);
                 break;
+
+            default:
+                break;
         }
     }
 
