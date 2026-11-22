@@ -404,6 +404,10 @@ internal static class WebDav
                 }
 
                 return;
+
+            default:
+                context.Response.StatusCode = (int)HttpStatusCode.MethodNotAllowed;
+                return;
         }
     }
 

@@ -329,7 +329,7 @@ public sealed class HttpServerTests
         {
             var outside = Path.Combine(Path.GetTempPath(), "mediateca-tests", Guid.NewGuid().ToString("N") + ".txt");
             Directory.CreateDirectory(Path.GetDirectoryName(outside)!);
-            File.WriteAllText(outside, "segreto");
+            await File.WriteAllTextAsync(outside, "segreto");
 
             var database = Migrated(directory);
             var store = new SqliteMediaStore(database);
@@ -461,7 +461,7 @@ public sealed class HttpServerTests
     public async Task ApiSession_ImpostaCookieSecureEAutorizza() =>
         await WithServerAsync(TokenOptions(), async (baseUrl, http) =>
         {
-            using var session = await PostSessionAsync(http, baseUrl, TestToken);
+            using var session = await PostSessionAsync(http, new Uri(baseUrl), TestToken);
             Assert.Equal(HttpStatusCode.NoContent, session.StatusCode);
             var cookie = Assert.Single(session.Headers.GetValues(SetCookieHeader));
             AssertCookieFlags(cookie);
@@ -479,7 +479,7 @@ public sealed class HttpServerTests
         {
             foreach (var supplied in invalidTokens)
             {
-                using var response = await PostSessionAsync(http, baseUrl, supplied);
+                using var response = await PostSessionAsync(http, new Uri(baseUrl), supplied);
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
                 Assert.False(response.Headers.Contains(SetCookieHeader));
             }
@@ -492,7 +492,7 @@ public sealed class HttpServerTests
             new ServerOptions { UseHttps = false, WebDavEnabled = false },
             async (baseUrl, http) =>
             {
-                using var session = await PostSessionAsync(http, baseUrl, "qualsiasi");
+                using var session = await PostSessionAsync(http, new Uri(baseUrl), "qualsiasi");
                 Assert.Equal(HttpStatusCode.NoContent, session.StatusCode);
                 Assert.False(session.Headers.Contains(SetCookieHeader));
                 using var stats = await http.GetAsync($"{baseUrl}/api/stats");
@@ -627,9 +627,9 @@ public sealed class HttpServerTests
             WebDavPassword = password ?? string.Empty,
         });
 
-    private static Task<HttpResponseMessage> PostSessionAsync(HttpClient http, string baseUrl, string token) =>
+    private static Task<HttpResponseMessage> PostSessionAsync(HttpClient http, Uri baseUri, string token) =>
         http.PostAsync(
-            $"{baseUrl}/api/session",
+            new Uri(baseUri, "/api/session"),
             new StringContent($$"""{"token":"{{token}}"}""", Encoding.UTF8, "application/json"));
 
     private static void AssertCookieFlags(string cookie)

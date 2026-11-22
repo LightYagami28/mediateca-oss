@@ -7,6 +7,8 @@ namespace Mediateca.Tests;
 
 public sealed class TelegramTests
 {
+    private readonly Lock handledGate = new();
+
     [Fact]
     public async Task SendMessage_con_bottoni_include_la_tastiera_inline()
     {
@@ -121,7 +123,7 @@ public sealed class TelegramTests
         };
         var run = polling.PollAsync((update, _) =>
         {
-            lock (handled)
+            lock (handledGate)
             {
                 handled.Add(update);
             }
