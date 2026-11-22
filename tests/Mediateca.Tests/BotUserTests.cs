@@ -84,6 +84,9 @@ public sealed class BotUserTests
             await dispatcher.HandleAsync(Message(2, "/stats"), CancellationToken.None);
             Assert.Equal(before, handler.Bodies.Count);
 
+            await dispatcher.HandleAsync(Message(77, "/sconosciuto"), CancellationToken.None);
+            Assert.Equal(before, handler.Bodies.Count);
+
             await dispatcher.HandleAsync(Message(1, "/unblock 2"), CancellationToken.None);
             await dispatcher.HandleAsync(Message(1, "/users"), CancellationToken.None);
             Assert.Contains("@utente2", handler.Bodies[^1]);
