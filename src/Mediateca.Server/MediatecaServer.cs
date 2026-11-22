@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using System.Xml.Linq;
 using Mediateca.Core.Abstractions;
@@ -188,7 +189,7 @@ public static class MediatecaServer
             context.Response.Cookies.Append(TokenCookie, options.ApiToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = context.Request.IsHttps,
+                Secure = true,
                 SameSite = SameSiteMode.Strict,
                 Path = "/api",
                 MaxAge = TimeSpan.FromHours(8),
@@ -233,7 +234,10 @@ public static class MediatecaServer
 
     private sealed class TokenRequest
     {
-        public string? Token { get; init; }
+        [JsonConstructor]
+        public TokenRequest(string? token) => Token = token;
+
+        public string? Token { get; }
     }
 
     private static void ConfigureAddress(WebApplicationBuilder builder, ServerOptions options)

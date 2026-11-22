@@ -443,6 +443,278 @@ public sealed class HttpServerTests
         }
     }
 
+    /// <summary>Il POST su <c>/api/session</c> imposta un cookie Secure e il cookie autorizza le API.</summary>
+    [Fact]
+    public async Task ApiSession_ImpostaCookieSecureEAutorizza()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var app = MediatecaServer.Build(
+                new ServerOptions { UseHttps = false, ApiToken = "token-di-prova", WebDavEnabled = false },
+                database);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var session = await http.PostAsync(
+                    $"{baseUrl}/api/session",
+                    new StringContent("""{"token":"token-di-prova"}""", Encoding.UTF8, "application/json"));
+
+                Assert.Equal(HttpStatusCode.NoContent, session.StatusCode);
+                var cookie = Assert.Single(session.Headers.GetValues("Set-Cookie"));
+                var lowercase = cookie.ToLowerInvariant();
+                Assert.Contains("mediateca_token=token-di-prova", lowercase);
+                Assert.Contains("secure", lowercase);
+                Assert.Contains("httponly", lowercase);
+                Assert.Contains("samesite=strict", lowercase);
+                Assert.Contains("path=/api", lowercase);
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/stats");
+                request.Headers.Add("Cookie", cookie.Split(';')[0]);
+                using var authorized = await http.SendAsync(request);
+                Assert.Equal(HttpStatusCode.OK, authorized.StatusCode);
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>Un token errato non genera il cookie, sia per lunghezza diversa sia a parità di lunghezza.</summary>
+    [Fact]
+    public async Task ApiSession_RifiutaTokenErrato()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var app = MediatecaServer.Build(
+                new ServerOptions { UseHttps = false, ApiToken = "token-di-prova", WebDavEnabled = false },
+                database);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                foreach (var supplied in new[] { "corto", "token-di-prova-X" })
+                {
+                    using var response = await http.PostAsync(
+                        $"{baseUrl}/api/session",
+                        new StringContent($$"""{"token":"{{supplied}}"}""", Encoding.UTF8, "application/json"));
+
+                    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+                    Assert.False(response.Headers.Contains("Set-Cookie"));
+                }
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>Senza token configurato la sessione non è necessaria e non imposta cookie.</summary>
+    [Fact]
+    public async Task ApiSession_SenzaTokenConfiguratoNonImpostaCookie()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var app = MediatecaServer.Build(
+                new ServerOptions { UseHttps = false, WebDavEnabled = false },
+                database);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var response = await http.PostAsync(
+                    $"{baseUrl}/api/session",
+                    new StringContent("""{"token":"qualsiasi"}""", Encoding.UTF8, "application/json"));
+
+                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                Assert.False(response.Headers.Contains("Set-Cookie"));
+                Assert.Equal(HttpStatusCode.OK, (await http.GetAsync($"{baseUrl}/api/stats")).StatusCode);
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>Un corpo JSON malformato produce 400 e non interrompe il server.</summary>
+    [Fact]
+    public async Task ApiSession_JsonMalformatoRestituisceBadRequest()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var app = MediatecaServer.Build(
+                new ServerOptions { UseHttps = false, ApiToken = "token-di-prova", WebDavEnabled = false },
+                database);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var response = await http.PostAsync(
+                    $"{baseUrl}/api/session",
+                    new StringContent("{non-json", Encoding.UTF8, "application/json"));
+
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.False(response.Headers.Contains("Set-Cookie"));
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary><c>/api/items</c> applica filtri e limite, e richiede il token quando configurato.</summary>
+    [Fact]
+    public async Task ApiItems_FiltraERestituisceCatalogo()
+    {
+        var directory = NewTempDirectory();
+        try
+        {
+            var database = Migrated(directory);
+            var store = new SqliteMediaStore(database);
+            store.UpsertChannel(new Channel { Id = 1, Title = "Sorgente" });
+            store.Upsert(new MediaItem { ChannelId = 1, MessageId = 1, Name = "Film.mkv", Kind = MediaKind.Movie, Size = 100 });
+            store.Upsert(new MediaItem { ChannelId = 1, MessageId = 2, Name = "Serie.mkv", Kind = MediaKind.Series, Size = 200 });
+
+            var app = MediatecaServer.Build(
+                new ServerOptions { UseHttps = false, ApiToken = "token-di-prova", WebDavEnabled = false },
+                database);
+
+            try
+            {
+                var baseUrl = await StartAsync(app);
+                using var http = new HttpClient();
+
+                using var anonymous = await http.GetAsync($"{baseUrl}/api/items");
+                Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/items?q=Film&kind=Movie&limit=1");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "token-di-prova");
+                using var authorized = await http.SendAsync(request);
+
+                Assert.Equal(HttpStatusCode.OK, authorized.StatusCode);
+                var body = await authorized.Content.ReadAsStringAsync();
+                Assert.Contains("Film.mkv", body);
+                Assert.DoesNotContain("Serie.mkv", body);
+            }
+            finally
+            {
+                await StopAsync(app);
+            }
+        }
+        finally
+        {
+            Cleanup(directory);
+        }
+    }
+
+    /// <summary>Un bind loopback non è soggetto ai vincoli di rete.</summary>
+    [Fact]
+    public void ApplyNonLoopbackGuards_LoopbackRestituisceLeStesseOpzioni()
+    {
+        var options = new ServerOptions { BindAddress = "localhost", WebDavEnabled = true };
+        Assert.Same(options, MediatecaServer.ApplyNonLoopbackGuards(options));
+    }
+
+    /// <summary>Senza token API l'ascolto resta su loopback e senza credenziali il WebDAV si disattiva.</summary>
+    [Fact]
+    public void ApplyNonLoopbackGuards_SenzaTokenLimitaALoopbackEDisattivaWebDav()
+    {
+        var result = MediatecaServer.ApplyNonLoopbackGuards(new ServerOptions
+        {
+            BindAddress = "0.0.0.0",
+            WebDavEnabled = true,
+        });
+
+        Assert.Equal("127.0.0.1", result.BindAddress);
+        Assert.False(result.WebDavEnabled);
+        Assert.True(result.WebDavRequireAuth);
+    }
+
+    /// <summary>Con token API il bind resta sulla rete, ma il WebDAV richiede credenziali.</summary>
+    [Fact]
+    public void ApplyNonLoopbackGuards_ConTokenMantieneBindEDisattivaWebDavSenzaCredenziali()
+    {
+        var result = MediatecaServer.ApplyNonLoopbackGuards(new ServerOptions
+        {
+            BindAddress = "0.0.0.0",
+            ApiToken = "token-di-prova",
+            WebDavEnabled = true,
+        });
+
+        Assert.Equal("0.0.0.0", result.BindAddress);
+        Assert.False(result.WebDavEnabled);
+        Assert.True(result.WebDavRequireAuth);
+    }
+
+    /// <summary>L'hash WebDAV abilita l'area sulla rete e impone l'autenticazione.</summary>
+    [Fact]
+    public void ApplyNonLoopbackGuards_ConHashWebDavAbilitaArea()
+    {
+        var result = MediatecaServer.ApplyNonLoopbackGuards(new ServerOptions
+        {
+            BindAddress = "0.0.0.0",
+            ApiToken = "token-di-prova",
+            WebDavEnabled = true,
+            WebDavPasswordHash = "hash",
+        });
+
+        Assert.Equal("0.0.0.0", result.BindAddress);
+        Assert.True(result.WebDavEnabled);
+        Assert.True(result.WebDavRequireAuth);
+    }
+
+    /// <summary>Anche la password in chiaro conta come credenziale WebDAV.</summary>
+    [Fact]
+    public void ApplyNonLoopbackGuards_ConPasswordWebDavAbilitaArea()
+    {
+        var result = MediatecaServer.ApplyNonLoopbackGuards(new ServerOptions
+        {
+            BindAddress = "0.0.0.0",
+            ApiToken = "token-di-prova",
+            WebDavEnabled = true,
+            WebDavPassword = "parola",
+        });
+
+        Assert.True(result.WebDavEnabled);
+        Assert.True(result.WebDavRequireAuth);
+    }
+
     /// <summary>Avvia l'app su una porta loopback dinamica e restituisce la base URL reale.</summary>
     private static async Task<string> StartAsync(WebApplication app)
     {

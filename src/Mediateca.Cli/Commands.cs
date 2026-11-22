@@ -230,12 +230,12 @@ internal static class Commands
 
         if (!string.Equals(options.BindAddress, bind, StringComparison.Ordinal))
         {
-            Console.Error.WriteLine($"bind {bind} senza token API: ascolto limitato a {options.BindAddress}.");
+            await Console.Error.WriteLineAsync($"bind {bind} senza token API: ascolto limitato a {options.BindAddress}.").ConfigureAwait(false);
         }
 
         if (settings.WebDavEnabled && !options.WebDavEnabled)
         {
-            Console.Error.WriteLine("bind non-loopback senza credenziali WebDAV: area WebDAV disattivata.");
+            await Console.Error.WriteLineAsync("bind non-loopback senza credenziali WebDAV: area WebDAV disattivata.").ConfigureAwait(false);
         }
 
         Console.WriteLine($"mediateca server su {Uri.UriSchemeHttps}://{options.BindAddress}:{options.Port}");
