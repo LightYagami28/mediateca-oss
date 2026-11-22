@@ -39,3 +39,6 @@ desktop.ini
 # Crash e log locali
 *.log
 core
+
+# Cache locale di sonar-scanner
+.scannerwork/
