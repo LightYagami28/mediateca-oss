@@ -13,6 +13,7 @@ funzione bloccata, nessun
 controllo di integrità remoto.
 
 ## Conseguenze
+
 Ogni installazione ha tutte le funzionalità, per sempre. Il codice e il modello
 di dati non devono
 prevedere livelli di licenza.
