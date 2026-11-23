@@ -1,7 +1,5 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -17,63 +15,79 @@ namespace Mediateca.Ui.Tests;
 
 public class RenderTests
 {
+    private static readonly Lazy<HeadlessUnitTestSession> Session = new(() =>
+        HeadlessUnitTestSession.StartNew(typeof(TestAppBuilder), AvaloniaTestIsolationLevel.PerAssembly));
+
     private static readonly string ArtifactDirectory =
         Path.Combine(Path.GetTempPath(), "mediateca-ui-artifacts");
 
-    [AvaloniaFact]
+    [Fact]
     public async Task Finestra_principale_Disegna_il_catalogo()
     {
-        var window = CreateWindow(500, ThemeVariant.Dark);
-        await ((MainWindowViewModel)window.DataContext!).LoadAsync();
+        var session = Session.Value;
+        await session.Dispatch(async () =>
+        {
+            var window = CreateWindow(500, ThemeVariant.Dark);
+            await ((MainWindowViewModel)window.DataContext!).LoadAsync();
 
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(MainWindowViewModel.VersionText, window.FindControl<TextBlock>("VersionTextLabel")?.Text);
-        Assert.Equal(MainWindowViewModel.FreeSpaceText, window.FindControl<TextBlock>("FreeSpaceTextLabel")?.Text);
+            Assert.Equal(MainWindowViewModel.VersionText, window.FindControl<TextBlock>("VersionTextLabel")?.Text);
+            Assert.Matches(@"^\d+(?:[.,]\d+)? GB liberi$",
+                window.FindControl<TextBlock>("FreeSpaceTextLabel")?.Text ?? string.Empty);
 
-        var frame = window.CaptureRenderedFrame();
-        Assert.NotNull(frame);
+            var frame = window.CaptureRenderedFrame();
+            Assert.NotNull(frame);
 
-        Directory.CreateDirectory(ArtifactDirectory);
-        var path = Path.Combine(ArtifactDirectory, "catalogo-scuro.png");
-        SavePng(frame!, path);
+            Directory.CreateDirectory(ArtifactDirectory);
+            var path = Path.Combine(ArtifactDirectory, "catalogo-scuro.png");
+            SavePng(frame!, path);
 
-        Assert.True(new FileInfo(path).Length > 10_000);
+            Assert.True(new FileInfo(path).Length > 10_000);
+        }, TestContext.Current.CancellationToken);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task Finestra_principale_Disegna_il_tema_chiaro()
     {
-        var window = CreateWindow(120, ThemeVariant.Light);
-        await ((MainWindowViewModel)window.DataContext!).LoadAsync();
+        var session = Session.Value;
+        await session.Dispatch(async () =>
+        {
+            var window = CreateWindow(120, ThemeVariant.Light);
+            await ((MainWindowViewModel)window.DataContext!).LoadAsync();
 
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
 
-        var frame = window.CaptureRenderedFrame();
-        Assert.NotNull(frame);
+            var frame = window.CaptureRenderedFrame();
+            Assert.NotNull(frame);
 
-        Directory.CreateDirectory(ArtifactDirectory);
-        SavePng(frame!, Path.Combine(ArtifactDirectory, "catalogo-chiaro.png"));
+            Directory.CreateDirectory(ArtifactDirectory);
+            SavePng(frame!, Path.Combine(ArtifactDirectory, "catalogo-chiaro.png"));
+        }, TestContext.Current.CancellationToken);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task Finestra_principale_Disegna_le_impostazioni()
     {
-        var window = CreateWindow(50, ThemeVariant.Dark);
-        var viewModel = (MainWindowViewModel)window.DataContext!;
-        await viewModel.LoadAsync();
-        viewModel.SelectNavCommand.Execute(viewModel.Sections.Single(section => section.Title == "Sistema").Items[0]);
+        var session = Session.Value;
+        await session.Dispatch(async () =>
+        {
+            var window = CreateWindow(50, ThemeVariant.Dark);
+            var viewModel = (MainWindowViewModel)window.DataContext!;
+            await viewModel.LoadAsync();
+            viewModel.SelectNavCommand.Execute(viewModel.Sections.Single(section => section.Title == "Sistema").Items[0]);
 
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
 
-        var frame = window.CaptureRenderedFrame();
-        Assert.NotNull(frame);
+            var frame = window.CaptureRenderedFrame();
+            Assert.NotNull(frame);
 
-        Directory.CreateDirectory(ArtifactDirectory);
-        SavePng(frame!, Path.Combine(ArtifactDirectory, "impostazioni-scuro.png"));
+            Directory.CreateDirectory(ArtifactDirectory);
+            SavePng(frame!, Path.Combine(ArtifactDirectory, "impostazioni-scuro.png"));
+        }, TestContext.Current.CancellationToken);
     }
 
     private static MainWindow CreateWindow(int rows, ThemeVariant variant)

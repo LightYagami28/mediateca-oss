@@ -20,7 +20,7 @@ public sealed class MtprotoMediaSourceTests
             await using var source = NewSource(directory, apiId: 0, cache: Path.Combine(directory, "cache"));
 
             Assert.False(source.IsConfigured);
-            Assert.Null(await source.OpenReadAsync(NewItem()));
+            Assert.Null(await source.OpenReadAsync(NewItem(), cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -37,7 +37,7 @@ public sealed class MtprotoMediaSourceTests
             await using var source = NewSource(directory, ApiId, cache: string.Empty);
 
             Assert.True(source.IsConfigured);
-            Assert.Null(await source.OpenReadAsync(NewItem()));
+            Assert.Null(await source.OpenReadAsync(NewItem(), cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -54,7 +54,7 @@ public sealed class MtprotoMediaSourceTests
             var cache = Path.Combine(directory, "cache");
             await using var source = NewSource(directory, ApiId, cache);
 
-            Assert.Null(await source.OpenReadAsync(NewItem()));
+            Assert.Null(await source.OpenReadAsync(NewItem(), cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -70,10 +70,10 @@ public sealed class MtprotoMediaSourceTests
         {
             var cache = Path.Combine(directory, "cache");
             Directory.CreateDirectory(cache);
-            await File.WriteAllBytesAsync(Path.Combine(cache, "7-42-film.mkv"), [1, 2, 3, 4]);
+            await File.WriteAllBytesAsync(Path.Combine(cache, "7-42-film.mkv"), [1, 2, 3, 4], cancellationToken: TestContext.Current.CancellationToken);
             await using var source = NewSource(directory, ApiId, cache);
 
-            var media = await source.OpenReadAsync(NewItem());
+            var media = await source.OpenReadAsync(NewItem(), cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.NotNull(media);
             Assert.Equal(4, media.Length);
@@ -105,10 +105,10 @@ public sealed class MtprotoMediaSourceTests
         {
             var cache = Path.Combine(directory, "cache");
             Directory.CreateDirectory(cache);
-            await File.WriteAllBytesAsync(Path.Combine(cache, "7-42-" + name), [1]);
+            await File.WriteAllBytesAsync(Path.Combine(cache, "7-42-" + name), [1], cancellationToken: TestContext.Current.CancellationToken);
             await using var source = NewSource(directory, ApiId, cache);
 
-            var media = await source.OpenReadAsync(NewItem(name));
+            var media = await source.OpenReadAsync(NewItem(name), cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.NotNull(media);
             Assert.Equal(expected, media.ContentType);
@@ -128,7 +128,7 @@ public sealed class MtprotoMediaSourceTests
         {
             await using var source = NewSource(directory, apiId: 0, cache: Path.Combine(directory, "cache"));
 
-            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => source.ImportChannelAsync("canale"));
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => source.ImportChannelAsync("canale", cancellationToken: TestContext.Current.CancellationToken));
 
             Assert.Contains("MTProto non configurato", error.Message);
         }

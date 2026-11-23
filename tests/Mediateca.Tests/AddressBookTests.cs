@@ -50,7 +50,7 @@ public sealed class AddressBookTests
         {
             await using var source = new TelegramMediaSource(new MtprotoOptions { CacheDirectory = Path.Combine(directory, "cache") }, NewDatabase(directory), NullLogger<TelegramMediaSource>.Instance);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => source.ImportAddressBookAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => source.ImportAddressBookAsync(TestContext.Current.CancellationToken));
         }
         finally
         {

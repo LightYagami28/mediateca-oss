@@ -42,3 +42,8 @@ core
 
 # Cache locale di sonar-scanner
 .scannerwork/
+
+# File env locali (mai segreti nel repository)
+.env
+.env.*
+!.env.example

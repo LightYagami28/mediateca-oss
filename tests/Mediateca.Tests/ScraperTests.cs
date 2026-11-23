@@ -53,7 +53,7 @@ public sealed class ScraperTests
         using var http = new HttpClient(handler);
         var scraper = new MusicBrainzScraper(http);
 
-        var results = await scraper.SearchAsync(MediaKind.Music, "notte", 2021);
+        var results = await scraper.SearchAsync(MediaKind.Music, "notte", 2021, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Single(results);
         Assert.Equal("Artista — La notte", results[0].Title);
@@ -70,7 +70,7 @@ public sealed class ScraperTests
         using var http = new HttpClient(new IncompleteMusicBrainzHandler());
         var scraper = new MusicBrainzScraper(http);
 
-        var results = await scraper.SearchAsync(MediaKind.Music, "senza-id");
+        var results = await scraper.SearchAsync(MediaKind.Music, "senza-id", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Empty(results);
     }
@@ -136,7 +136,7 @@ public sealed class ScraperTests
         var fakeKey = string.Concat("tmdb", "-chiave-di-prova");
         var client = new TmdbClient(http, new TmdbOptions { ApiKey = fakeKey });
 
-        var results = await client.SearchMovieAsync("notte", 2021);
+        var results = await client.SearchMovieAsync("notte", 2021, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Single(results);
         Assert.Equal("FilmNotte", results[0].Title);

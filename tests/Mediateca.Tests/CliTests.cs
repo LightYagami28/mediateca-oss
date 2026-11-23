@@ -31,7 +31,7 @@ public sealed class CliTests
                 }
                 catch (IOException)
                 {
-                    await Task.Delay(50);
+                    await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
                 }
             }
         }

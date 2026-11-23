@@ -17,7 +17,7 @@ public sealed class TelegramBotPoolTests
 
         for (var call = 0; call < 4; call++)
         {
-            await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token));
+            await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken);
         }
 
         Assert.Equal(["111111111", "222222222", "333333333", "111111111"], handler.Bots);
@@ -32,19 +32,19 @@ public sealed class TelegramBotPoolTests
         using var http = new HttpClient(handler);
         var pool = new TelegramBotPool(Clients(http), time);
 
-        Assert.True(await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token)));
+        Assert.True(await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(["111111111", "222222222"], handler.Bots);
         Assert.Equal(2, pool.AvailableCount);
 
         handler.Limited.Clear();
-        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token));
-        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token));
+        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken);
+        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain("111111111", handler.Bots.Skip(2));
 
         time.Advance(TimeSpan.FromSeconds(31));
         Assert.Equal(3, pool.AvailableCount);
-        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token));
-        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token));
+        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken);
+        await pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains("111111111", handler.Bots.Skip(4));
     }
 
@@ -56,7 +56,7 @@ public sealed class TelegramBotPoolTests
         using var http = new HttpClient(handler);
         var pool = new TelegramBotPool(Clients(http), new ManualTime());
 
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token)));
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => pool.ExecuteAsync((client, token) => client.SendMessageAsync(1, "x", token), cancellationToken: TestContext.Current.CancellationToken));
 
         var limit = Assert.IsType<TelegramApiException>(error.InnerException);
         Assert.Equal(429, limit.ErrorCode);

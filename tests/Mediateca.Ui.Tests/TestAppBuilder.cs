@@ -1,9 +1,6 @@
 using Avalonia;
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
 using Mediateca.Ui;
-
-[assembly: AvaloniaTestApplication(typeof(Mediateca.Ui.Tests.TestAppBuilder))]
 
 namespace Mediateca.Ui.Tests;
 

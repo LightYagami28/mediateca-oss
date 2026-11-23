@@ -87,14 +87,14 @@ public sealed class TransferTests
                 Path.Combine(directory, "downloads"),
                 new AlwaysEnabledLogger<TransferQueueService>());
 
-            var processed = await service.ProcessPendingAsync();
+            var processed = await service.ProcessPendingAsync(TestContext.Current.CancellationToken);
 
             Assert.Equal(1, processed);
             var job = store.Find(jobId);
             Assert.Equal("completed", job!.State);
             var downloaded = Path.Combine(directory, "downloads", "film.bin");
             Assert.True(File.Exists(downloaded));
-            Assert.Equal(bytes, await File.ReadAllBytesAsync(downloaded));
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(downloaded, cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -123,7 +123,7 @@ public sealed class TransferTests
                 Path.Combine(directory, "downloads"),
                 NullLogger<TransferQueueService>.Instance);
 
-            await service.ProcessPendingAsync();
+            await service.ProcessPendingAsync(TestContext.Current.CancellationToken);
 
             Assert.Equal("failed", store.Find(jobId)!.State);
         }

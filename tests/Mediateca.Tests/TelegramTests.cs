@@ -16,7 +16,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var sent = await client.SendMessageAsync(42, "scegli", [new InlineKeyboardButton { Text = "Scarica", CallbackData = "dl:1" }]);
+        var sent = await client.SendMessageAsync(42, "scegli", [new InlineKeyboardButton { Text = "Scarica", CallbackData = "dl:1" }], cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(sent);
         var body = JsonDocument.Parse(handler.LastBody!);
@@ -33,7 +33,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var link = await client.CreateInvoiceLinkAsync("Abbonamento", "Un mese di streaming", "abb-1", 250);
+        var link = await client.CreateInvoiceLinkAsync("Abbonamento", "Un mese di streaming", "abb-1", 250, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("https://t.me/$invoicelink", link);
         var body = JsonDocument.Parse(handler.LastBody!);
@@ -48,7 +48,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var sent = await client.AnswerWebAppQueryAsync("qid-1", "Film", "Descrizione", new Uri("https://example.com/film"));
+        var sent = await client.AnswerWebAppQueryAsync("qid-1", "Film", "Descrizione", new Uri("https://example.com/film"), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(sent);
         var body = JsonDocument.Parse(handler.LastBody!);
@@ -63,7 +63,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        await Assert.ThrowsAsync<ArgumentException>(() => client.SetChatMenuButtonAsync("Apri", new Uri("http://127.0.0.1:8080/miniapp")));
+        await Assert.ThrowsAsync<ArgumentException>(() => client.SetChatMenuButtonAsync("Apri", new Uri("http://127.0.0.1:8080/miniapp"), cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var updates = await client.GetUpdatesAsync();
+        var updates = await client.GetUpdatesAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Single(updates);
         Assert.Null(updates[0].Message);
@@ -131,7 +131,7 @@ public sealed class TelegramTests
             return Task.CompletedTask;
         }, cancellation.Token);
 
-        await run.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
+        await run.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken: TestContext.Current.CancellationToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
 
         Assert.True(run.IsCompleted);
         Assert.Equal(2, handled.Count);
@@ -236,7 +236,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegraphClient(http);
 
-        var url = await client.CreatePageAsync("Catalogo", "Elenco");
+        var url = await client.CreatePageAsync("Catalogo", "Elenco", cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("https://telegra.ph/Catalogo-01-01", url);
         Assert.Contains("telegra.ph/createPage", handler.LastUrl!.ToString());
@@ -250,7 +250,7 @@ public sealed class TelegramTests
         using var http = new HttpClient(handler);
         var client = new TelegramBotClient(http, new TelegramOptions { BotToken = "123456789:AAA" + new string('x', 30) });
 
-        var set = await client.SetChatMenuButtonAsync("Apri", new Uri("https://example.com/miniapp"));
+        var set = await client.SetChatMenuButtonAsync("Apri", new Uri("https://example.com/miniapp"), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(set);
         var body = JsonDocument.Parse(handler.LastBody!);

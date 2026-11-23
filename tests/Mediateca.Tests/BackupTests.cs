@@ -18,7 +18,7 @@ public sealed class BackupTests
             File.WriteAllText(Path.Combine(source, "mediateca.db"), "catalogo");
             File.WriteAllText(Path.Combine(source, LocalBackupTarget.BackupsFolderName, "vecchio.zip"), "x");
 
-            var result = await new LocalBackupTarget(2).CreateAsync(source, Path.Combine(source, LocalBackupTarget.BackupsFolderName));
+            var result = await new LocalBackupTarget(2).CreateAsync(source, Path.Combine(source, LocalBackupTarget.BackupsFolderName), cancellationToken: TestContext.Current.CancellationToken);
 
             using var archive = System.IO.Compression.ZipFile.OpenRead(result.ArchivePath);
             Assert.Equal(["mediateca.db"], archive.Entries.Select(static entry => entry.FullName));
@@ -51,7 +51,7 @@ public sealed class BackupTests
                 MaxBackups = 2,
             };
 
-            var result = await new GoogleDriveBackupTarget(http, options).CreateAsync(source, Path.Combine(directory, "backups"));
+            var result = await new GoogleDriveBackupTarget(http, options).CreateAsync(source, Path.Combine(directory, "backups"), cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Equal("nuovo-id", result.RemoteId);
             Assert.Equal(2, result.RemovedOldArchives);
@@ -79,7 +79,7 @@ public sealed class BackupTests
 
         var target = new GoogleDriveBackupTarget(http, new GoogleDriveOptions());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => target.CreateAsync(".", "."));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => target.CreateAsync(".", ".", cancellationToken: TestContext.Current.CancellationToken));
         Assert.Empty(handler.AuthorizedRequests);
         Assert.Null(handler.TokenBody);
     }
@@ -94,7 +94,7 @@ public sealed class BackupTests
             using var http = new HttpClient(handler);
             var options = new GoogleDriveOptions { ClientId = "c", ClientSecret = "s", RefreshToken = "r" };
 
-            var error = await Assert.ThrowsAsync<GoogleDriveException>(() => new GoogleDriveBackupTarget(http, options).CreateAsync(directory, Path.Combine(directory, "backups")));
+            var error = await Assert.ThrowsAsync<GoogleDriveException>(() => new GoogleDriveBackupTarget(http, options).CreateAsync(directory, Path.Combine(directory, "backups"), cancellationToken: TestContext.Current.CancellationToken));
 
             Assert.Equal(400, error.StatusCode);
             Assert.Equal("token OAuth", error.Operation);

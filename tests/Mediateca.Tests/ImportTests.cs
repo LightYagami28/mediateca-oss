@@ -22,12 +22,12 @@ public sealed class ImportTests
             database.Migrate();
             var service = new LocalImportService(database);
 
-            var first = await service.ImportFolderAsync(folder);
+            var first = await service.ImportFolderAsync(folder, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(2, first.Added);
             Assert.Equal(1, first.Skipped);
             Assert.Equal(1500, first.Bytes);
 
-            var second = await service.ImportFolderAsync(folder);
+            var second = await service.ImportFolderAsync(folder, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(0, second.Added);
             Assert.Equal(2, second.AlreadyPresent);
 
@@ -60,17 +60,17 @@ public sealed class ImportTests
 
             var database = new MediatecaDatabase(Path.Combine(directory, "mediateca.db"));
             database.Migrate();
-            await new LocalImportService(database).ImportFolderAsync(folder);
+            await new LocalImportService(database).ImportFolderAsync(folder, cancellationToken: TestContext.Current.CancellationToken);
 
             var store = new SqliteMediaStore(database);
             var item = store.Search("", null, 10).Single();
             var source = new LocalMediaFileSource(folder);
-            var media = await source.OpenReadAsync(item);
+            var media = await source.OpenReadAsync(item, cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.NotNull(media);
             await using var stream = media!.Stream;
             using var memory = new MemoryStream();
-            await stream.CopyToAsync(memory);
+            await stream.CopyToAsync(memory, cancellationToken: TestContext.Current.CancellationToken);
             Assert.Equal(bytes, memory.ToArray());
         }
         finally

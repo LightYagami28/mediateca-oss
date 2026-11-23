@@ -43,12 +43,12 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var response = await http.GetAsync($"{baseUrl}/health");
+                using var response = await http.GetAsync($"{baseUrl}/health", cancellationToken: TestContext.Current.CancellationToken);
 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.StartsWith("application/json", response.Content.Headers.ContentType?.MediaType);
 
-                var body = await response.Content.ReadAsStringAsync();
+                var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 Assert.Contains("\"status\":\"ok\"", body);
                 Assert.Contains($"\"schema\":{MediatecaDatabase.SchemaVersion}", body);
                 Assert.DoesNotContain("tier", body);
@@ -81,7 +81,7 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var response = await http.GetAsync($"{baseUrl}/health");
+                using var response = await http.GetAsync($"{baseUrl}/health", cancellationToken: TestContext.Current.CancellationToken);
 
                 Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").First());
                 Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").First());
@@ -125,18 +125,18 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var health = await http.GetAsync($"{baseUrl}/health");
+                using var health = await http.GetAsync($"{baseUrl}/health", cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.OK, health.StatusCode);
 
-                using var anonymous = await http.GetAsync($"{baseUrl}/api/stats");
+                using var anonymous = await http.GetAsync($"{baseUrl}/api/stats", cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/stats");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "token-di-prova");
-                using var authorized = await http.SendAsync(request);
+                using var authorized = await http.SendAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
                 Assert.Equal(HttpStatusCode.OK, authorized.StatusCode);
-                var body = await authorized.Content.ReadAsStringAsync();
+                var body = await authorized.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 Assert.Contains("\"items\":1", body);
                 Assert.Contains("\"channels\":1", body);
             }
@@ -175,7 +175,7 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var anonymous = await http.SendAsync(new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/dav/"));
+                using var anonymous = await http.SendAsync(new HttpRequestMessage(HttpMethod.Options, $"{baseUrl}/dav/"), cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
                 Assert.Contains("Basic realm=\"Mediateca\"", anonymous.Headers.WwwAuthenticate.ToString());
 
@@ -183,7 +183,7 @@ public sealed class HttpServerTests
                 request.Headers.Authorization = new AuthenticationHeaderValue(
                     "Basic",
                     Convert.ToBase64String(Encoding.UTF8.GetBytes("utente:parola")));
-                using var authorized = await http.SendAsync(request);
+                using var authorized = await http.SendAsync(request, cancellationToken: TestContext.Current.CancellationToken);
 
                 Assert.Equal(HttpStatusCode.OK, authorized.StatusCode);
                 Assert.Equal("1", authorized.Headers.GetValues("DAV").Single());
@@ -224,10 +224,10 @@ public sealed class HttpServerTests
             {
                 try
                 {
-                    using var response = await http.GetAsync($"http://127.0.0.1:{port}/health");
+                    using var response = await http.GetAsync($"http://127.0.0.1:{port}/health", cancellationToken: TestContext.Current.CancellationToken);
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        body = await response.Content.ReadAsStringAsync();
+                        body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                         break;
                     }
                 }
@@ -236,7 +236,7 @@ public sealed class HttpServerTests
                     // Il listener non è ancora pronto: si riprova.
                 }
 
-                await Task.Delay(50);
+                await Task.Delay(50, cancellationToken: TestContext.Current.CancellationToken);
             }
 
             Assert.NotNull(body);
@@ -245,7 +245,7 @@ public sealed class HttpServerTests
             cancellation.Cancel();
             try
             {
-                await run.WaitAsync(TimeSpan.FromSeconds(15));
+                await run.WaitAsync(TimeSpan.FromSeconds(15), cancellationToken: TestContext.Current.CancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -292,21 +292,21 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var full = await http.GetAsync($"{baseUrl}/api/items/{itemId}/stream");
+                using var full = await http.GetAsync($"{baseUrl}/api/items/{itemId}/stream", cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.OK, full.StatusCode);
-                Assert.Equal(bytes, await full.Content.ReadAsByteArrayAsync());
+                Assert.Equal(bytes, await full.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
                 Assert.Equal("bytes", full.Headers.GetValues("Accept-Ranges").Single());
 
                 using var partialRequest = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/items/{itemId}/stream");
                 partialRequest.Headers.Range = new RangeHeaderValue(100, 199);
-                using var partial = await http.SendAsync(partialRequest);
+                using var partial = await http.SendAsync(partialRequest, cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.PartialContent, partial.StatusCode);
                 Assert.Equal("bytes 100-199/1024", partial.Content.Headers.ContentRange!.ToString());
-                Assert.Equal(bytes[100..200], await partial.Content.ReadAsByteArrayAsync());
+                Assert.Equal(bytes[100..200], await partial.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
 
                 using var unsatisfiableRequest = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/api/items/{itemId}/stream");
                 unsatisfiableRequest.Headers.Range = new RangeHeaderValue(5000, 6000);
-                using var unsatisfiable = await http.SendAsync(unsatisfiableRequest);
+                using var unsatisfiable = await http.SendAsync(unsatisfiableRequest, cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.RequestedRangeNotSatisfiable, unsatisfiable.StatusCode);
             }
             finally
@@ -329,7 +329,7 @@ public sealed class HttpServerTests
         {
             var outside = Path.Combine(Path.GetTempPath(), "mediateca-tests", Guid.NewGuid().ToString("N") + ".txt");
             Directory.CreateDirectory(Path.GetDirectoryName(outside)!);
-            await File.WriteAllTextAsync(outside, "segreto");
+            await File.WriteAllTextAsync(outside, "segreto", cancellationToken: TestContext.Current.CancellationToken);
 
             var database = Migrated(directory);
             var store = new SqliteMediaStore(database);
@@ -352,7 +352,7 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var response = await http.GetAsync($"{baseUrl}/api/items/{itemId}/stream");
+                using var response = await http.GetAsync($"{baseUrl}/api/items/{itemId}/stream", cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
             }
             finally
@@ -384,20 +384,20 @@ public sealed class HttpServerTests
                 var baseUrl = await StartAsync(app);
                 using var http = new HttpClient();
 
-                using var response = await http.GetAsync($"{baseUrl}/miniapp");
+                using var response = await http.GetAsync($"{baseUrl}/miniapp", cancellationToken: TestContext.Current.CancellationToken);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                var body = await response.Content.ReadAsStringAsync();
+                var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 Assert.Contains("Mediateca", body);
 
-                using (var css = await http.GetAsync($"{baseUrl}/miniapp.css"))
+                using (var css = await http.GetAsync($"{baseUrl}/miniapp.css", cancellationToken: TestContext.Current.CancellationToken))
                 {
                     Assert.Equal(HttpStatusCode.OK, css.StatusCode);
                 }
 
-                using (var script = await http.GetAsync($"{baseUrl}/miniapp.js"))
+                using (var script = await http.GetAsync($"{baseUrl}/miniapp.js", cancellationToken: TestContext.Current.CancellationToken))
                 {
                     Assert.Equal(HttpStatusCode.OK, script.StatusCode);
-                    var scriptText = await script.Content.ReadAsStringAsync();
+                    var scriptText = await script.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                     Assert.Contains("api/stats", scriptText);
                 }
             }
@@ -430,7 +430,7 @@ public sealed class HttpServerTests
 
             try
             {
-                await app.StartAsync();
+                await app.StartAsync(TestContext.Current.CancellationToken);
                 Assert.Contains($"https://127.0.0.1:{port}", app.Urls);
 
                 using var handler = new HttpClientHandler
@@ -439,10 +439,10 @@ public sealed class HttpServerTests
                         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
                 };
                 using var http = new HttpClient(handler);
-                using var response = await http.GetAsync($"https://127.0.0.1:{port}/health");
+                using var response = await http.GetAsync($"https://127.0.0.1:{port}/health", cancellationToken: TestContext.Current.CancellationToken);
 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.Contains("\"status\":\"ok\"", await response.Content.ReadAsStringAsync());
+                Assert.Contains("\"status\":\"ok\"", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
             }
             finally
             {

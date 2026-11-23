@@ -15,7 +15,7 @@ public sealed class MtprotoUploadTests
         {
             await using var source = NewSource(directory, apiId: 0);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => source.UploadAsync(1, Path.Combine(directory, "film.mkv")));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => source.UploadAsync(1, Path.Combine(directory, "film.mkv"), cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -31,7 +31,7 @@ public sealed class MtprotoUploadTests
         {
             await using var source = NewSource(directory, apiId: 12345);
 
-            await Assert.ThrowsAsync<FileNotFoundException>(() => source.UploadAsync(1, Path.Combine(directory, "assente.mkv")));
+            await Assert.ThrowsAsync<FileNotFoundException>(() => source.UploadAsync(1, Path.Combine(directory, "assente.mkv"), cancellationToken: TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -51,7 +51,7 @@ public sealed class MtprotoUploadTests
             new SqliteMediaStore(database).UpsertChannel(new Channel { Id = 7, Title = "Senza hash", Kind = ChannelKind.Channel });
             await using var source = new TelegramMediaSource(Options(directory, 12345), database, NullLogger<TelegramMediaSource>.Instance);
 
-            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => source.UploadAsync(7, file));
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => source.UploadAsync(7, file, cancellationToken: TestContext.Current.CancellationToken));
 
             Assert.Contains("importalo prima", error.Message);
         }
