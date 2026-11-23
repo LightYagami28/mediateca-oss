@@ -57,8 +57,8 @@ dotnet test Mediateca.slnx -c Release
 dotnet list Mediateca.slnx package --vulnerable --include-transitive
 ```
 
-Build e test attuali: zero errori e zero avvisi, 127 test superati (107 core e
-20 UI).
+Build e test attuali: zero errori e zero avvisi, 172 test superati (149 core e
+23 UI).
 
 ## Sicurezza
 
