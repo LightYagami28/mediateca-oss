@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -19,12 +18,29 @@ public class RenderTests
 {
     private static readonly string ArtifactDirectory =
         Path.Combine(Path.GetTempPath(), "mediateca-ui-artifacts");
+    private static bool _avaloniaReady;
+    private static readonly object AvaloniaLock = new();
 
-    [AvaloniaFact]
+    private static void EnsureAvalonia()
+    {
+        lock (AvaloniaLock)
+        {
+            if (_avaloniaReady)
+            {
+                return;
+            }
+
+            TestAppBuilder.BuildAvaloniaApp().SetupWithoutStarting();
+            _avaloniaReady = true;
+        }
+    }
+
+    [Fact]
     public async Task Finestra_principale_Disegna_il_catalogo()
     {
+        EnsureAvalonia();
         var window = CreateWindow(500, ThemeVariant.Dark);
-        await ((MainWindowViewModel)window.DataContext!).LoadAsync();
+        await ((MainWindowViewModel)window.DataContext!).LoadAsync(TestContext.Current.CancellationToken);
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -42,11 +58,12 @@ public class RenderTests
         Assert.True(new FileInfo(path).Length > 10_000);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task Finestra_principale_Disegna_il_tema_chiaro()
     {
+        EnsureAvalonia();
         var window = CreateWindow(120, ThemeVariant.Light);
-        await ((MainWindowViewModel)window.DataContext!).LoadAsync();
+        await ((MainWindowViewModel)window.DataContext!).LoadAsync(TestContext.Current.CancellationToken);
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -58,12 +75,13 @@ public class RenderTests
         SavePng(frame!, Path.Combine(ArtifactDirectory, "catalogo-chiaro.png"));
     }
 
-    [AvaloniaFact]
+    [Fact]
     public async Task Finestra_principale_Disegna_le_impostazioni()
     {
+        EnsureAvalonia();
         var window = CreateWindow(50, ThemeVariant.Dark);
         var viewModel = (MainWindowViewModel)window.DataContext!;
-        await viewModel.LoadAsync();
+        await viewModel.LoadAsync(TestContext.Current.CancellationToken);
         viewModel.SelectNavCommand.Execute(viewModel.Sections.Single(section => section.Title == "Sistema").Items[0]);
 
         window.Show();

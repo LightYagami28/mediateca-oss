@@ -48,12 +48,12 @@ jobs:
           /o:"lightyagami28"
           /d:sonar.token="$env:SONAR_TOKEN"
           /d:sonar.host.url="https://sonarcloud.io"
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+          /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml"
 
       - name: Compilazione e test con copertura
         run: |
           dotnet build Mediateca.slnx -c Release
-          dotnet test Mediateca.slnx --no-build -c Release --collect:"XPlat Code Coverage" --results-directory coverage-results -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+          dotnet test Mediateca.slnx --no-build -c Release --results-directory coverage-results --results-directory-layout per-module -- --coverlet --coverlet-output-format opencover --coverlet-file-prefix coverage
 
       - name: Pubblica analisi
         env:
