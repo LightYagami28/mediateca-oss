@@ -48,7 +48,7 @@ jobs:
           /o:"lightyagami28"
           /d:sonar.token="$env:SONAR_TOKEN"
           /d:sonar.host.url="https://sonarcloud.io"
-          /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml"
+          /d:sonar.cs.opencover.reportsPaths="coverage-results/**/*.opencover.*.xml"
 
       - name: Compilazione e test con copertura
         run: |
