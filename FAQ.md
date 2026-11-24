@@ -38,9 +38,10 @@ backup, la cache e i log.
 
 ## Posso esporre il server su Internet?
 
-Il server non ha TLS e di default ascolta solo su `127.0.0.1`. Fuori dal
-loopback servono un token API
-(`MEDIATECA_API_TOKEN` o `--token`) e un terminatore TLS davanti: vedi [SECURITY.md](SECURITY.md).
+Il server usa HTTPS con un certificato autofirmato generato a ogni avvio e di
+default ascolta solo su `127.0.0.1`. Fuori dal loopback servono un token API
+(`MEDIATECA_API_TOKEN` o `--token`) ed è preferibile un terminatore TLS 1.3 con
+certificato fidato: vedi [SECURITY.md](SECURITY.md).
 
 ## Il client Telegram funziona?
 
