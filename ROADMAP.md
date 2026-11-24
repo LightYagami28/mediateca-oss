@@ -7,7 +7,7 @@ ordine di priorità.
 ## Stato attuale
 
 - Solution `Mediateca.slnx` su .NET 11 con nove progetti, UI Avalonia inclusa.
-- Build e test puliti: 127 test totali (107 core + 20 UI), zero errori e zero warning.
+- Build e test puliti: 172 test totali (149 core + 23 UI), zero errori e zero warning.
 - `MediatecaSettings` espone `Validate()` con soglie di porta, scala UI, formato
   `HH:mm`, URL pubblico, tema ed estensioni; `JsonSettingsStore` offre
   `LoadStrict()` e `SaveValidated()` con errori espliciti e `InnerException`.

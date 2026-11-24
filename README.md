@@ -17,20 +17,20 @@ teledisk.net** né supportato dagli autori dell'originale.
 
 | Ambito | Stato |
 | --- | --- |
-| Percorsi dati, impostazioni JSON, hash password, cifratura dei segreti | pronto |
+| Percorsi, impostazioni JSON, cifratura segreti | pronto |
 | Database SQLite con migrazioni versionate e controllo di integrità | pronto |
 | Catalogo media e canali, ricerca, statistiche | pronto |
 | Import di una cartella locale nel catalogo | pronto |
-| Server HTTP con API JSON, WebDAV in sola lettura e streaming con Range | pronto |
-| Code di trasferimento persistenti con worker di download | pronto |
-| Bot Telegram: long polling, comandi, tastiere inline, amministrazione, Stars, MiniApp, Telegraph | pronto |
-| Client MTProto (login, import canali, download in cache) | pronto, end-to-end da verificare con credenziali reali |
-| Interfaccia Avalonia 12 (catalogo, canali, impostazioni, log, tema chiaro/scuro) | pronto |
+| Server HTTP: API JSON, WebDAV, streaming Range | pronto |
+| Code di trasferimento con worker di download | pronto |
+| Bot Telegram: polling, comandi, MiniApp, Stars | pronto |
+| Client MTProto (login, canali, download) | pronto, da verificare |
+| Interfaccia Avalonia 12 (catalogo, impostazioni, log) | pronto |
 | Scraper TMDB e MusicBrainz, lettura NFO, copertine locali | pronto |
 | Backup compresso con ritenzione | pronto |
 | `MediatecaSettings.Validate()` e `JsonSettingsStore.LoadStrict()` | pronto |
 | Pool di bot e upload MTproto | in libreria, non ancora collegati alla coda |
-| `.strm`, radar degli intro, FUSE, scraper Tidal, pacchetto di distribuzione | mancanti |
+| `.strm`, radar intro, FUSE, Tidal, pacchetto | mancanti |
 
 Confronto dettagliato con l'originale: [docs/PARITA.md](docs/PARITA.md).
 Architettura: [ARCHITECTURE.md](ARCHITECTURE.md). Priorità: [ROADMAP.md](ROADMAP.md).
@@ -39,11 +39,11 @@ Architettura: [ARCHITECTURE.md](ARCHITECTURE.md). Priorità: [ROADMAP.md](ROADMA
 
 | Progetto | Responsabilità |
 | --- | --- |
-| `Mediateca.Core` | Dominio, percorsi, impostazioni, hash password, cifratura autenticata |
-| `Mediateca.Data` | SQLite: migrazioni, integrità, catalogo, code, import locale |
+| `Mediateca.Core` | Dominio, percorsi, impostazioni, cifratura |
+| `Mediateca.Data` | SQLite: migrazioni, catalogo, code, import |
 | `Mediateca.Media` | Analisi nomi, NFO, copertine, scraper TMDB/MusicBrainz |
 | `Mediateca.Backup` | Backup compressi con ritenzione |
-| `Mediateca.Server` | API HTTP JSON, WebDAV, streaming Range, code di trasferimento |
+| `Mediateca.Server` | API JSON, WebDAV, streaming Range, code |
 | `Mediateca.Telegram` / `Mediateca.Mtproto` | Bot e client MTProto |
 | `Mediateca.Ui` | Client Avalonia 12 |
 | `Mediateca.Cli` | Comandi a riga di comando |
@@ -57,8 +57,8 @@ dotnet test Mediateca.slnx -c Release
 dotnet list Mediateca.slnx package --vulnerable --include-transitive
 ```
 
-Build e test attuali: zero errori e zero avvisi, 127 test superati (107 core e
-20 UI).
+Build e test attuali: zero errori e zero avvisi, 172 test superati (149 core e
+23 UI).
 
 ## Sicurezza
 
